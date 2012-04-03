@@ -56,6 +56,17 @@ module Interpol
     def api_version_for(rack_env_hash)
       @api_version_block.call(rack_env_hash).to_s
     end
+
+    def self.default
+      @default ||= Configuration.new
+    end
+
+    def customized_duplicate(*extensions)
+      dup.tap do |instance|
+        extensions.each { |e| instance.extend(e) }
+        yield instance if block_given?
+      end
+    end
   end
 end
 

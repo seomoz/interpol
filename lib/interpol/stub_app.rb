@@ -1,5 +1,4 @@
-require 'interpol/configuration'
-require 'interpol/endpoint'
+require 'interpol'
 require 'sinatra/base'
 require 'json'
 
@@ -24,11 +23,8 @@ module Interpol
       end
     end
 
-    def build
-      config = Configuration.new
-      config.extend ConfigurationExtras
-      yield config
-
+    def build(&block)
+      config = Configuration.default.customized_duplicate(ConfigurationExtras, &block)
       builder = Builder.new(config)
       builder.build
       builder.app

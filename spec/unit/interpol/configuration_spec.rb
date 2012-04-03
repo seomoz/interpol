@@ -170,6 +170,32 @@ module Interpol
         }.to raise_error(ConfigurationError)
       end
     end
+
+    describe "#customized_duplicate" do
+      let(:mod1) { Module.new { attr_accessor :mod1 } }
+      let(:mod2) { Module.new { attr_accessor :mod2 } }
+
+      it "applies the given extension modules" do
+        cd = config.customized_duplicate(mod1, mod2)
+        cd.should respond_to(:mod1, :mod2)
+      end
+
+      it 'yields a configuration instance' do
+        cd = nil
+        config.customized_duplicate(mod1, mod2) { |c| cd = c }
+        cd.should be_a(Configuration)
+        cd.should respond_to(:mod1, :mod2)
+      end
+
+      it 'uses a duplicate so as not to affect the original instance' do
+        config.customized_duplicate(mod1, mod2) do |c|
+          c.mod1 = :foo
+          c.mod2 = :bar
+        end
+
+        config.should_not respond_to(:mod1, :mod2)
+      end
+    end
   end
 end
 

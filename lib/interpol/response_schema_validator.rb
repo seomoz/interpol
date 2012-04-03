@@ -1,6 +1,4 @@
-require 'interpol/configuration'
-require 'interpol/endpoint'
-require 'interpol/errors'
+require 'interpol'
 require 'json'
 
 module Interpol
@@ -24,9 +22,8 @@ module Interpol
       end
     end
 
-    def initialize(app)
-      @config = Configuration.new.extend(ConfigurationExtras)
-      yield @config
+    def initialize(app, &block)
+      @config = Configuration.default.customized_duplicate(ConfigurationExtras, &block)
       @app = app
       @handler_class = @config.validation_mode == :warn ? HandlerWithWarnings : Handler
     end

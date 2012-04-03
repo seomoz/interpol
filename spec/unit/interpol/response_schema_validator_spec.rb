@@ -10,7 +10,7 @@ module Interpol
     def configuration
       lambda do |config|
         config.stub(endpoints: definition_finder)
-        config.api_version '1.0'
+        config.api_version '1.0' unless api_version_configured?(config)
         config.validate_if(&validate_if_block) if validate_if_block
         config.validation_mode = validation_mode
       end
@@ -45,7 +45,7 @@ module Interpol
       end
     end
 
-    let(:validator) { fire_double("Interpol::EndpointDefinition") }
+    let(:validator) { fire_double("Interpol::EndpointDefinition", validate_data!: nil) }
     let(:definition_finder) { fire_double("Interpol::DefinitionFinder") }
 
     it 'validates the data against the correct versioned endpoint definition' do
@@ -53,6 +53,16 @@ module Interpol
 
       definition_finder.should_receive(:find_definition).
         with(method: "GET", path: "/search/17/overview", version: "1.0").
+        and_return(validator)
+
+      get '/search/17/overview'
+    end
+
+    it 'falls back to the default configuration' do
+      Interpol.default_configuration { |c| c.api_version '2.4' }
+
+      definition_finder.should_receive(:find_definition).
+        with(method: "GET", path: "/search/17/overview", version: "2.4").
         and_return(validator)
 
       get '/search/17/overview'

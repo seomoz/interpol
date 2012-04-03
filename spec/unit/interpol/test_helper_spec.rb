@@ -44,6 +44,13 @@ module Interpol
         run(test_group)
         results_from(test_group).should =~ ['passed', 'failed', 'failed']
       end
+
+      it 'falls back to default config settings' do
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+        Interpol.default_configuration { |c| c.endpoint_definition_files = Dir["#{dir}/*.yml"] }
+        group = within_group { define_interpol_example_tests }
+        num_tests_from(group).should eq(3)
+      end
     end
 
     describe "RSpec" do

@@ -1,4 +1,4 @@
-require 'interpol/configuration'
+require 'interpol'
 
 module Interpol
   module TestHelper
@@ -14,7 +14,7 @@ module Interpol
       end
 
       def define_interpol_example_tests(&block)
-        config = Configuration.new(&block)
+        config = Configuration.default.customized_duplicate(&block)
 
         each_example_from(config.endpoints) do |endpoint, definition, example, example_index|
           description = "#{endpoint.name} (v #{definition.version}) has " +

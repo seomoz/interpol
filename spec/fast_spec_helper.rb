@@ -13,6 +13,14 @@ module TestHelpers
     File.open(filename, 'w') { |f| f.write(contents) }
   end
 
+  def api_version_configured?(config)
+    config.api_version_for(nil)
+  rescue
+    false
+  else
+    true
+  end
+
   module ClassMethods
     def let_without_indentation(name, &block)
       let(name) { without_indentation(block.call) }
@@ -28,6 +36,11 @@ RSpec.configure do |c|
   c.debug = (RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI'])
   c.include TestHelpers
   c.extend TestHelpers::ClassMethods
+
+  c.before do
+    # clear global state between examples
+    Interpol::Configuration.instance_variable_set(:@default, nil)
+  end
 end
 
 shared_context "clean endpoint directory", :clean_endpoint_dir do

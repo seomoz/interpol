@@ -28,12 +28,23 @@ module Interpol
     let(:app) do
       StubApp.build do |config|
         config.stub(endpoints: [endpoint])
-        config.api_version { |env| env.fetch('HTTP_API_VERSION') }
+
+        unless api_version_configured?(config) # allow default config to take precedence
+          config.api_version { |env| env.fetch('HTTP_API_VERSION') }
+        end
       end
     end
 
     def parsed_body
       JSON.parse(last_response.body)
+    end
+
+    it 'falls back to the default configuration' do
+      Interpol.default_configuration { |c| c.api_version '1.0' }
+
+      header 'API-Version', '2.0'
+      get '/users/3/projects'
+      parsed_body.should include('name' => 'some project')
     end
 
     it 'renders the example data' do
