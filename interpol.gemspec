@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Police your HTTP JSON interface with interpol.}
   gem.homepage      = ""
 
-  gem.files         = %w(README.md) + Dir.glob("lib/**/*.rb")
+  gem.files         = %w(README.md License Gemfile Rakefile) + Dir.glob("lib/**/*.rb")
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
 
   gem.name          = "interpol"
