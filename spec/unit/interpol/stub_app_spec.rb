@@ -28,7 +28,7 @@ module Interpol
     let(:app) do
       StubApp.build do |config|
         config.stub(endpoints: [endpoint])
-        config.api_version { |req| req.env['HTTP_API_VERSION'] }
+        config.api_version { |env| env.fetch('HTTP_API_VERSION') }
       end
     end
 
