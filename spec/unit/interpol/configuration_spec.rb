@@ -2,6 +2,64 @@ require 'fast_spec_helper'
 require 'interpol/configuration'
 
 module Interpol
+  describe DefinitionFinder do
+    describe '#find_definition' do
+      def endpoint(method, route, *versions)
+        Endpoint.new \
+          'name' => 'endpoint_name',
+          'route' => route,
+          'method' => method,
+          'definitions' => [{
+            'versions' => versions,
+            'schema' => {},
+            'examples' => {}
+          }]
+      end
+
+      let(:endpoint_1)    { endpoint 'GET', '/users/:user_id/overview', '1.3' }
+      let(:endpoint_2)    { endpoint 'POST', '/foo/bar', '2.3', '2.7' }
+      let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
+
+      def find(*args)
+        all_endpoints.find_definition(*args)
+      end
+
+      it 'finds a matching endpoint' do
+        found = find(method: 'POST', path: '/foo/bar', version: '2.3')
+        found.endpoint.should be(endpoint_2)
+        found.version.should eq('2.3')
+      end
+
+      it 'finds the correct version of the endpoint' do
+        found = find(method: 'POST', path: '/foo/bar', version: '2.7')
+        found.version.should eq('2.7')
+      end
+
+      it 'returns NoDefinitionFound if it cannot find a matching route' do
+        result = find(method: 'POST', path: '/goo/bar', version: '2.7')
+        result.should be(DefinitionFinder::NoDefinitionFound)
+      end
+
+      it 'returns nil if the endpoint does not have a matching version' do
+        result = find(method: 'POST', path: '/foo/bar', version: '13.7')
+        result.should be(DefinitionFinder::NoDefinitionFound)
+      end
+
+      it 'handles route params properly' do
+        found = find(method: 'GET', path: '/users/17/overview', version: '1.3')
+        found.endpoint.should be(endpoint_1)
+      end
+
+      [:method, :path, :version].each do |key|
+        it "raises a helpful error if you do not include #{key.inspect} in the options" do
+          options = { method: 'POST', path: '/foo/bar', version: '2.3' }
+          options.delete(key)
+          expect { find(options) }.to raise_error(/key not found.*#{key}/)
+        end
+      end
+    end
+  end
+
   describe Configuration do
     let(:config) { Configuration.new }
 
@@ -50,6 +108,14 @@ module Interpol
         endpoints1 = config.endpoints
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
         endpoints1.should_not equal(config.endpoints)
+      end
+
+      it 'returns a blank array if no definition files have been set' do
+        config.endpoints.should eq([])
+      end
+
+      it 'provides a method to easily find an endpoint definition' do
+        config.endpoints.should respond_to(:find_definition)
       end
     end
 
