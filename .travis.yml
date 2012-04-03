@@ -1,4 +1,5 @@
 language: ruby
+bundler_args: --without extras
 script: "bundle exec rake"
 rvm:
   - 1.9.2
