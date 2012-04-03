@@ -21,8 +21,8 @@ module Interpol
     end
   end
 
-  # Error raised when the schema validator cannot find a version of the
-  # endpoint definition matching what was requested.
-  class NoEndpointVersionFoundError < Error; end
+  # Error raised when the schema validator cannot find a matching
+  # endpoint definition for the request.
+  class NoEndpointDefinitionFoundError < Error; end
 end
 
