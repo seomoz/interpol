@@ -1,5 +1,7 @@
 # Interpol
 
+[![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol)
+
 Police your HTTP JSON interface with interpol.
 
 Interpol is a toolkit for policing your HTTP JSON interface. To use it,
