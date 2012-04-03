@@ -42,7 +42,7 @@ module Interpol
       it 'generates tests that fail if their example data is invalid' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
-        results_from(test_group).should eq(['passed', 'failed', 'failed'])
+        results_from(test_group).should =~ ['passed', 'failed', 'failed']
       end
     end
 
