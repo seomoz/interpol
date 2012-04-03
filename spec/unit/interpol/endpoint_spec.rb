@@ -38,20 +38,20 @@ module Interpol
     end
 
     let(:definitions_array) do [{
-      'versions' => ['1.2', '3.2'],
+      'versions' => ['3.2', '1.2'],
       'schema'   => {'the' => 'schema'},
       'examples' => ['e1', 'e2']
     }] end
 
     describe "#definitions" do
-      it 'returns each definition object' do
+      it 'returns each definition object, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
         endpoint.definitions.map(&:version).should eq(%w[ 1.2 3.2 ])
       end
     end
 
     describe "#available_versions" do
-      it 'returns the list of available version strings' do
+      it 'returns the list of available version strings, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
         endpoint.available_versions.should eq(%w[ 1.2 3.2 ])
       end

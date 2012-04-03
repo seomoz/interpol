@@ -2,15 +2,27 @@ require 'json-schema'
 require 'interpol/errors'
 
 module Interpol
+  module HashFetcher
+    # Unfortunately, on JRuby 1.9, the error raised from Hash#fetch when
+    # the key is not found does not include the key itself :(. So we work
+    # around it here.
+    def fetch_from(hash, key)
+      hash.fetch(key) do
+        raise ArgumentError.new("key not found: #{key.inspect}")
+      end
+    end
+  end
+
   # Represents an endpoint. Instances of this class are constructed
   # based on the endpoint definitions in the YAML files.
   class Endpoint
+    include HashFetcher
     attr_reader :name, :route, :method
 
     def initialize(endpoint_hash)
-      @name        = endpoint_hash.fetch('name')
-      @route       = endpoint_hash.fetch('route')
-      @method      = endpoint_hash.fetch('method').downcase.to_sym
+      @name        = fetch_from(endpoint_hash, 'name')
+      @route       = fetch_from(endpoint_hash, 'route')
+      @method      = fetch_from(endpoint_hash, 'method').downcase.to_sym
       @definitions = extract_definitions_from(endpoint_hash)
     end
 
@@ -27,7 +39,7 @@ module Interpol
     end
 
     def definitions
-      @definitions.values
+      @definitions.values.sort_by(&:version)
     end
 
     def route_matches?(path)
@@ -53,8 +65,8 @@ module Interpol
     def extract_definitions_from(endpoint_hash)
       definitions = {}
 
-      endpoint_hash.fetch('definitions').each do |definition|
-        definition.fetch('versions').each do |version|
+      fetch_from(endpoint_hash, 'definitions').each do |definition|
+        fetch_from(definition, 'versions').each do |version|
           definitions[version] = EndpointDefinition.new(self, version, definition)
         end
       end
@@ -66,13 +78,14 @@ module Interpol
   # Wraps a single versioned definition for an endpoint.
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
+    include HashFetcher
     attr_reader :endpoint, :version, :schema, :examples
 
     def initialize(endpoint, version, definition)
       @endpoint = endpoint
       @version  = version
-      @schema   = definition.fetch('schema')
-      @examples = definition.fetch('examples').map { |e| EndpointExample.new(e, self) }
+      @schema   = fetch_from(definition, 'schema')
+      @examples = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
     end
 
