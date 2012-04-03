@@ -1,6 +1,8 @@
 # Note: this file is purposefully minimal. Load as little as possible here.
 require 'rspec/fire'
 
+ENV['RACK_ENV'] = 'test'
+
 module TestHelpers
   def without_indentation(heredoc)
     leading_whitespace = heredoc.split("\n").first[/\A\s+/]

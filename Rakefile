@@ -12,7 +12,7 @@ if RUBY_ENGINE == 'ruby' # MRI only
 
   desc "Run cane to check quality metrics"
   Cane::RakeTask.new(:quality) do |cane|
-    cane.abc_max = 10
+    cane.abc_max = 12
     cane.add_threshold 'coverage/coverage_percent.txt', :==, 100
     cane.style_measure = 100
   end
