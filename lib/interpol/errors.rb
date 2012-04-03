@@ -2,6 +2,9 @@ module Interpol
   # Base class that interpol errors should subclass.
   class Error < StandardError; end
 
+  # Error raised when the configuration is invalid.
+  class ConfigurationError < Error; end
+
   # Error raised when data fails to validate against the schema
   # for an endpoint.
   class ValidationError < Error

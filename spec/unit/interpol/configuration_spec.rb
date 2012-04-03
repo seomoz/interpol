@@ -52,6 +52,52 @@ module Interpol
         endpoints1.should_not equal(config.endpoints)
       end
     end
+
+    describe "#api_version" do
+      it 'raises an error when given a static version and a dynamic block' do
+        expect {
+          config.api_version('1.0') { }
+        }.to raise_error(ConfigurationError)
+      end
+
+      it 'raises an error when given neither a static version or dynamic block' do
+        expect {
+          config.api_version
+        }.to raise_error(ConfigurationError)
+      end
+    end
+
+    describe "#api_version_for" do
+      context 'when configured with a static version' do
+        it 'returns the configured static api version number' do
+          config.api_version '1.2'
+          config.api_version_for({}).should eq('1.2')
+        end
+
+        it 'always returns a string, even when configured as an integer' do
+          config.api_version 3
+          config.api_version_for({}).should eq('3')
+        end
+      end
+
+      context 'when configured with a block' do
+        it "returns the blocks's return value" do
+          config.api_version { |e| e[:path][%r|/api/v(\d+)/|, 1] }
+          config.api_version_for(path: "/api/v2/foo").should eq('2')
+        end
+
+        it 'always returns a string, even when configured as a string' do
+          config.api_version { |e| 3 }
+          config.api_version_for({}).should eq('3')
+        end
+      end
+
+      it 'raises a helpful error when api_version has not been configured' do
+        expect {
+          config.api_version_for({})
+        }.to raise_error(ConfigurationError)
+      end
+    end
   end
 end
 
