@@ -18,9 +18,9 @@ module Interpol
         yield config
 
         each_example_from(config.endpoints) do |endpoint, definition, example, example_index|
-          define_test "#{endpoint.name} (v #{definition.version}) has valid data for example #{example_index + 1}" do
-            example.validate!
-          end
+          description = "#{endpoint.name} (v #{definition.version}) has " +
+                        "valid data for example #{example_index + 1}"
+          define_test(description) { example.validate! }
         end
       end
     end
