@@ -34,6 +34,7 @@ module Interpol
         raise ConfigurationError, "api_version has not been configured"
       end
       self.endpoint_definition_files = []
+      yield self if block_given?
     end
 
     def endpoint_definition_files=(files)

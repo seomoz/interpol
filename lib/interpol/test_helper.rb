@@ -13,9 +13,8 @@ module Interpol
         end
       end
 
-      def define_interpol_example_tests
-        config = Configuration.new
-        yield config
+      def define_interpol_example_tests(&block)
+        config = Configuration.new(&block)
 
         each_example_from(config.endpoints) do |endpoint, definition, example, example_index|
           description = "#{endpoint.name} (v #{definition.version}) has " +

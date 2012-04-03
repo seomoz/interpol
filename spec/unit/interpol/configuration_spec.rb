@@ -63,6 +63,12 @@ module Interpol
   describe Configuration do
     let(:config) { Configuration.new }
 
+    it 'yields itself on initialization if a block is provided' do
+      yielded_object = nil
+      config = Configuration.new { |c| yielded_object = c }
+      yielded_object.should be(config)
+    end
+
     describe "#endpoint_definition_files" do
       it 'allows files to be set as a glob' do
         config.endpoint_definition_files = Dir["spec/fixtures/dir_with_two_yaml_files/*.yml"]
