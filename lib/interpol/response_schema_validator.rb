@@ -16,7 +16,7 @@ module Interpol
 
       def validate?(*args)
         @validate_if_block ||= lambda do |env, status, headers, body|
-          (200..299).cover?(status)
+          (200..299).cover?(status) && status != 204 # No Content
         end
         @validate_if_block.call(*args)
       end

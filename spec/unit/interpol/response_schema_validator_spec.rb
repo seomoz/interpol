@@ -38,10 +38,12 @@ module Interpol
         use Interpol::ResponseSchemaValidator, &config
         use Rack::ContentLength
 
-        map('/search/17/overview') do
-          run lambda { |env|
-            [ 200, {'Content-Type' => 'application/json'}, [%|{"a":"b"}|] ]
-          }
+        [200, 204].each do |status|
+          map("/search/#{status}/overview") do
+            run lambda { |env|
+              [ status, {'Content-Type' => 'application/json'}, [%|{"a":"b"}|] ]
+            }
+          end
         end
 
         map('/closable/body') do
@@ -69,27 +71,27 @@ module Interpol
       validator.should_receive(:validate_data!).with("a" => "b")
 
       definition_finder.should_receive(:find_definition).
-        with(method: "GET", path: "/search/17/overview", version: "1.0").
+        with(method: "GET", path: "/search/200/overview", version: "1.0").
         and_return(validator)
 
-      get '/search/17/overview'
+      get '/search/200/overview'
     end
 
     it 'falls back to the default configuration' do
       Interpol.default_configuration { |c| c.api_version '2.4' }
 
       definition_finder.should_receive(:find_definition).
-        with(method: "GET", path: "/search/17/overview", version: "2.4").
+        with(method: "GET", path: "/search/200/overview", version: "2.4").
         and_return(validator)
 
-      get '/search/17/overview'
+      get '/search/200/overview'
     end
 
     it 'yields the env, status, headers and body from the validate_if callback' do
       yielded_args = nil
       validate_if { |*args| yielded_args = args; false }
 
-      get '/search/17/overview'
+      get '/search/200/overview'
 
       yielded_args[0].should have_key('rack.version') # env hash
       yielded_args[1].should eq(200) # status
@@ -102,7 +104,7 @@ module Interpol
 
       validator.should_not_receive(:validate_data!)
       definition_finder.should_not_receive(:find_definition)
-      get '/search/17/overview'
+      get '/search/200/overview'
     end
 
     it 'does not validate if the response is not 2xx when no validate_if callback has been set' do
@@ -111,9 +113,14 @@ module Interpol
       get '/not_found'
     end
 
+    it 'does not validate a 204 no content response when no validate_if callback has been set' do
+      validator.should_not_receive(:validate_data!)
+      definition_finder.should_not_receive(:find_definition)
+      get '/search/204/overview'
+    end
+
     it 'closes the body when done interating it as per the rack spec' do
       stub_lookup
-      #validator.stub(:validate_data!)
       closable_body.should_receive(:close).once
       get '/closable/body'
     end
@@ -125,21 +132,21 @@ module Interpol
         validator.should_receive(:validate_data!).and_raise(ValidationError)
         stub_lookup
 
-        expect { get '/search/17/overview' }.to raise_error(ValidationError)
+        expect { get '/search/200/overview' }.to raise_error(ValidationError)
       end
 
       it 'raises an error when no endpoint definition can be found' do
         validator.stub(:validate_data!)
         stub_lookup(nil)
 
-        expect { get '/search/17/overview' }.to raise_error(NoEndpointDefinitionFoundError)
+        expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
       end
 
       it 'does not raise an error when the data passes validation' do
         validator.stub(:validate_data!)
         stub_lookup
 
-        get '/search/17/overview'
+        get '/search/200/overview'
       end
     end
 
@@ -152,7 +159,7 @@ module Interpol
         stub_lookup
 
         warner.should_receive(:warn).with(/Found.*error.*when validating/)
-        get '/search/17/overview'
+        get '/search/200/overview'
       end
 
       it 'prints a warning when no endpoint definition can be found' do
@@ -160,7 +167,7 @@ module Interpol
         stub_lookup(nil)
 
         warner.should_receive(:warn).with(/No endpoint definition could be found/)
-        get '/search/17/overview'
+        get '/search/200/overview'
       end
 
       it 'does not print a warning when the data passes validation' do
@@ -168,7 +175,7 @@ module Interpol
         stub_lookup
 
         warner.should_not_receive(:warn)
-        get '/search/17/overview'
+        get '/search/200/overview'
       end
     end
   end
