@@ -165,7 +165,7 @@ end
 
 ## Tool Usage
 
-### `Interpol::TestHelper::RSpec` and `Interpol::TestHelper::TestUnit`
+### Interpol::TestHelper::RSpec and Interpol::TestHelper::TestUnit
 
 These are modules that you can extend onto an RSpec example group
 or a `Test::Unit::TestCase` subclass, respectively.
@@ -202,7 +202,7 @@ class MyAPIEndpointsTest < Test::Unit::TestCase
 end
 ```
 
-### `Interpol::StubApp`
+### Interpol::StubApp
 
 This will build a little sinatra app that returns example data from
 your endpoint definition files.
@@ -226,7 +226,7 @@ end
 run stub_app
 ```
 
-### `Interpol::ResponseSchemaValidator`
+### Interpol::ResponseSchemaValidator
 
 This rack middleware validates the responses from your app
 against the schema definition. Here's an example of how you
