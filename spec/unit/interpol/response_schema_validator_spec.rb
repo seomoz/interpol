@@ -16,7 +16,8 @@ module Interpol
       end
     end
 
-    attr_accessor :validation_mode, :validate_if_block
+    attr_accessor :validation_mode, :validate_if_block, :definition_finder
+
     def set_validation_mode(mode)
       self.validation_mode = mode
     end
@@ -32,6 +33,7 @@ module Interpol
     end
 
     let(:app) do
+      self.definition_finder ||= default_definition_finder
       config = configuration
       _closable_body = closable_body
       Rack::Builder.new do
@@ -61,30 +63,51 @@ module Interpol
     end
 
     let(:validator) { fire_double("Interpol::EndpointDefinition", validate_data!: nil) }
-    let(:definition_finder) { fire_double("Interpol::DefinitionFinder") }
+    let(:endpoint)  { Interpol::Endpoint.new(stub.as_null_object) }
+    let(:default_definition_finder) { fire_double("Interpol::DefinitionFinder") }
 
     def stub_lookup(v = validator)
-      definition_finder.stub(find_definition: v)
+      default_definition_finder.stub(find_definition: v)
     end
 
     it 'validates the data against the correct versioned endpoint definition' do
       validator.should_receive(:validate_data!).with("a" => "b")
 
-      definition_finder.should_receive(:find_definition).
-        with(method: "GET", path: "/search/200/overview", version: "1.0").
+      default_definition_finder.should_receive(:find_definition).
+        with("GET", "/search/200/overview").
         and_return(validator)
 
       get '/search/200/overview'
     end
 
     it 'falls back to the default configuration' do
-      Interpol.default_configuration { |c| c.api_version '2.4' }
-
-      definition_finder.should_receive(:find_definition).
-        with(method: "GET", path: "/search/200/overview", version: "2.4").
-        and_return(validator)
+      default_config_called = false
+      Interpol.default_configuration do |c|
+        c.validate_if do
+          default_config_called = true
+          false
+        end
+      end
 
       get '/search/200/overview'
+      default_config_called.should be_true
+    end
+
+    it 'calls the api_version callback with the rack env and the endpoint' do
+      endpoint.stub(method: :get, route_matches?: true)
+      self.definition_finder = [endpoint].extend(Interpol::DefinitionFinder)
+
+      yielded_args = nil
+      Interpol.default_configuration do |c|
+        c.api_version do |*args|
+          yielded_args = args
+          '1.0'
+        end
+      end
+
+      expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
+
+      yielded_args.map(&:class).should eq([Hash, Interpol::Endpoint])
     end
 
     it 'yields the env, status, headers and body from the validate_if callback' do
@@ -101,21 +124,20 @@ module Interpol
 
     it 'does not validate if the validate_if config returns false' do
       validate_if { |*args| false }
-
       validator.should_not_receive(:validate_data!)
-      definition_finder.should_not_receive(:find_definition)
+      default_definition_finder.should_not_receive(:find_definition)
       get '/search/200/overview'
     end
 
     it 'does not validate if the response is not 2xx when no validate_if callback has been set' do
       validator.should_not_receive(:validate_data!)
-      definition_finder.should_not_receive(:find_definition)
+      default_definition_finder.should_not_receive(:find_definition)
       get '/not_found'
     end
 
     it 'does not validate a 204 no content response when no validate_if callback has been set' do
       validator.should_not_receive(:validate_data!)
-      definition_finder.should_not_receive(:find_definition)
+      default_definition_finder.should_not_receive(:find_definition)
       get '/search/204/overview'
     end
 
@@ -137,7 +159,7 @@ module Interpol
 
       it 'raises an error when no endpoint definition can be found' do
         validator.stub(:validate_data!)
-        stub_lookup(nil)
+        stub_lookup(DefinitionFinder::NoDefinitionFound)
 
         expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
       end
@@ -164,7 +186,7 @@ module Interpol
 
       it 'prints a warning when no endpoint definition can be found' do
         validator.stub(:validate_data!)
-        stub_lookup(nil)
+        stub_lookup(DefinitionFinder::NoDefinitionFound)
 
         warner.should_receive(:warn).with(/No endpoint definition could be found/)
         get '/search/200/overview'

@@ -20,19 +20,28 @@ module Interpol
       let(:endpoint_2)    { endpoint 'POST', '/foo/bar', '2.3', '2.7' }
       let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
 
-      def find(*args)
-        all_endpoints.find_definition(*args)
+      def find(options)
+        all_endpoints.find_definition(options[:method], options[:path]) { |e| options[:version] }
       end
 
-      it 'finds a matching endpoint' do
+      it 'finds a matching endpoint definition'  do
         found = find(method: 'POST', path: '/foo/bar', version: '2.3')
         found.endpoint.should be(endpoint_2)
         found.version.should eq('2.3')
       end
 
-      it 'finds the correct version of the endpoint' do
+      it 'finds the correct versioned definition of the endpoint' do
         found = find(method: 'POST', path: '/foo/bar', version: '2.7')
         found.version.should eq('2.7')
+      end
+
+      it 'calls the version block with the endpoint' do
+        endpoint = nil
+        all_endpoints.find_definition('POST', '/foo/bar') do |e|
+          endpoint = e
+        end
+
+        endpoint.should be(endpoint_2)
       end
 
       it 'returns NoDefinitionFound if it cannot find a matching route' do
@@ -48,14 +57,6 @@ module Interpol
       it 'handles route params properly' do
         found = find(method: 'GET', path: '/users/17/overview', version: '1.3')
         found.endpoint.should be(endpoint_1)
-      end
-
-      [:method, :path, :version].each do |key|
-        it "raises a helpful error if you do not include #{key.inspect} in the options" do
-          options = { method: 'POST', path: '/foo/bar', version: '2.3' }
-          options.delete(key)
-          expect { find(options) }.to raise_error(/key not found.*#{key}/)
-        end
       end
     end
   end
@@ -149,30 +150,30 @@ module Interpol
       context 'when configured with a static version' do
         it 'returns the configured static api version number' do
           config.api_version '1.2'
-          config.api_version_for({}).should eq('1.2')
+          config.api_version_for({}, stub.as_null_object).should eq('1.2')
         end
 
         it 'always returns a string, even when configured as an integer' do
           config.api_version 3
-          config.api_version_for({}).should eq('3')
+          config.api_version_for({}, stub.as_null_object).should eq('3')
         end
       end
 
       context 'when configured with a block' do
         it "returns the blocks's return value" do
           config.api_version { |e| e[:path][%r|/api/v(\d+)/|, 1] }
-          config.api_version_for(path: "/api/v2/foo").should eq('2')
+          config.api_version_for({ path: "/api/v2/foo" }, stub.as_null_object).should eq('2')
         end
 
         it 'always returns a string, even when configured as a string' do
           config.api_version { |e| 3 }
-          config.api_version_for({}).should eq('3')
+          config.api_version_for({}, stub.as_null_object).should eq('3')
         end
       end
 
       it 'raises a helpful error when api_version has not been configured' do
         expect {
-          config.api_version_for({})
+          config.api_version_for({}, stub.as_null_object)
         }.to raise_error(ConfigurationError)
       end
     end

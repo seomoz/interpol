@@ -48,7 +48,7 @@ module Interpol
 
       def endpoint_definition(endpoint)
         lambda do
-          version = interpol_config.api_version_for(request.env)
+          version = interpol_config.api_version_for(request.env, endpoint)
           example = example_for(endpoint, version)
           example.validate!
           JSON.dump(example.data)

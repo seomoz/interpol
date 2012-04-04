@@ -47,6 +47,20 @@ module Interpol
       parsed_body.should include('name' => 'some project')
     end
 
+    it 'calls the api_version callback with the rack env and the endpoint' do
+      yielded_args = nil
+      Interpol.default_configuration do |c|
+        c.api_version do |*args|
+          yielded_args = args
+          '1.0'
+        end
+      end
+
+      get '/users/3/projects'
+
+      yielded_args.map(&:class).should eq([Hash, Interpol::Endpoint])
+    end
+
     it 'renders the example data' do
       header 'API-Version', '1.0'
       get '/users/3/projects'

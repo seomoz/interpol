@@ -33,9 +33,12 @@ module Interpol
       end
 
       def validate!
-        return validator.validate_data!(data) if validator
+        unless validator == Interpol::DefinitionFinder::NoDefinitionFound
+          return validator.validate_data!(data)
+        end
+
         raise NoEndpointDefinitionFoundError,
-          "No endpoint definition could be found for: #{request_method} '#{path}' (#{version})"
+          "No endpoint definition could be found for: #{request_method} '#{path}'"
       end
 
       # The only interface we can count on from the body is that it
@@ -63,13 +66,10 @@ module Interpol
         env.fetch('PATH_INFO')
       end
 
-      def version
-        @version ||= @config.api_version_for(@env)
-      end
-
       def validator
-        @validator ||= @config.endpoints.find_definition \
-          method: request_method, path: path, version: version
+        @validator ||= @config.endpoints.find_definition(request_method, path) do |endpoint|
+          @config.api_version_for(env, endpoint)
+        end
       end
     end
 

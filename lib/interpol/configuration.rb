@@ -7,21 +7,19 @@ module Interpol
     include HashFetcher
     NoDefinitionFound = Class.new
 
-    def find_definition(options)
-      method, path, version = extract_search_options_from(options)
-      endpoint = find { |e| e.method == method && e.route_matches?(path) }
-      return NoDefinitionFound if endpoint.nil?
-      endpoint.definitions.find { |d| d.version == version } || NoDefinitionFound
+    def find_definition(method, path)
+      with_endpoint_matching(method, path) do |endpoint|
+        version = yield endpoint
+        endpoint.definitions.find { |d| d.version == version }
+      end
     end
 
   private
 
-    def extract_search_options_from(options)
-      method  = fetch_from(options, :method).downcase.to_sym
-      path    = fetch_from(options, :path)
-      version = fetch_from(options, :version)
-
-      return method, path, version
+    def with_endpoint_matching(method, path)
+      method = method.downcase.to_sym
+      endpoint = find { |e| e.method == method && e.route_matches?(path) }
+      (yield endpoint if endpoint) || NoDefinitionFound
     end
   end
 
@@ -67,11 +65,11 @@ module Interpol
                                      "or a dynamic block, but not both")
       end
 
-      @api_version_block = block || lambda { |env| version }
+      @api_version_block = block || lambda { |*a| version }
     end
 
-    def api_version_for(rack_env_hash)
-      @api_version_block.call(rack_env_hash).to_s
+    def api_version_for(rack_env, endpoint=nil)
+      @api_version_block.call(rack_env, endpoint).to_s
     end
 
     def validate_if(&block)

@@ -119,9 +119,9 @@ Interpol.default_configuration do |config|
 
   # Determines which versioned endpoint definition Interpol uses
   # for a request. You can also use a block form, which yields
-  # the rack env hash as an argument. This is useful when you need
-  # to extract the version from a request header (e.g. Accept) or
-  # from the request URI.
+  # the rack env hash and the endpoint object as arguments.
+  # This is useful when you need to extract the version from a
+  # request header (e.g. Accept) or from the request URI.
   #
   # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
   config.api_version '1.0'
