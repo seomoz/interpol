@@ -123,6 +123,12 @@ module Interpol
       it 'provides a method to easily find an endpoint definition' do
         config.endpoints.should respond_to(:find_definition)
       end
+
+      it 'can be assigned directly' do
+        endpoints_array = [stub.as_null_object]
+        config.endpoints = endpoints_array
+        config.endpoints.should respond_to(:find_definition)
+      end
     end
 
     describe "#api_version" do

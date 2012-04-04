@@ -51,10 +51,14 @@ module Interpol
     end
 
     def endpoint_definition_files=(files)
-      @endpoints = files.map do |file|
+      self.endpoints = files.map do |file|
         Endpoint.new(YAML.load_file file)
-      end.extend(DefinitionFinder)
+      end
       @endpoint_definition_files = files
+    end
+
+    def endpoints=(endpoints)
+      @endpoints = endpoints.extend(DefinitionFinder)
     end
 
     def api_version(version=nil, &block)
