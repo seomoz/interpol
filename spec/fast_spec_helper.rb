@@ -38,8 +38,10 @@ RSpec.configure do |c|
   c.extend TestHelpers::ClassMethods
 
   c.before do
-    # clear global state between examples
-    Interpol::Configuration.instance_variable_set(:@default, nil)
+    if defined?(Interpol::Configuration)
+      # clear global state between examples
+      Interpol::Configuration.instance_variable_set(:@default, nil)
+    end
   end
 end
 
