@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Myron Marston"]
   gem.email         = ["myron.marston@gmail.com"]
   gem.description   = %q{Interpol is a toolkit for working with API endpoint definition files, giving you a stub app, a schema validation middleware, and browsable documentation.}
-  gem.summary       = %q{Police your HTTP JSON interface with interpol.}
+  gem.summary       = %q{Interpol is a toolkit for policing your HTTP JSON interface.}
   gem.homepage      = ""
 
   gem.files         = %w(README.md License Gemfile Rakefile) + Dir.glob("lib/**/*.rb")

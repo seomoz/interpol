@@ -2,16 +2,28 @@
 
 [![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol)
 
-Police your HTTP JSON interface with interpol.
-
 Interpol is a toolkit for policing your HTTP JSON interface. To use it,
-you define the endpoints of your HTTP API in simple YAML files.  From
-this metadata, interpol gives you three things:
+define the endpoints of your HTTP API in simple YAML files.
+Interpol provides multiple tools to work with these endpoint
+definitions:
 
-* A stub sinatra app that serves up example data.
-* A rack middleware that will validate the data being returned by an
-  endpoint against the JSON schema for that endpoint.
-* A documentation browser for your API.
+* `Interpol::TestHelper::RSpec` and `Interpol::TestHelper::TestUnit` are
+  modules that you can mix in to your test context. They provide a means
+  to generate tests from your endpoint definitions that validate example
+  data against your JSON schema definition.
+* `Interpol::StubApp` builds a stub implementation of your API from
+  the endpoint definitions. This can be distributed with your API's
+  client gem so that API users have something local to hit that
+  generates data that is valid according to your schema definition.
+* `Interpol::ResponseSchemaValidator` is a rack middleware that
+  validates your API responses against the JSON schema in your endpoint
+  definition files. This is useful in test/development environments to
+  ensure that your real API returns valid responses.
+* A documentation browser for your API is planned as well (but not yet
+  implemented).
+
+You can use any of these tools individually or some combination of all
+of them.
 
 ## Installation
 
@@ -27,17 +39,17 @@ Or install it yourself as:
 
     $ gem install interpol
 
-## Usage
+## Endpoint Definition
 
-First, define your API endpoints in interpol YAML files, using
-a separate file per endpoint. Here's an example of what one looks like:
+Endpoints are defined in YAML files, using a separate
+file per endpoint. Here's an example:
 
 ``` yaml
 ---
 name: user_projects
 route: /users/:user_id/projects
 method: GET
-entries:
+definitions:
   - versions: ["1.0"]
     schema:
       description: Returns a list of projects for the given user.
@@ -70,23 +82,100 @@ Let's look at this YAML file, point-by-point:
 
 * `name` can be anything you want. Each endpoint should have a different name. Interpol uses
   it in schema validation error messages.
-* `route` defines the sinatra route for this endpoint. Any valid sinatra route can be used here.
+* `route` defines the sinatra route for this endpoint. Note that while
+  Interpol::StubApp supports any sinatra route, Interpol::ResponseSchemaValidator
+  (which has to find a matching endpoint definition from the request path), only
+  supports a subset of Sinatra's routing syntax. Specifically, it supports static
+  segments (`users` and `projects` in the example above) and named
+  parameter segments (`:user_id` in the example above).
 * `method` defines the HTTP method for this endpoint.  The method should be in uppercase.
-* The `entries` array contains a list of tuples (each containing versions/schema/examples).
-  Everytime you modify your schema and change the version, you should add a new entry here.
-* The `versions` array lists the endpoint versions that should be associated with this entry.
+* The `definitions` array contains a list of versioned schema definitions, with
+  corresponding examples.  Everytime you modify your schema and change the version,
+  you should add a new entry here.
+* The `versions` array lists the endpoint versions that should be associated with a
+  particular schema definition.
 * The `schema` contains a [JSON schema](http://tools.ietf.org/html/draft-zyp-json-schema-03)
   description of the contents of the endpoint. This schema definition is used by the
   `SchemaValidation` middleware to ensure that your implementation of the endpoint
   matches the definition.
-* `examples` contains a list of valid examples. It is used by the stub app as example data.
+* `examples` contains a list of valid example data. It is used by the stub app as example data.
 
-Now that you've defined your endpoints, interpol provides several utilities to work
-with the endpoints.
+## Configuration
 
-### Test Helpers to Validate your endpoint examples
+Interpol provides two levels of configuration: global default
+configuration, and one-off configuration, set on a particular
+instance of one of the provided tools. Each of the tools accepts
+a configuration block that provides an identical API to the
+global configuration API shown below.
 
-You can use it with RSpec:
+``` ruby
+require 'interpol'
+
+Interpol.default_configuration do |config|
+  # Tells Interpol where to find your endpoint definition files.
+  #
+  # Needed by all tools.
+  config.endpoint_definition_files = Dir["config/endpoints/*.yml"]
+
+  # Determines which versioned endpoint definition Interpol uses
+  # for a request. You can also use a block form, which yields
+  # the rack env hash as an argument. This is useful when you need
+  # to extract the version from a request header (e.g. Accept) or
+  # from the request URI.
+  #
+  # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
+  config.api_version '1.0'
+
+  # Determines the stub app response when the requested version is not
+  # available. This block will be eval'd in the context of the stub app
+  # sinatra application, so you can use sinatra helpers like `halt` here.
+  #
+  # Needed by Interpol::StubApp.
+  config.on_invalid_request_version do |requested_version, available_versions|
+    message = JSON.dump(
+      "message" => "Not Acceptable",
+      "requested_version" => requested_version,
+      "available_versions" => available_versions
+    )
+
+    halt 406, message
+  end
+
+  # Determines which responses will be validated against the endpoint
+  # definition when you use Interpol::ResponseSchemaValidator. The
+  # validation is meant to run against the "happy path" response.
+  # For responses like "404 Not Found", you probably don't want any
+  # validation performed. The default validate_if hook will cause
+  # validation to run against any 2xx response except 204 ("No Content").
+  #
+  # Used by Interpol::ResponseSchemaValidator.
+  config.validate_if do |env, status, headers, body|
+    headers['Content-Type'] == my_custom_mime_type
+  end
+
+  # Determines how Interpol::ResponseSchemaValidator handles
+  # invalid data. By default it will raise an error, but you can
+  # make it print a warning instead.
+  #
+  # Used by Interpol::ResponseSchemaValidator.
+  config.validation_mode = :error # or :warn
+end
+
+```
+
+## Tool Usage
+
+### `Interpol::TestHelper::RSpec` and `Interpol::TestHelper::TestUnit`
+
+These are modules that you can extend onto an RSpec example group
+or a `Test::Unit::TestCase` subclass, respectively.
+They provide a `define_interpol_example_tests` macro that will define
+a test for each example for each schema definition in your endpoint
+definition files. The tests will validate that your schema is a valid
+JSON schema definition and will validate that the examples are valid
+according to that schema.
+
+RSpec example:
 
 ``` ruby
 require 'interpol/test_helper'
@@ -94,72 +183,69 @@ require 'interpol/test_helper'
 describe "My API endpoints" do
   extend Interpol::TestHelper::RSpec
 
+  # the block is only necessary if you want to override the default
+  # config or if you have not set a default config.
   define_interpol_example_tests do |ipol|
     ipol.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
   end
 end
 ```
 
-...or with Test::Unit:
+Test::Unit example:
 
 ``` ruby
 require 'interpol/test_helper'
 
 class MyAPIEndpointsTest < Test::Unit::TestCase
   extend Interpol::TestHelper::TestUnit
-
-  define_interpol_example_tests do |ipol|
-    ipol.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
-  end
+  define_interpol_example_tests
 end
 ```
 
-`define_endpoint_example_tests` defines a test for each example in the endpoint
-YAML files. The example data will be validated against your JSON schema definition.
-This helps ensure that your examples actually use the right JSON schema.
+### `Interpol::StubApp`
 
-### Stub App
+This will build a little sinatra app that returns example data from
+your endpoint definition files.
 
-Put this in a `config.ru`:
+Example:
 
 ``` ruby
+# config.ru
+
 require 'interpol/stub_app'
 
+# the block is only necessary if you want to override the default
+# config or if you have not set a default config.
 stub_app = Interpol::StubApp.build do |app|
   app.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
   app.api_version do |env|
-    # This is called on each request with the Rack env hash.
-    # You should return the API version for the request.
-    # Interpol will use this to find an appropriate example
-    # for this request based on the endpoint definition.
-    "1.0"
+    RequestVersion.extract_from(env['HTTP_ACCEPT'])
   end
 end
 
 run stub_app
 ```
 
-...and run with `rackup config.ru`.
+### `Interpol::ResponseSchemaValidator`
 
-### Schema Validation middleware
-
-The validation middleware works with any rack app. Here's what it might look like
-when used with a classic style sinatra app:
+This rack middleware validates the responses from your app
+against the schema definition. Here's an example of how you
+might use it with a class-style sinatra app:
 
 ``` ruby
 require 'sinatra'
 
 # You probably only want to validate the schema in local development.
 unless ENV['RACK_ENV'] == 'production'
-  require 'interpol/schema_validation'
-  use Interpol::SchemaValidation do |config|
+  require 'interpol/ResponseSchemaValidator'
+
+  # the block is only necessary if you want to override the default
+  # config or if you have not set a default config.
+  use Interpol::ResponseSchemaValidator do |config|
     config.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
     config.api_version do |env|
-      # This is called on each request with the Rack env hash.
-      # You should return the API version for the request.
-      "1.0"
+      RequestVersion.extract_from(env['HTTP_ACCEPT'])
     end
-    config.on_validation_failure :raise # or :warn
   end
 end
 
