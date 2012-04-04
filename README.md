@@ -237,7 +237,7 @@ require 'sinatra'
 
 # You probably only want to validate the schema in local development.
 unless ENV['RACK_ENV'] == 'production'
-  require 'interpol/ResponseSchemaValidator'
+  require 'interpol/response_schema_validator'
 
   # the block is only necessary if you want to override the default
   # config or if you have not set a default config.
