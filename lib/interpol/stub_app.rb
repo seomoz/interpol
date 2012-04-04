@@ -6,25 +6,8 @@ module Interpol
   module StubApp
     extend self
 
-    module ConfigurationExtras
-      def on_invalid_request_version(&block)
-        @invalid_request_version_block = block
-      end
-
-      def request_version_invalid(execution_context, *args)
-        @invalid_request_version_block ||= lambda do |requested, available|
-          message = "The requested API version is invalid. " +
-                    "Requested: #{requested}. " +
-                    "Available: #{available}"
-          halt 406, JSON.dump(error: message)
-        end
-
-        execution_context.instance_exec(*args, &@invalid_request_version_block)
-      end
-    end
-
     def build(&block)
-      config = Configuration.default.customized_duplicate(ConfigurationExtras, &block)
+      config = Configuration.default.customized_duplicate(&block)
       builder = Builder.new(config)
       builder.build
       builder.app

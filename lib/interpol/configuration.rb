@@ -28,6 +28,7 @@ module Interpol
   # Public: Defines interpol configuration.
   class Configuration
     attr_reader :endpoint_definition_files, :endpoints
+    attr_accessor :validation_mode
 
     def initialize
       api_version do
@@ -57,15 +58,39 @@ module Interpol
       @api_version_block.call(rack_env_hash).to_s
     end
 
+    def validate_if(&block)
+      @validate_if_block = block
+    end
+
+    def validate?(*args)
+      @validate_if_block ||= lambda do |env, status, headers, body|
+        (200..299).cover?(status) && status != 204 # No Content
+      end
+      @validate_if_block.call(*args)
+    end
+
+    def on_invalid_request_version(&block)
+      @invalid_request_version_block = block
+    end
+
+    def request_version_invalid(execution_context, *args)
+      @invalid_request_version_block ||= lambda do |requested, available|
+        message = "The requested API version is invalid. " +
+                  "Requested: #{requested}. " +
+                  "Available: #{available}"
+        halt 406, JSON.dump(error: message)
+      end
+
+      execution_context.instance_exec(*args, &@invalid_request_version_block)
+    end
+
     def self.default
       @default ||= Configuration.new
     end
 
-    def customized_duplicate(*extensions)
-      dup.tap do |instance|
-        extensions.each { |e| instance.extend(e) }
-        yield instance if block_given?
-      end
+    def customized_duplicate(&block)
+      block ||= lambda { |c| }
+      dup.tap(&block)
     end
   end
 end

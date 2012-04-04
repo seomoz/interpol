@@ -7,23 +7,8 @@ module Interpol
   # error or warn in this condition. Intended for development and
   # test use.
   class ResponseSchemaValidator
-    module ConfigurationExtras
-      attr_accessor :validation_mode
-
-      def validate_if(&block)
-        @validate_if_block = block
-      end
-
-      def validate?(*args)
-        @validate_if_block ||= lambda do |env, status, headers, body|
-          (200..299).cover?(status) && status != 204 # No Content
-        end
-        @validate_if_block.call(*args)
-      end
-    end
-
     def initialize(app, &block)
-      @config = Configuration.default.customized_duplicate(ConfigurationExtras, &block)
+      @config = Configuration.default.customized_duplicate(&block)
       @app = app
       @handler_class = @config.validation_mode == :warn ? HandlerWithWarnings : Handler
     end
