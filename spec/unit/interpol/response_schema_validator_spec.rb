@@ -25,8 +25,15 @@ module Interpol
       self.validate_if_block = block
     end
 
+    let(:closable_body) do
+      stub(close: nil).tap do |s|
+        s.stub(:each).and_yield('{"a":"b"}')
+      end
+    end
+
     let(:app) do
       config = configuration
+      _closable_body = closable_body
       Rack::Builder.new do
         use Interpol::ResponseSchemaValidator, &config
         use Rack::ContentLength
@@ -34,6 +41,12 @@ module Interpol
         map('/search/17/overview') do
           run lambda { |env|
             [ 200, {'Content-Type' => 'application/json'}, [%|{"a":"b"}|] ]
+          }
+        end
+
+        map('/closable/body') do
+          run lambda { |env|
+            [ 200, { 'Content-Type' => 'application/json' }, _closable_body ]
           }
         end
 
@@ -47,6 +60,10 @@ module Interpol
 
     let(:validator) { fire_double("Interpol::EndpointDefinition", validate_data!: nil) }
     let(:definition_finder) { fire_double("Interpol::DefinitionFinder") }
+
+    def stub_lookup(v = validator)
+      definition_finder.stub(find_definition: v)
+    end
 
     it 'validates the data against the correct versioned endpoint definition' do
       validator.should_receive(:validate_data!).with("a" => "b")
@@ -94,8 +111,11 @@ module Interpol
       get '/not_found'
     end
 
-    def stub_lookup(v = validator)
-      definition_finder.stub(find_definition: v)
+    it 'closes the body when done interating it as per the rack spec' do
+      stub_lookup
+      #validator.stub(:validate_data!)
+      closable_body.should_receive(:close).once
+      get '/closable/body'
     end
 
     context 'when configured with :error' do

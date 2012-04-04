@@ -60,6 +60,7 @@ module Interpol
       def extracted_body
         @extracted_body ||= [].tap do |extracted_body|
           body.each { |str| extracted_body << str }
+          body.close if body.respond_to?(:close)
         end
       end
 
