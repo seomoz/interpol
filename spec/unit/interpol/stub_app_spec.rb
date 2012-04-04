@@ -54,8 +54,8 @@ module Interpol
       last_response.should be_ok
     end
 
-    it 'uses the configured invalid_request_version hook when an invalid version is requested' do
-      app.interpol_config.on_invalid_request_version do |requested_version, available_versions|
+    it 'uses the unavailable_request_version hook when an invalid version is requested' do
+      app.interpol_config.on_unavailable_request_version do |requested_version, available_versions|
         halt 405, JSON.dump(requested: requested_version, available: available_versions)
       end
 

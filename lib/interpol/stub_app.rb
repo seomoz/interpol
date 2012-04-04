@@ -21,7 +21,7 @@ module Interpol
       def example_for(endpoint, version)
         endpoint.find_example_for!(version)
       rescue ArgumentError
-        interpol_config.request_version_invalid(self, version, endpoint.available_versions)
+        interpol_config.request_version_unavailable(self, version, endpoint.available_versions)
       end
     end
 

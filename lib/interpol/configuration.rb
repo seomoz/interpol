@@ -34,6 +34,18 @@ module Interpol
       api_version do
         raise ConfigurationError, "api_version has not been configured"
       end
+
+      validate_if do |env, status, headers, body|
+        (200..299).cover?(status) && status != 204 # No Content
+      end
+
+      on_unavailable_request_version do |requested, available|
+        message = "The requested API version is invalid. " +
+                  "Requested: #{requested}. " +
+                  "Available: #{available}"
+        halt 406, JSON.dump(error: message)
+      end
+
       self.endpoint_definition_files = []
       yield self if block_given?
     end
@@ -63,25 +75,15 @@ module Interpol
     end
 
     def validate?(*args)
-      @validate_if_block ||= lambda do |env, status, headers, body|
-        (200..299).cover?(status) && status != 204 # No Content
-      end
       @validate_if_block.call(*args)
     end
 
-    def on_invalid_request_version(&block)
-      @invalid_request_version_block = block
+    def on_unavailable_request_version(&block)
+      @unavailable_request_version_block = block
     end
 
-    def request_version_invalid(execution_context, *args)
-      @invalid_request_version_block ||= lambda do |requested, available|
-        message = "The requested API version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-        halt 406, JSON.dump(error: message)
-      end
-
-      execution_context.instance_exec(*args, &@invalid_request_version_block)
+    def request_version_unavailable(execution_context, *args)
+      execution_context.instance_exec(*args, &@unavailable_request_version_block)
     end
 
     def self.default

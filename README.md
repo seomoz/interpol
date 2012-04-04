@@ -131,7 +131,7 @@ Interpol.default_configuration do |config|
   # sinatra application, so you can use sinatra helpers like `halt` here.
   #
   # Needed by Interpol::StubApp.
-  config.on_invalid_request_version do |requested_version, available_versions|
+  config.on_unavailable_request_version do |requested_version, available_versions|
     message = JSON.dump(
       "message" => "Not Acceptable",
       "requested_version" => requested_version,
