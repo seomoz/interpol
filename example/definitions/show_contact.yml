@@ -1,0 +1,38 @@
+---
+name: show_contact
+route: /contacts/:contact_id
+method: GET
+definitions:
+  - versions: ["1.0"]
+    schema:
+      description: Returns information about a contact.
+      type: object
+      properties:
+        first_name:
+          description: "The person's first name."
+          type: string
+        last_name:
+          description: "The person's last name."
+          type: string
+        date_of_birth:
+          description: "The person's birthday."
+          type: date
+        gender:
+          description: "Male or Female"
+          type: string 
+          enum: [male, female]
+
+    examples:
+      - first_name: John
+        last_name: Doe
+        date_of_birth: '1979-05-23'
+        gender: male
+      - first_name: Jane
+        last_name: Donald
+        date_of_birth: '1982-08-03'
+        gender: female
+      # an invalid example to demonstrate a generated test failure:
+      - first_name: Jack
+        last_name: Brown
+        date_of_brith: '1981-08-03'
+        gender: male

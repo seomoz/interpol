@@ -1,0 +1,25 @@
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = %w[--format documentation]
+  t.pattern = "*_spec.rb"
+  t.verbose = false
+end
+
+require 'rake/testtask'
+Rake::TestTask.new do |t|
+  t.libs << "../lib"
+  t.test_files = FileList['*_test.rb']
+end
+
+task default: :spec
+
+desc "Boots the stub app"
+task :boot_stub_app do
+  sh "bundle exec rackup -p 3100 stub_app.config.ru"
+end
+
+desc "Boots the real app"
+task :boot_app do
+  sh "bundle exec ruby app.rb"
+end
