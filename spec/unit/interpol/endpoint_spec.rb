@@ -57,6 +57,21 @@ module Interpol
       end
     end
 
+    describe "#find_definition!" do
+      let(:hash) { build_hash('definitions' => definitions_array) }
+      let(:endpoint) { Endpoint.new(hash) }
+
+      it 'finds the definition matching the given version' do
+        endpoint.find_definition!('1.2').version.should eq('1.2')
+      end
+
+      it 'raises an error when given a version that matches no definition' do
+        expect {
+          endpoint.find_definition!('2.1')
+        }.to raise_error(ArgumentError)
+      end
+    end
+
     describe "#find_example_for!" do
       let(:hash) { build_hash('definitions' => definitions_array) }
       let(:endpoint) { Endpoint.new(hash) }

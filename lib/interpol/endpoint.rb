@@ -26,12 +26,15 @@ module Interpol
       @definitions = extract_definitions_from(endpoint_hash)
     end
 
-    def find_example_for!(version)
-      d = @definitions.fetch(version) do
+    def find_definition!(version)
+      @definitions.fetch(version) do
         message = "No definition found for #{name} endpoint for version #{version}"
         raise ArgumentError.new(message)
       end
-      d.examples.first
+    end
+
+    def find_example_for!(version)
+      find_definition!(version).examples.first
     end
 
     def available_versions
