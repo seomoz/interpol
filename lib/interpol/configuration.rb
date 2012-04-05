@@ -34,6 +34,7 @@ module Interpol
       end
 
       validate_if do |env, status, headers, body|
+        headers['Content-Type'].to_s.include?('json') &&
         (200..299).cover?(status) && status != 204 # No Content
       end
 

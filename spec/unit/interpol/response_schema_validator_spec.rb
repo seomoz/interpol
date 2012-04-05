@@ -59,6 +59,12 @@ module Interpol
             [ 404, {'Content-Type' => 'application/json'}, [%|{"message":"Not Found"}|] ]
           }
         end
+
+        map('/not_json') do
+          run lambda { |env|
+            [ 200, {'Content-Type' => 'test/plain'}, ["stuff"] ]
+          }
+        end
       end
     end
 
@@ -129,16 +135,25 @@ module Interpol
       get '/search/200/overview'
     end
 
-    it 'does not validate if the response is not 2xx when no validate_if callback has been set' do
-      validator.should_not_receive(:validate_data!)
-      default_definition_finder.should_not_receive(:find_definition)
-      get '/not_found'
-    end
+    context 'when no validate_if callback has been set' do
+      it 'does not validate if the response is not 2xx' do
+        validator.should_not_receive(:validate_data!)
+        default_definition_finder.should_not_receive(:find_definition)
+        get '/not_found'
+      end
 
-    it 'does not validate a 204 no content response when no validate_if callback has been set' do
-      validator.should_not_receive(:validate_data!)
-      default_definition_finder.should_not_receive(:find_definition)
-      get '/search/204/overview'
+      it 'does not validate a 204 no content response' do
+        validator.should_not_receive(:validate_data!)
+        default_definition_finder.should_not_receive(:find_definition)
+        get '/search/204/overview'
+      end
+
+      it 'does not validate a non json response' do
+        validator.should_not_receive(:validate_data!)
+        default_definition_finder.should_not_receive(:find_definition)
+        get '/not_json'
+        last_response.status.should eq(200)
+      end
     end
 
     it 'closes the body when done interating it as per the rack spec' do
