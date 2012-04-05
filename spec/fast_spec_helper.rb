@@ -1,6 +1,14 @@
 # Note: this file is purposefully minimal. Load as little as possible here.
 require 'rspec/fire'
 
+# Sinatra acts a bit different in the test vs dev environments
+# in a way that made one of our tests a false positive. We want
+# to force the environment to dev here so it's closer to how
+# end-users will run stuff.
+# Note: this is needed for the build on Travis CI since it has
+# RACK_ENV=test by default.
+ENV['RACK_ENV'] = 'development'
+
 module TestHelpers
   def without_indentation(heredoc)
     leading_whitespace = heredoc.split("\n").first[/\A\s+/]
