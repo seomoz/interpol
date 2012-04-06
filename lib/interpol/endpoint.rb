@@ -24,6 +24,7 @@ module Interpol
       @route       = fetch_from(endpoint_hash, 'route')
       @method      = fetch_from(endpoint_hash, 'method').downcase.to_sym
       @definitions = extract_definitions_from(endpoint_hash)
+      validate_name!
     end
 
     def find_definition!(version)
@@ -75,6 +76,13 @@ module Interpol
       end
 
       definitions
+    end
+
+    def validate_name!
+      unless name =~ /\A[\w\-]+\z/
+        raise ArgumentError, "Invalid endpoint name (#{name.inspect}). "+
+                             "Only letters, numbers, underscores and dashes are allowed."
+      end
     end
   end
 

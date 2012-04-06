@@ -27,6 +27,17 @@ module TestHelpers
     true
   end
 
+  def new_endpoint(hash = {})
+    hash = {
+      'name' => "the-name",
+      'route' => nil,
+      'method' => 'GET',
+      'definitions' => []
+    }.merge(hash)
+
+    Interpol::Endpoint.new(hash)
+  end
+
   module ClassMethods
     def let_without_indentation(name, &block)
       let(name) { without_indentation(block.call) }

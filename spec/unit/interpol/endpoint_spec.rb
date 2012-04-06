@@ -5,7 +5,7 @@ module Interpol
   describe Endpoint do
     def build_hash(hash = {})
       {
-        'name' => nil,
+        'name' => "the-name",
         'route' => nil,
         'method' => 'GET',
         'definitions' => []
@@ -29,6 +29,17 @@ module Interpol
           Endpoint.new(hash)
         }.to raise_error(/key not found.*#{attr}/)
       end
+    end
+
+    it 'raises an error if the name contains invalid HTML element attribute characters' do
+      expect {
+        Endpoint.new(build_hash 'name' => "two words")
+      }.to raise_error(ArgumentError)
+    end
+
+    it 'allows letters, digits, underscores and dashes in the name' do
+      name = "abyz0123456789-_"
+      Endpoint.new(build_hash 'name' => name) # should not raise an error
     end
 
     it 'raises an error if any definition lack versions' do
