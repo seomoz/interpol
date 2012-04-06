@@ -23,3 +23,8 @@ desc "Boots the real app"
 task :boot_app do
   sh "bundle exec ruby app.rb"
 end
+
+desc "Boots the real app"
+task :boot_doc_app do
+  sh "bundle exec rackup -p 3200 documentation_app.config.ru"
+end

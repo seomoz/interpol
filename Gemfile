@@ -8,3 +8,4 @@ group :extras do
 end
 
 gem 'json-jruby', platform: 'jruby'
+gem 'compass_twitter_bootstrap', git: 'git://github.com/vwall/compass-twitter-bootstrap.git'

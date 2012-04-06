@@ -20,4 +20,11 @@ else
   task(:quality) { } # no-op
 end
 
+desc "Watch Documentation App Compass Files"
+task :compass_watch do
+  Dir.chdir("lib/interpol/documentation_app") do
+    sh "bundle exec compass watch"
+  end
+end
+
 task default: [:spec, :quality]
