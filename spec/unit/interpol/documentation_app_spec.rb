@@ -53,6 +53,19 @@ module Interpol
       get '/'
       last_response.body.should include("API Documentation Provided by Interpol")
     end
+
+    describe ".render_static_page" do
+      let(:static_page) do
+        DocumentationApp.render_static_page do |config|
+          config.endpoints = [endpoint]
+          config.documentation_title = "My Cool API"
+        end
+      end
+
+      it "renders the documentation" do
+        static_page.should include("project_list", "My Cool API")
+      end
+    end
   end
 end
 

@@ -28,3 +28,11 @@ desc "Boots the real app"
 task :boot_doc_app do
   sh "bundle exec rackup -p 3200 documentation_app.config.ru"
 end
+
+desc "Render static documentation"
+task :render_docs do
+  require File.expand_path("../interpol_config", __FILE__)
+  require 'interpol/documentation_app'
+  doc = Interpol::DocumentationApp.render_static_page
+  File.write("doc.html", doc)
+end

@@ -11,6 +11,13 @@ module Interpol
       Builder.new(config).app
     end
 
+    def render_static_page(&block)
+      require 'rack/mock'
+      app = build(&block)
+      status, headers, body = app.call(Rack::MockRequest.env_for "/", method: "GET")
+      body.join
+    end
+
     module Helpers
       def interpol_config
         self.class.interpol_config
