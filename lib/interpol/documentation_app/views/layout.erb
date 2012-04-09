@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Interpol API Documentation</title>
+    <title><%= title %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -36,10 +36,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Interpol API Documentation</a>
-          <div class="nav-collapse">
-            <p class="navbar-text pull-right"><a href="https://github.com/seomoz/interpol">Interpol</a></p>
-          </div><!--/.nav-collapse -->
+          <a class="brand" href="#"><%= title %></a>
         </div>
       </div>
     </div>
@@ -49,68 +46,20 @@
         <div class="span3">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
-              <li class="nav-header">Sidebar</li>
-              <li class="active"><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li class="nav-header">Sidebar</li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li class="nav-header">Sidebar</li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
-              <li><a href="#">Link</a></li>
+              <li class="nav-header">API Endpoints</li>
+              <% endpoints.each do |endpoint| %>
+                <li<%= ' class="active"' if endpoint == current_endpoint  %>>
+                  <a href="#" data-endpoint-name="<%= endpoint.name %>"><%= endpoint.name %></a>
+                </li>
+              <% end %>
             </ul>
           </div><!--/.well -->
         </div><!--/span-->
-        <div class="span9">
-          <div class="hero-unit">
-            <h1>Hello, world!</h1>
-            <p>This is a template for a simple marketing or informational website. It includes a large callout called the hero unit and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
-            <p><a class="btn btn-primary btn-large">Learn more &raquo;</a></p>
-          </div>
-          <div class="row-fluid">
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-          </div><!--/row-->
-          <div class="row-fluid">
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-            <div class="span4">
-              <h2>Heading</h2>
-              <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-              <p><a class="btn" href="#">View details &raquo;</a></p>
-            </div><!--/span-->
-          </div><!--/row-->
-        </div><!--/span-->
-      </div><!--/row-->
 
+        <% endpoints.each do |endpoint| %>
+          <%= erb :endpoint, locals: { endpoint: endpoint, visible: (endpoint == current_endpoint) } %>
+        <% end %>
+      </div><!--/row-->
       <hr>
 
       <footer>
@@ -119,23 +68,11 @@
 
     </div><!--/.fluid-container-->
 
-    <!-- Le javascript
+    <!-- The javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/javascripts/jquery.js"></script>
-    <script src="/javascripts/bootstrap-transition.js"></script>
-    <script src="/javascripts/bootstrap-alert.js"></script>
-    <script src="/javascripts/bootstrap-modal.js"></script>
-    <script src="/javascripts/bootstrap-dropdown.js"></script>
-    <script src="/javascripts/bootstrap-scrollspy.js"></script>
-    <script src="/javascripts/bootstrap-tab.js"></script>
-    <script src="/javascripts/bootstrap-tooltip.js"></script>
-    <script src="/javascripts/bootstrap-popover.js"></script>
-    <script src="/javascripts/bootstrap-button.js"></script>
-    <script src="/javascripts/bootstrap-collapse.js"></script>
-    <script src="/javascripts/bootstrap-carousel.js"></script>
-    <script src="/javascripts/bootstrap-typeahead.js"></script>
-
+    <script src="/javascripts/jquery.1.7.2.min.js"></script>
+    <script src="/javascripts/interpol.js"></script>
   </body>
 </html>
 

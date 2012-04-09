@@ -1,0 +1,15 @@
+<div id="<%= endpoint.name %>" class="span9 endpoint-documentation-wrapper" <%= 'style="display: none;"' unless visible %>>
+  <div class="hero-unit">
+    <h1><%= endpoint.name %></h1>
+    <h2><%= endpoint.method.to_s.upcase %> <%= endpoint.route %></h2>
+
+    <% endpoint.definitions.reverse.each do |definition| %>
+      <div class="versioned-endpoint-definition">
+        <h3>Version <%= definition.version %></h3>
+        <hr>
+
+        <%= Interpol::Documentation.html_for_schema(definition.schema) %>
+      </div>
+    <% end %>
+  </div>
+</div><!--/span-->

@@ -19,8 +19,23 @@ definitions:
           type: date
         gender:
           description: "Male or Female"
-          type: string 
+          type: string
           enum: [male, female]
+        address:
+          description: "The person's mailing address"
+          type: object
+          optional: true
+          properties:
+            street:
+              description: "Street address"
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            zip:
+              description: "Zip code"
+              type: string
 
     examples:
       - first_name: John

@@ -81,7 +81,8 @@ definitions:
 Let's look at this YAML file, point-by-point:
 
 * `name` can be anything you want. Each endpoint should have a different name. Interpol uses
-  it in schema validation error messages.
+  it in schema validation error messages. It is also used by the
+  documentation app.
 * `route` defines the sinatra route for this endpoint. Note that while
   Interpol::StubApp supports any sinatra route, Interpol::ResponseSchemaValidator
   (which has to find a matching endpoint definition from the request path), only

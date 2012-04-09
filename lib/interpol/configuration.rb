@@ -26,7 +26,7 @@ module Interpol
   # Public: Defines interpol configuration.
   class Configuration
     attr_reader :endpoint_definition_files, :endpoints
-    attr_accessor :validation_mode
+    attr_accessor :validation_mode, :documentation_title
 
     def initialize
       api_version do
@@ -46,6 +46,7 @@ module Interpol
       end
 
       self.endpoint_definition_files = []
+      self.documentation_title = "API Documentation Provided by Interpol"
       yield self if block_given?
     end
 
