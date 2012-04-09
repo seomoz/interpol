@@ -57,8 +57,8 @@ module Interpol
     describe ".render_static_page" do
       let(:public_folder) { DocumentationApp.build.public_folder }
 
-      def asset_contents(name)
-        File.read(File.join(public_folder, name))
+      def first_line_of(name)
+        File.read(File.join(public_folder, name)).split("\n").first.strip
       end
 
       let(:static_page) do
@@ -74,10 +74,10 @@ module Interpol
         static_page.should include("project_list", "My Cool API")
 
         doc.css("link[rel=stylesheet]").size.should eq(0)
-        static_page.should include(asset_contents "stylesheets/screen.css")
+        static_page.should include(first_line_of "stylesheets/screen.css")
 
         doc.css("script[src]").size.should eq(0)
-        static_page.should include(asset_contents "javascripts/interpol.js")
+        static_page.should include(first_line_of "javascripts/interpol.js")
       end
     end
   end
