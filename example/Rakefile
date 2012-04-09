@@ -34,6 +34,6 @@ task :render_docs do
   require File.expand_path("../interpol_config", __FILE__)
   require 'interpol/documentation_app'
   doc = Interpol::DocumentationApp.render_static_page
-  File.write("doc.html", doc)
+  File.open("doc.html", 'w') { |f| f.write(doc) }
   open("doc.html")
 end
