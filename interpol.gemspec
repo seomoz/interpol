@@ -8,7 +8,9 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Interpol is a toolkit for policing your HTTP JSON interface.}
   gem.homepage      = ""
 
-  gem.files         = %w(README.md License Gemfile Rakefile) + Dir.glob("lib/**/*.rb")
+  gem.files         = %w(README.md License Gemfile Rakefile) +
+                      Dir.glob("lib/**/*.rb") + Dir.glob("lib/interpol/documentation_app/**/*")
+
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
 
   gem.name          = "interpol"
