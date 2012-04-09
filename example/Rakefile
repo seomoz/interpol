@@ -35,4 +35,5 @@ task :render_docs do
   require 'interpol/documentation_app'
   doc = Interpol::DocumentationApp.render_static_page
   File.write("doc.html", doc)
+  open("doc.html")
 end

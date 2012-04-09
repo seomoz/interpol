@@ -1,6 +1,7 @@
 require 'interpol'
 require 'interpol/documentation'
 require 'sinatra/base'
+require 'nokogiri'
 
 module Interpol
   module DocumentationApp
@@ -15,8 +16,50 @@ module Interpol
       require 'rack/mock'
       app = build(&block)
       status, headers, body = app.call(Rack::MockRequest.env_for "/", method: "GET")
-      body.join
+      AssetInliner.new(body.join, app.public_folder).standalone_page
     end
+
+    # Inlines the assets so the page can be viewed as a standalone web page.
+    class AssetInliner
+      def initialize(page, asset_root)
+        @page, @asset_root = page, asset_root
+        @doc = Nokogiri::HTML(page)
+      end
+
+      def standalone_page
+        inline_stylesheets
+        inline_javascript
+        @doc.to_s
+      end
+
+    private
+
+      def inline_stylesheets
+        @doc.css("link[rel=stylesheet]").map do |link|
+          inline_asset link, "style", link['href'], type: "text/css"
+        end
+      end
+
+      def inline_javascript
+        @doc.css("script[src]").each do |script|
+          inline_asset script, "script", script['src'], type: "text/javascript"
+        end
+      end
+
+      def contents_for(asset)
+        File.read(File.join(@asset_root, asset))
+      end
+
+      def inline_asset(tag, tag_type, filename, attributes = {})
+        inline_tag = Nokogiri::XML::Node.new(tag_type, @doc)
+        attributes.each { |k, v| inline_tag[k] = v }
+        inline_tag.content = contents_for(filename)
+        tag.add_next_sibling(inline_tag)
+        tag.remove
+      end
+    end
+
+  private
 
     module Helpers
       def interpol_config

@@ -55,6 +55,12 @@ module Interpol
     end
 
     describe ".render_static_page" do
+      let(:public_folder) { DocumentationApp.build.public_folder }
+
+      def asset_contents(name)
+        File.read(File.join(public_folder, name))
+      end
+
       let(:static_page) do
         DocumentationApp.render_static_page do |config|
           config.endpoints = [endpoint]
@@ -62,8 +68,16 @@ module Interpol
         end
       end
 
-      it "renders the documentation" do
+      let(:doc) { Nokogiri::HTML(static_page) }
+
+      it "renders the documentation with inlined stylesheets and javascript" do
         static_page.should include("project_list", "My Cool API")
+
+        doc.css("link[rel=stylesheet]").size.should eq(0)
+        static_page.should include(asset_contents "stylesheets/screen.css")
+
+        doc.css("script[src]").size.should eq(0)
+        static_page.should include(asset_contents "javascripts/interpol.js")
       end
     end
   end
