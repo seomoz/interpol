@@ -111,3 +111,14 @@ In your browser, go to `http://localhost:4567/contacts/good` (which
 should render valid JSON) and `http://localhost:4567/contacts/bad`
 (which should render a validation error).
 
+## Run the documentation app
+
+`documentation_app.config.ru` contains the documentation app,
+generated from the endpoint definition. Let's start it:
+
+```
+rake boot_stub_app
+```
+
+Then visit `localhost:3200/` in your web browser.
+

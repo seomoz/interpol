@@ -19,8 +19,8 @@ definitions:
   validates your API responses against the JSON schema in your endpoint
   definition files. This is useful in test/development environments to
   ensure that your real API returns valid responses.
-* A documentation browser for your API is planned as well (but not yet
-  implemented).
+* `Interpol::DocumentationApp` builds a sinatra app that renders
+  documentation for your API based on the endpoint definitions.
 
 You can use any of these tools individually or some combination of all
 of them.
@@ -160,6 +160,12 @@ Interpol.default_configuration do |config|
   #
   # Used by Interpol::ResponseSchemaValidator.
   config.validation_mode = :error # or :warn
+
+  # Determines the title shown on the rendered documentation
+  # pages.
+  #
+  # Used by Interpol::DocumentationApp.
+  config.documentation_title = "Acme Widget API Documentaton"
 end
 
 ```
@@ -254,6 +260,29 @@ get '/users/:user_id/projects' do
   JSON.dump(User.find(params[:user_id]).projects)
 end
 ```
+
+### Interpol::DocumentationApp
+
+This will build a little sinatra app that renders documentation
+about your API based on your endpoint definitions.
+
+``` ruby
+# config.ru
+
+require 'interpol/documentation_app'
+
+# the block is only necessary if you want to override the default
+# config or if you have not set a default config.
+doc_app = Interpol::DocumentationApp.build do |app|
+  app.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
+  app.documentation_title = "My API Documentation"
+end
+
+run doc_app
+```
+
+Note: the documentation app is definitely a work-in-progress and I'm not
+a front-end/UI developer. I'd happily accept a pull request improving it!
 
 ## Contributing
 
