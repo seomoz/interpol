@@ -3,7 +3,14 @@ module Interpol
   class Error < StandardError; end
 
   # Error raised when the configuration is invalid.
-  class ConfigurationError < Error; end
+  class ConfigurationError < Error
+    attr_reader :original_error
+
+    def initialize(message=nil, original_error=nil)
+      @original_error = original_error
+      super(message)
+    end
+  end
 
   # Error raised when data fails to validate against the schema
   # for an endpoint.

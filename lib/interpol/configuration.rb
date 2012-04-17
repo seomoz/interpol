@@ -26,33 +26,20 @@ module Interpol
   # Public: Defines interpol configuration.
   class Configuration
     attr_reader :endpoint_definition_files, :endpoints
-    attr_accessor :validation_mode, :documentation_title
+    attr_accessor :validation_mode, :documentation_title, :endpoint_definition_merge_key_files
 
     def initialize
-      api_version do
-        raise ConfigurationError, "api_version has not been configured"
-      end
-
-      validate_if do |env, status, headers, body|
-        headers['Content-Type'].to_s.include?('json') &&
-        (200..299).cover?(status) && status != 204 # No Content
-      end
-
-      on_unavailable_request_version do |requested, available|
-        message = "The requested API version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-        halt 406, JSON.dump(error: message)
-      end
-
       self.endpoint_definition_files = []
+      self.endpoint_definition_merge_key_files = []
       self.documentation_title = "API Documentation Provided by Interpol"
+      register_default_callbacks
+
       yield self if block_given?
     end
 
     def endpoint_definition_files=(files)
       self.endpoints = files.map do |file|
-        Endpoint.new(YAML.load_file file)
+        Endpoint.new(deserialized_hash_from file)
       end
       @endpoint_definition_files = files
     end
@@ -97,6 +84,46 @@ module Interpol
     def customized_duplicate(&block)
       block ||= lambda { |c| }
       dup.tap(&block)
+    end
+
+  private
+
+    def deserialized_hash_from(file)
+      YAML.load(yaml_content_for file)
+    rescue TypeError => e
+      raise ConfigurationError.new \
+        "Received an error while loading YAML from #{file}: \"" +
+        "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
+        "to declare shared types, you must configure endpoint_definition_merge_key_files " +
+        "before endpoint_definition_files.", e
+    end
+
+    def yaml_content_for(file)
+      File.read(file).gsub(/\A---\n/, "---\n" + endpoint_merge_keys + "\n\n")
+    end
+
+    def endpoint_merge_keys
+      @endpoint_merge_keys ||= endpoint_definition_merge_key_files.map { |f|
+        File.read(f).gsub(/\A---\n/, '')
+      }.join("\n\n")
+    end
+
+    def register_default_callbacks
+      api_version do
+        raise ConfigurationError, "api_version has not been configured"
+      end
+
+      validate_if do |env, status, headers, body|
+        headers['Content-Type'].to_s.include?('json') &&
+        (200..299).cover?(status) && status != 204 # No Content
+      end
+
+      on_unavailable_request_version do |requested, available|
+        message = "The requested API version is invalid. " +
+                  "Requested: #{requested}. " +
+                  "Available: #{available}"
+        halt 406, JSON.dump(error: message)
+      end
     end
   end
 end

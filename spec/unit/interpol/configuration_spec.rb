@@ -105,6 +105,62 @@ module Interpol
         config.endpoints.map(&:name).should =~ %w[ project_list task_list ]
       end
 
+      context "when YAML merge keys are used" do
+        let_without_indentation(:types) do <<-EOF
+          ---
+          project_schema: &project_schema
+            type: object
+            properties:
+              name:
+                type: string
+          EOF
+        end
+
+        let_without_indentation(:endpoint_definition_yml_with_merge_keys) do <<-EOF
+          ---
+          name: project_list
+          route: /users/:user_id/projects
+          method: GET
+          definitions:
+            - versions: ["1.0"]
+              schema:
+                <<: *project_schema
+              examples:
+                - name: "some project"
+          EOF
+        end
+
+        before do
+          write_file "#{dir}/e1.yml", endpoint_definition_yml_with_merge_keys
+          write_file "#{dir}/merge_keys.yml", types
+        end
+
+        def assert_expected_endpoint
+          config.endpoints.size.should eq(1)
+          endpoint = config.endpoints.first
+          endpoint.definitions.first.schema.fetch("properties").should have_key("name")
+        end
+
+        it 'supports the merge keys when configured before the endpoint definition files' do
+          config.endpoint_definition_merge_key_files = Dir["#{dir}/merge_keys.yml"]
+          config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
+          assert_expected_endpoint
+        end
+
+        it 'works when the merge key YAML file lacks the leading `---`' do
+          write_file "#{dir}/merge_keys.yml", types.gsub(/\A---\n/, '')
+          config.endpoint_definition_merge_key_files = Dir["#{dir}/merge_keys.yml"]
+          config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
+          assert_expected_endpoint
+        end
+
+        it 'raises a helpful error when endpoint_definition_files is configured first' do
+          expect {
+            config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
+          }.to raise_error(/endpoint_definition_merge_key_files/)
+        end
+      end
+
       it 'is memoized' do
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
         config.endpoints.should equal(config.endpoints)
