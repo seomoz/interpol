@@ -47,7 +47,7 @@ module Interpol
          "required"=>true}}
     end
 
-    shared_examples_for "schema rendering" do
+    shared_examples_for "schema rendering" do |root_properties_dom = '.schema-definition > .properties'|
       let(:html) { Documentation.html_for_schema(schema) }
       let(:parsed_html) { Nokogiri::HTML::DocumentFragment.parse(html) }
 
@@ -61,7 +61,7 @@ module Interpol
       end
 
       it 'renders properties' do
-        parsed_html.css('.schema-definition > .properties > .name').map(&:content).should eq([
+        parsed_html.css("#{root_properties_dom} > .name").map(&:content).should eq([
           "first_name (string)",
           "last_name (string)",
           "date_of_birth (date)",
@@ -91,7 +91,7 @@ module Interpol
              "required"=>true} }
         end
 
-        it_behaves_like "schema rendering"
+        it_behaves_like "schema rendering", ".schema-definition > .items > .properties"
       end
 
       context "for an object schema" do
