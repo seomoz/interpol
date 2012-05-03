@@ -47,7 +47,7 @@ module Interpol
          "required"=>true}}
     end
 
-    shared_examples_for "schema rendering" do |root_properties_dom = '.schema-definition > .properties'|
+    shared_examples_for "schema rendering" do |root_properties_dom|
       let(:html) { Documentation.html_for_schema(schema) }
       let(:parsed_html) { Nokogiri::HTML::DocumentFragment.parse(html) }
 
@@ -103,7 +103,7 @@ module Interpol
            "required"=>true}
         end
 
-        it_behaves_like "schema rendering"
+        it_behaves_like "schema rendering", '.schema-definition > .properties'
       end
     end
   end

@@ -70,7 +70,6 @@ module Interpol
       def property_definition(doc, name, property)
         doc.dt(class: "name") { doc.text(property_title name, property) }  if name
 
-        debugger if property.is_a? Array
         if property.has_key?('description')
           doc.dd { doc.text(property['description']) }
         end
