@@ -35,11 +35,15 @@ module Interpol
         doc.h3(class: "description") { doc.text(schema['description']) }
       end
 
+      def render_properties_and_items(doc, schema)
+        render_properties(doc, Array(schema['properties']))
+        render_items(doc, schema['items'])
+      end
+
       def schema_definition(doc, schema)
         doc.div(class: "schema-definition") do
           schema_description(doc, schema)
-          render_properties(doc, Array(schema['properties']))
-          render_items(doc, schema['items'])
+          render_properties_and_items(doc, schema)
         end
       end
 
@@ -51,8 +55,7 @@ module Interpol
           if items.has_key?('description')
             doc.dd { doc.text(items['description']) }
           end
-          render_properties(doc, Array(items['properties']))
-          render_items(doc, items['items'])
+          render_properties_and_items(doc, items)
         end
 
       end
@@ -74,8 +77,7 @@ module Interpol
           doc.dd { doc.text(property['description']) }
         end
 
-        render_properties(doc, Array(property['properties']))
-        render_items(doc, property['items'])
+        render_properties_and_items(doc, property)
       end
 
       def property_title(name, property)
