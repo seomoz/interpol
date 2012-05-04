@@ -39,7 +39,22 @@ module Interpol
         doc.div(class: "schema-definition") do
           schema_description(doc, schema)
           render_properties(doc, Array(schema['properties']))
+          render_items(doc, schema['items'])
         end
+      end
+
+      def render_items(doc, items)
+        # No support for tuple-typing, just basic array typing
+        return  if items.nil? 
+        doc.dl(class: "items") do
+          doc.dt(class: "name") { doc.text("(array contains #{items['type']}s)") }
+          if items.has_key?('description')
+            doc.dd { doc.text(items['description']) }
+          end
+          render_properties(doc, Array(items['properties']))
+          render_items(doc, items['items'])
+        end
+
       end
 
       def render_properties(doc, properties)
@@ -53,13 +68,14 @@ module Interpol
       end
 
       def property_definition(doc, name, property)
-        doc.dt(class: "name") { doc.text(property_title name, property) }
+        doc.dt(class: "name") { doc.text(property_title name, property) }  if name
 
         if property.has_key?('description')
           doc.dd { doc.text(property['description']) }
         end
 
         render_properties(doc, Array(property['properties']))
+        render_items(doc, property['items'])
       end
 
       def property_title(name, property)

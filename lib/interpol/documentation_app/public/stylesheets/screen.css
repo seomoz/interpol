@@ -4227,6 +4227,6 @@ a.thumbnail:hover {
   visibility: hidden;
 }
 
-dl.properties {
+dl.properties, dl.items {
   margin-left: 25px;
 }
