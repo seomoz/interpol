@@ -45,7 +45,7 @@ module Interpol
 
       def render_items(doc, items)
         # No support for tuple-typing, just basic array typing
-        return  if items.nil? 
+        return  if items.nil?
         doc.dl(class: "items") do
           doc.dt(class: "name") { doc.text("(array contains #{items['type']}s)") }
           if items.has_key?('description')
