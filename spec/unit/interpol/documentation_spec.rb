@@ -88,6 +88,7 @@ module Interpol
            "items"=>
             {"properties"=>address_schema,
              "additionalProperties"=>false,
+             "description" => "One contact",
              "required"=>true} }
         end
 
