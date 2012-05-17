@@ -1,4 +1,4 @@
-if RUBY_ENGINE == 'ruby' # MRI only
+if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
   require 'simplecov'
 
   SimpleCov.start do

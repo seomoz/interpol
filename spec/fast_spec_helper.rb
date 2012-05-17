@@ -50,7 +50,7 @@ RSpec.configure do |c|
   c.treat_symbols_as_metadata_keys_with_true_values = true
   c.filter_run :f
   c.run_all_when_everything_filtered = true
-  c.debug = (RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI'])
+  c.debug = defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI']
   c.include TestHelpers
   c.extend TestHelpers::ClassMethods
 

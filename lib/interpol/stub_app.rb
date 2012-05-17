@@ -34,9 +34,9 @@ module Interpol
         @app = Sinatra.new do
           set            :interpol_config, config
           helpers        Helpers
-          not_found      { JSON.dump(error: "The requested resource could not be found") }
+          not_found      { JSON.dump(:error => "The requested resource could not be found") }
           before         { content_type "application/json;charset=utf-8" }
-          get('/__ping') { JSON.dump(message: "Interpol stub app running.") }
+          get('/__ping') { JSON.dump(:message => "Interpol stub app running.") }
         end
       end
 

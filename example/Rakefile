@@ -12,7 +12,7 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['*_test.rb']
 end
 
-task default: :spec
+task :default => :spec
 
 desc "Boots the stub app"
 task :boot_stub_app do
