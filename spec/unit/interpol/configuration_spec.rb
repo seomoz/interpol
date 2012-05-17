@@ -25,13 +25,13 @@ module Interpol
       end
 
       it 'finds a matching endpoint definition'  do
-        found = find(method: 'POST', path: '/foo/bar', version: '2.3')
+        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.3')
         found.endpoint.should be(endpoint_2)
         found.version.should eq('2.3')
       end
 
       it 'finds the correct versioned definition of the endpoint' do
-        found = find(method: 'POST', path: '/foo/bar', version: '2.7')
+        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.7')
         found.version.should eq('2.7')
       end
 
@@ -45,17 +45,17 @@ module Interpol
       end
 
       it 'returns NoDefinitionFound if it cannot find a matching route' do
-        result = find(method: 'POST', path: '/goo/bar', version: '2.7')
+        result = find(:method => 'POST', :path => '/goo/bar', :version => '2.7')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'returns nil if the endpoint does not have a matching version' do
-        result = find(method: 'POST', path: '/foo/bar', version: '13.7')
+        result = find(:method => 'POST', :path => '/foo/bar', :version => '13.7')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'handles route params properly' do
-        found = find(method: 'GET', path: '/users/17/overview', version: '1.3')
+        found = find(:method => 'GET', :path => '/users/17/overview', :version => '1.3')
         found.endpoint.should be(endpoint_1)
       end
     end
@@ -217,12 +217,12 @@ module Interpol
 
       context 'when configured with a block' do
         it "returns the blocks's return value" do
-          config.api_version { |e| e[:path][%r|/api/v(\d+)/|, 1] }
-          config.api_version_for({ path: "/api/v2/foo" }, stub.as_null_object).should eq('2')
+          config.api_version { |e, _| e[:path][%r|/api/v(\d+)/|, 1] }
+          config.api_version_for({ :path => "/api/v2/foo" }, stub.as_null_object).should eq('2')
         end
 
         it 'always returns a string, even when configured as a string' do
-          config.api_version { |e| 3 }
+          config.api_version { |_| 3 }
           config.api_version_for({}, stub.as_null_object).should eq('3')
         end
       end

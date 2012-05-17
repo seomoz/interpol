@@ -9,7 +9,7 @@ module Interpol
 
     def configuration
       lambda do |config|
-        config.stub(endpoints: definition_finder)
+        config.stub(:endpoints => definition_finder)
         config.api_version '1.0' unless api_version_configured?(config)
         config.validate_if(&validate_if_block) if validate_if_block
         config.validation_mode = validation_mode
@@ -27,7 +27,7 @@ module Interpol
     end
 
     let(:closable_body) do
-      stub(close: nil).tap do |s|
+      stub(:close => nil).tap do |s|
         s.stub(:each).and_yield('{"a":"b"}')
       end
     end
@@ -68,12 +68,12 @@ module Interpol
       end
     end
 
-    let(:validator) { fire_double("Interpol::EndpointDefinition", validate_data!: nil) }
+    let(:validator) { fire_double("Interpol::EndpointDefinition", :validate_data! => nil) }
     let(:endpoint)  { new_endpoint }
     let(:default_definition_finder) { fire_double("Interpol::DefinitionFinder") }
 
     def stub_lookup(v = validator)
-      default_definition_finder.stub(find_definition: v)
+      default_definition_finder.stub(:find_definition => v)
     end
 
     it 'validates the data against the correct versioned endpoint definition' do
@@ -100,7 +100,7 @@ module Interpol
     end
 
     it 'calls the api_version callback with the rack env and the endpoint' do
-      endpoint.stub(method: :get, route_matches?: true)
+      endpoint.stub(:method => :get, :route_matches? => true)
       self.definition_finder = [endpoint].extend(Interpol::DefinitionFinder)
 
       yielded_args = nil

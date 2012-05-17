@@ -27,10 +27,10 @@ module Interpol
 
     let(:app) do
       StubApp.build do |config|
-        config.stub(endpoints: [endpoint])
+        config.stub(:endpoints => [endpoint])
 
         unless api_version_configured?(config) # allow default config to take precedence
-          config.api_version { |env| env.fetch('HTTP_API_VERSION') }
+          config.api_version { |env, _| env.fetch('HTTP_API_VERSION') }
         end
       end.tap do |a|
         a.set :raise_errors, true
@@ -73,7 +73,7 @@ module Interpol
 
     it 'uses the unavailable_request_version hook when an invalid version is requested' do
       app.interpol_config.on_unavailable_request_version do |requested_version, available_versions|
-        halt 405, JSON.dump(requested: requested_version, available: available_versions)
+        halt 405, JSON.dump(:requested => requested_version, :available => available_versions)
       end
 
       header 'API-Version', '2.0'

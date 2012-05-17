@@ -15,7 +15,7 @@ module Interpol
     def render_static_page(&block)
       require 'rack/mock'
       app = build(&block)
-      status, headers, body = app.call(Rack::MockRequest.env_for "/", method: "GET")
+      status, headers, body = app.call(Rack::MockRequest.env_for "/", :method => "GET")
       AssetInliner.new(body.join, app.public_folder).standalone_page
     end
 
@@ -36,13 +36,13 @@ module Interpol
 
       def inline_stylesheets
         @doc.css("link[rel=stylesheet]").map do |link|
-          inline_asset link, "style", link['href'], type: "text/css"
+          inline_asset link, "style", link['href'], :type => "text/css"
         end
       end
 
       def inline_javascript
         @doc.css("script[src]").each do |script|
-          inline_asset script, "script", script['src'], type: "text/javascript"
+          inline_asset script, "script", script['src'], :type => "text/javascript"
         end
       end
 
@@ -93,7 +93,8 @@ module Interpol
           helpers Helpers
 
           get('/') do
-            erb :layout, locals: { endpoints: endpoints, current_endpoint: current_endpoint }
+            erb :layout, :locals => { :endpoints => endpoints, \
+                                      :current_endpoint => current_endpoint }
           end
         end
       end

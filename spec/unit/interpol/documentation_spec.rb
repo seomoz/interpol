@@ -61,22 +61,22 @@ module Interpol
       end
 
       it 'renders properties' do
-        parsed_html.css("#{root_properties_dom} > .name").map(&:content).should eq([
+        parsed_html.css("#{root_properties_dom} > .name").map(&:content).should =~ [
           "first_name (string)",
           "last_name (string)",
           "date_of_birth (date)",
           "gender (string)",
           "address (object)"
-        ])
+        ]
       end
 
       it 'renders nested properties' do
-        parsed_html.css('.properties .properties .name').map(&:content).should eq([
+        parsed_html.css('.properties .properties .name').map(&:content).should =~ [
           "street (string)",
           "city (string)",
           "state (string)",
           "zip (string)"
-        ])
+        ]
       end
     end
 

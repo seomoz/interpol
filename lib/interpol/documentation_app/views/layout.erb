@@ -56,7 +56,7 @@
         </div><!--/span-->
 
         <% endpoints.each do |endpoint| %>
-          <%= erb :endpoint, locals: { endpoint: endpoint, visible: (endpoint == current_endpoint) } %>
+          <%= erb :endpoint, :locals => { :endpoint => endpoint, :visible => (endpoint == current_endpoint) } %>
         <% end %>
       </div><!--/row-->
       <hr>

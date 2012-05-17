@@ -32,7 +32,7 @@ module Interpol
 
       def schema_description(doc, schema)
         return unless schema.has_key?('description')
-        doc.h3(class: "description") { doc.text(schema['description']) }
+        doc.h3(:class => "description") { doc.text(schema['description']) }
       end
 
       def render_properties_and_items(doc, schema)
@@ -41,7 +41,7 @@ module Interpol
       end
 
       def schema_definition(doc, schema)
-        doc.div(class: "schema-definition") do
+        doc.div(:class => "schema-definition") do
           schema_description(doc, schema)
           render_properties_and_items(doc, schema)
         end
@@ -50,8 +50,8 @@ module Interpol
       def render_items(doc, items)
         # No support for tuple-typing, just basic array typing
         return  if items.nil?
-        doc.dl(class: "items") do
-          doc.dt(class: "name") { doc.text("(array contains #{items['type']}s)") }
+        doc.dl(:class => "items") do
+          doc.dt(:class => "name") { doc.text("(array contains #{items['type']}s)") }
           if items.has_key?('description')
             doc.dd { doc.text(items['description']) }
           end
@@ -63,7 +63,7 @@ module Interpol
       def render_properties(doc, properties)
         return if properties.none?
 
-        doc.dl(class: "properties") do
+        doc.dl(:class => "properties") do
           properties.each do |name, property|
             property_definition(doc, name, property)
           end
@@ -71,7 +71,7 @@ module Interpol
       end
 
       def property_definition(doc, name, property)
-        doc.dt(class: "name") { doc.text(property_title name, property) }  if name
+        doc.dt(:class => "name") { doc.text(property_title name, property) }  if name
 
         if property.has_key?('description')
           doc.dd { doc.text(property['description']) }

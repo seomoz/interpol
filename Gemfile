@@ -4,8 +4,10 @@ source 'https://rubygems.org'
 gemspec
 
 group :extras do
-  gem 'debugger' if RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3'
+  gem 'debugger' if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3'
 end
 
-gem 'json-jruby', platform: 'jruby'
-gem 'compass_twitter_bootstrap', git: 'git://github.com/vwall/compass-twitter-bootstrap.git'
+gem 'json-jruby', :platform => 'jruby'
+gem 'compass_twitter_bootstrap', :git => 'git://github.com/vwall/compass-twitter-bootstrap.git'
+
+gem 'json', :platform => 'ruby_18'

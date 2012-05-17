@@ -1,6 +1,7 @@
 require 'interpol/endpoint'
 require 'interpol/errors'
 require 'yaml'
+require 'interpol/configuration_ruby_18_extensions'  if RUBY_VERSION.to_f < 1.9
 
 module Interpol
   module DefinitionFinder
@@ -88,15 +89,21 @@ module Interpol
 
   private
 
-    def deserialized_hash_from(file)
-      YAML.load(yaml_content_for file)
-    rescue TypeError => e
-      raise ConfigurationError.new \
-        "Received an error while loading YAML from #{file}: \"" +
-        "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
-        "to declare shared types, you must configure endpoint_definition_merge_key_files " +
-        "before endpoint_definition_files.", e
-    end
+    # 1.9 version
+    include Module.new {
+      def deserialized_hash_from(file)
+        YAML.load(yaml_content_for file)
+      rescue TypeError => e
+        raise ConfigurationError.new \
+          "Received an error while loading YAML from #{file}: \"" +
+          "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
+          "to declare shared types, you must configure endpoint_definition_merge_key_files " +
+          "before endpoint_definition_files.", e
+      end
+    }
+
+    # Needed to override deserialized_hash_from for Ruby 1.8
+    include Interpol::ConfigurationRuby18Extensions  if RUBY_VERSION.to_f < 1.9
 
     def yaml_content_for(file)
       File.read(file).gsub(/\A---\n/, "---\n" + endpoint_merge_keys + "\n\n")
@@ -115,14 +122,14 @@ module Interpol
 
       validate_if do |env, status, headers, body|
         headers['Content-Type'].to_s.include?('json') &&
-        (200..299).cover?(status) && status != 204 # No Content
+        status >= 200 && status <= 299 && status != 204 # No Content
       end
 
       on_unavailable_request_version do |requested, available|
         message = "The requested API version is invalid. " +
                   "Requested: #{requested}. " +
                   "Available: #{available}"
-        halt 406, JSON.dump(error: message)
+        halt 406, JSON.dump(:error => message)
       end
     end
   end

@@ -7,7 +7,7 @@ RSpec::Core::RakeTask.new(:spec) do |t|
   t.ruby_opts  = "-Ispec -rsimplecov_setup"
 end
 
-if RUBY_ENGINE == 'ruby' # MRI only
+if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
   require 'cane/rake_task'
 
   desc "Run cane to check quality metrics"
@@ -20,7 +20,7 @@ else
   task(:quality) { } # no-op
 end
 
-task default: [:spec, :quality]
+task :default => [:spec, :quality]
 
 desc "Watch Documentation App Compass Files"
 task :compass_watch do
