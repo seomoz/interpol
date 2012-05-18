@@ -1,4 +1,5 @@
 # Interpol
+![Interpol Logo](https://github.com/seomoz/interpol/blob/assets/interpol-logo.png?raw=true)
 
 [![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol)
 
