@@ -93,7 +93,7 @@ module Interpol
           helpers Helpers
 
           get('/') do
-            erb :layout, :locals => { :endpoints => endpoints, \
+            erb :layout, :locals => { :endpoints => endpoints,
                                       :current_endpoint => current_endpoint }
           end
         end
