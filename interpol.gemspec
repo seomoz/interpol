@@ -17,7 +17,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Interpol::VERSION
 
-  gem.add_dependency 'sinatra', '>= 1.3.2', '< 2.0.0'
   gem.add_dependency 'json-schema', '~> 1.0.5'
   gem.add_dependency 'nokogiri', '~> 1.5'
 

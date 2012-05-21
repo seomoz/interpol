@@ -11,3 +11,5 @@ gem 'json-jruby', :platform => 'jruby'
 gem 'compass_twitter_bootstrap', :git => 'git://github.com/vwall/compass-twitter-bootstrap.git'
 
 gem 'json', :platform => 'ruby_18'
+
+gem 'sinatra', '>= 1.3.2', '< 2.0.0'
