@@ -1,3 +1,5 @@
+require File.expand_path('../../config/setup_load_paths', __FILE__)
+
 # Note: this file is purposefully minimal. Load as little as possible here.
 require 'rspec/fire'
 
