@@ -93,7 +93,7 @@ module Interpol
     include Module.new {
       def deserialized_hash_from(file)
         YAML.load(yaml_content_for file)
-      rescue TypeError => e
+      rescue Psych::BadAlias, TypeError => e
         raise ConfigurationError.new \
           "Received an error while loading YAML from #{file}: \"" +
           "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
