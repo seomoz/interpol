@@ -91,9 +91,11 @@ module Interpol
 
     # 1.9 version
     include Module.new {
+      BAD_ALIAS_ERROR = defined?(::Psych::BadAlias) ?
+                          ::Psych::BadAlias : TypeError
       def deserialized_hash_from(file)
         YAML.load(yaml_content_for file)
-      rescue Psych::BadAlias, TypeError => e
+      rescue BAD_ALIAS_ERROR => e
         raise ConfigurationError.new \
           "Received an error while loading YAML from #{file}: \"" +
           "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
