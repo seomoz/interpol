@@ -90,13 +90,13 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint, :version, :schema, :examples
+    attr_reader :endpoint_name, :version, :schema, :examples
 
-    def initialize(endpoint, version, definition)
-      @endpoint = endpoint
-      @version  = version
-      @schema   = fetch_from(definition, 'schema')
-      @examples = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
+    def initialize(endpoint_name, version, definition)
+      @endpoint_name = endpoint_name
+      @version       = version
+      @schema        = fetch_from(definition, 'schema')
+      @examples      = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
     end
 
@@ -108,7 +108,7 @@ module Interpol
     end
 
     def description
-      "#{endpoint.name} (v. #{version})"
+      "#{endpoint_name} (v. #{version})"
     end
 
   private

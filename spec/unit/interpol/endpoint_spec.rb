@@ -139,24 +139,23 @@ module Interpol
       }.merge(hash)
     end
 
-    let(:endpoint) { stub(:endpoint).as_null_object }
     let(:version)  { '1.0' }
 
-    it 'initializes the endpoint' do
-      EndpointDefinition.new(endpoint, version, build_hash).endpoint.should be(endpoint)
+    it 'initializes the endpoint_name' do
+      EndpointDefinition.new("e-name", version, build_hash).endpoint_name.should eq("e-name")
     end
 
     it 'initializes the version' do
-      EndpointDefinition.new(endpoint, '2.3', build_hash).version.should eq('2.3')
+      EndpointDefinition.new("name", '2.3', build_hash).version.should eq('2.3')
     end
 
     it 'initializes the example data' do
-      v = EndpointDefinition.new(endpoint, version, build_hash('examples' => [{'a' => 5}]))
+      v = EndpointDefinition.new("name", version, build_hash('examples' => [{'a' => 5}]))
       v.examples.map(&:data).should eq([{ 'a' => 5 }])
     end
 
     it 'initializes the schema' do
-      v = EndpointDefinition.new(endpoint, version, build_hash('schema' => {'the' => 'schema'}))
+      v = EndpointDefinition.new("name", version, build_hash('schema' => {'the' => 'schema'}))
       v.schema['the'].should eq('schema')
     end
 
@@ -164,7 +163,7 @@ module Interpol
       it "raises an error if not initialized with '#{attr}'" do
         hash = build_hash.reject { |k, v| k == attr }
         expect {
-          EndpointDefinition.new(endpoint, version, hash)
+          EndpointDefinition.new("name", version, hash)
         }.to raise_error(/key not found.*#{attr}/)
       end
     end
@@ -175,7 +174,7 @@ module Interpol
         'properties' => {'foo' => { 'type' => 'integer' } }
       } end
 
-      subject { EndpointDefinition.new(endpoint, version, build_hash('schema' => schema)) }
+      subject { EndpointDefinition.new("e-name", version, build_hash('schema' => schema)) }
 
       it 'raises a validation error when given data of the wrong type' do
         expect {
