@@ -122,7 +122,7 @@ module Interpol
 
       return unless modify_object
 
-      raw_schema['additionalProperties'] = false
+      raw_schema['additionalProperties'] ||= false
       raw_schema['required'] = !raw_schema.delete('optional')
     end
   end

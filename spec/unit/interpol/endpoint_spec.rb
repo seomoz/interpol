@@ -238,6 +238,11 @@ module Interpol
             subject.validate_data!('foo' => {'name' => 3, 'bar' => 7})
           }.to raise_error(ValidationError)
         end
+
+        it 'allows additional properties if the additionalProperties property is set to true' do
+          schema['properties']['foo']['additionalProperties'] = true
+          subject.validate_data!('foo' => {'name' => 3, 'bar' => 7})
+        end
       end
 
       context 'a schema with a nested array of nested objects' do
