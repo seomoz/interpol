@@ -71,7 +71,7 @@ module Interpol
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
-          definitions[version] = EndpointDefinition.new(self, version, definition)
+          definitions[version] = EndpointDefinition.new(name, version, definition)
         end
       end
 

@@ -4,7 +4,7 @@ require 'interpol/configuration'
 module Interpol
   describe DefinitionFinder do
     describe '#find_definition' do
-      def endpoint(method, route, *versions)
+      def endpoint(name, method, route, *versions)
         Endpoint.new \
           'name' => 'endpoint_name',
           'route' => route,
@@ -16,17 +16,17 @@ module Interpol
           }]
       end
 
-      let(:endpoint_1)    { endpoint 'GET', '/users/:user_id/overview', '1.3' }
-      let(:endpoint_2)    { endpoint 'POST', '/foo/bar', '2.3', '2.7' }
+      let(:endpoint_1)    { endpoint 'e1', 'GET', '/users/:user_id/overview', '1.3' }
+      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', '2.3', '2.7' }
       let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
 
       def find(options)
         all_endpoints.find_definition(options[:method], options[:path]) { |e| options[:version] }
       end
 
-      it 'finds a matching endpoint definition'  do
+      it 'finds a matching endpoint definition' do
         found = find(:method => 'POST', :path => '/foo/bar', :version => '2.3')
-        found.endpoint.should be(endpoint_2)
+        found.endpoint_name.should eq(endpoint_2.name)
         found.version.should eq('2.3')
       end
 
@@ -56,7 +56,7 @@ module Interpol
 
       it 'handles route params properly' do
         found = find(:method => 'GET', :path => '/users/17/overview', :version => '1.3')
-        found.endpoint.should be(endpoint_1)
+        found.endpoint_name.should be(endpoint_1.name)
       end
     end
   end
