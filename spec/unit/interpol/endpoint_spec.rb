@@ -149,6 +149,15 @@ module Interpol
       EndpointDefinition.new("name", '2.3', build_hash).version.should eq('2.3')
     end
 
+    it 'default initialized the message type' do
+      EndpointDefinition.new("name", '2.3', build_hash).message_type.should eq('response')
+    end
+
+    it 'initializes the message type' do
+      hash = build_hash('message_type' => 'request')
+      EndpointDefinition.new("name", '2.3', build_hash).message_type.should eq('request')
+    end
+
     it 'initializes the example data' do
       v = EndpointDefinition.new("name", version, build_hash('examples' => [{'a' => 5}]))
       v.examples.map(&:data).should eq([{ 'a' => 5 }])

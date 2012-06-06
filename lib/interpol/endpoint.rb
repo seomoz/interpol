@@ -90,10 +90,13 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint_name, :version, :schema, :examples
+    attr_reader :endpoint_name, :message_type, :version, :schema, :examples
+
+    DEFAULT_MESSAGE_TYPE = 'response'
 
     def initialize(endpoint_name, version, definition)
       @endpoint_name = endpoint_name
+      @message_type  = definition['message_type'] || DEFAULT_MESSAGE_TYPE
       @version       = version
       @schema        = fetch_from(definition, 'schema')
       @examples      = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
