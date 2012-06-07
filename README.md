@@ -53,7 +53,7 @@ method: GET
 definitions:
   - message_type: response
     versions: ["1.0"]
-    status_codes: ["2xx"]
+    status_codes: ["2xx", "404"]
     schema:
       description: Returns a list of projects for the given user.
       type: object
@@ -108,7 +108,8 @@ Let's look at this YAML file, point-by-point:
   is ignored if part of a `request` `message_type`. Valid formats for a status code are either
   a 3 digit string (i.e. `"200"`, `"403"`, etc.) which will match against the exact status code,
   or 1 digit followed by 2 x's (i.e. `"2xx") which will match any status code starting with the
-  same digit.
+  same digit. In the schema example above it will match all status codes between 200 and 299
+  inclusive and 404.
 * The `schema` contains a [JSON schema](http://tools.ietf.org/html/draft-zyp-json-schema-03)
   description of the contents of the endpoint. This schema definition is used by the
   `SchemaValidation` middleware to ensure that your implementation of the endpoint
