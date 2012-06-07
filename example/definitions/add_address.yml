@@ -50,7 +50,7 @@ definitions:
           type: string
     examples:
       - street: 1300 Pine St.
-        apartment: 400
+        apartment: 'Suite 400'
         city: Seattle
         state: WA
         postal: '98111'
