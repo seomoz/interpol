@@ -4,26 +4,41 @@ require 'interpol/configuration'
 module Interpol
   describe DefinitionFinder do
     describe '#find_definition' do
-      def endpoint(name, method, route, message_type, *versions)
-        Endpoint.new \
-          'name' => 'endpoint_name',
-          'route' => route,
-          'method' => method,
-          'definitions' => [{
-            'versions' => versions,
-            'message_type' => message_type,
-            'schema' => {},
-            'examples' => {}
-          }]
+      def endpoint_def(message_type, status_codes, *versions)
+        {
+          'versions' => versions,
+          'message_type' => message_type,
+          'status_codes' => status_codes,
+          'schema' => {},
+          'examples' => {}
+        }
       end
 
-      let(:endpoint_1)    { endpoint 'e1', 'GET', '/users/:user_id/overview', 'response', '1.3' }
-      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', 'request', '2.3', '2.7' }
+      def endpoint(name, method, route, *endpoint_defs)
+        Endpoint.new \
+          'name' => name,
+          'route' => route,
+          'method' => method,
+          'definitions' => endpoint_defs
+      end
+
+      let(:endpoint_def_1a) { endpoint_def('response', ['2xx'], '1.3') }
+      let(:endpoint_def_1b) { endpoint_def('response', nil, '1.3') }
+      let(:endpoint_def_2a) { endpoint_def('request', nil, '2.3', '2.7') }
+
+      let(:endpoint_1) do
+        endpoint 'e1', 'GET', '/users/:user_id/overview', endpoint_def_1a, endpoint_def_1b
+      end
+      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', endpoint_def_2a}
       let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
 
       def find(options)
+        find_with_status_code(nil, options)
+      end
+
+      def find_with_status_code(status_code, options)
         all_endpoints.find_definition(options[:method], options[:path],
-          options[:message_type]) { |e| options[:version] }
+          options[:message_type], status_code) { |e| options[:version] }
       end
 
       it 'finds a matching endpoint definition' do
@@ -61,9 +76,17 @@ module Interpol
       end
 
       it 'handles route params properly' do
-        found = find(:method => 'GET', :path => '/users/17/overview',
+        found = find_with_status_code('200', :method => 'GET', :path => '/users/17/overview',
           :version => '1.3', :message_type => 'response')
         found.endpoint_name.should be(endpoint_1.name)
+        found.status_codes.should eq('2xx')
+      end
+
+      it 'handles status code params properly' do
+        found = find_with_status_code('403', :method => 'GET', :path => '/users/17/overview',
+          :version => '1.3', :message_type => 'response')
+        found.endpoint_name.should be(endpoint_1.name)
+        found.status_codes.should eq('all status codes')
       end
     end
   end

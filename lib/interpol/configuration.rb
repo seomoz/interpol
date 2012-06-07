@@ -8,11 +8,13 @@ module Interpol
     include HashFetcher
     NoDefinitionFound = Class.new
 
-    def find_definition(method, path, message_type)
+    def find_definition(method, path, message_type, status_code = nil)
       with_endpoint_matching(method, path) do |endpoint|
         version = yield endpoint
         endpoint.definitions.find do |d|
-          d.version == version && d.message_type == message_type
+          d.version == version &&
+          d.message_type == message_type &&
+          (status_code.nil? || d.matches_status_code?(status_code))
         end
       end
     end

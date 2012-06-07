@@ -133,6 +133,10 @@ module Interpol
       @status_codes.to_codes
     end
 
+    def matches_status_code?(status_code)
+      @status_codes.matches?(status_code)
+    end
+
   private
 
     def make_schema_strict!(raw_schema, modify_object=true)
