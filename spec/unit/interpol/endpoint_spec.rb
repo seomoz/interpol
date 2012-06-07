@@ -68,7 +68,8 @@ module Interpol
       end
 
       it 'returns each definition object, ordered by message type' do
-        endpoint = Endpoint.new(build_hash('definitions' => (definitions_array + request_definition_array)))
+        full_definitions_array = (definitions_array + request_definition_array)
+        endpoint = Endpoint.new(build_hash('definitions' => full_definitions_array))
         endpoint.definitions.map(&:version).should eq(%w[ 1.1 3.2 1.2 ])
         endpoint.definitions.map(&:message_type).should eq(%w[ request response response ])
       end
@@ -158,29 +159,35 @@ module Interpol
     let(:version)  { '1.0' }
 
     it 'initializes the endpoint_name' do
-      EndpointDefinition.new("e-name", version, 'response', build_hash).endpoint_name.should eq("e-name")
+      endpoint_def = EndpointDefinition.new("e-name", version, 'response', build_hash)
+      endpoint_def.endpoint_name.should eq("e-name")
     end
 
     it 'initializes the version' do
-      EndpointDefinition.new("name", '2.3', 'response', build_hash).version.should eq('2.3')
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def.version.should eq('2.3')
     end
 
     it 'default initialized the message type' do
-      EndpointDefinition.new("name", '2.3', 'response', build_hash).message_type.should eq('response')
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def.message_type.should eq('response')
     end
 
     it 'initializes the message type' do
       hash = build_hash('message_type' => 'request')
-      EndpointDefinition.new("name", '2.3', 'request', hash).message_type.should eq('request')
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'request', hash)
+      endpoint_def.message_type.should eq('request')
     end
 
     it 'initializes the example data' do
-      v = EndpointDefinition.new("name", version, 'response', build_hash('examples' => [{'a' => 5}]))
+      hash = build_hash('examples' => [{'a' => 5}])
+      v = EndpointDefinition.new("name", version, 'response', hash)
       v.examples.map(&:data).should eq([{ 'a' => 5 }])
     end
 
     it 'initializes the schema' do
-      v = EndpointDefinition.new("name", version, 'response', build_hash('schema' => {'the' => 'schema'}))
+      hash = build_hash('schema' => {'the' => 'schema'})
+      v = EndpointDefinition.new("name", version, 'response', hash)
       v.schema['the'].should eq('schema')
     end
 
@@ -199,7 +206,9 @@ module Interpol
         'properties' => {'foo' => { 'type' => 'integer' } }
       } end
 
-      subject { EndpointDefinition.new("e-name", version, 'response', build_hash('schema' => schema)) }
+      subject {
+        EndpointDefinition.new("e-name", version, 'response', build_hash('schema' => schema))
+      }
 
       it 'raises a validation error when given data of the wrong type' do
         expect {
@@ -355,6 +364,16 @@ module Interpol
 
       it 'returns false for no matches' do
         subject.matches?('202').should be_false
+      end
+    end
+
+    describe '#to_codes' do
+      it 'returns a string when no status codes exist' do
+        StatusCodeMatcher.new(nil).to_codes.should eq('all status codes')
+      end
+
+      it 'returns the status codes as a comma separated list' do
+        StatusCodeMatcher.new(['200', '4xx']).to_codes.should eq('200,4xx')
       end
     end
   end
