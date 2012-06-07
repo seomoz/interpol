@@ -18,8 +18,8 @@ module Interpol
         self.class.interpol_config
       end
 
-      def example_for(endpoint, version)
-        endpoint.find_example_for!(version)
+      def example_for(endpoint, version, message_type)
+        endpoint.find_example_for!(version, message_type)
       rescue ArgumentError
         interpol_config.request_version_unavailable(self, version, endpoint.available_versions)
       end
@@ -49,7 +49,8 @@ module Interpol
       def endpoint_definition(endpoint)
         lambda do
           version = interpol_config.api_version_for(request.env, endpoint)
-          example = example_for(endpoint, version)
+          message_type = 'response'
+          example = example_for(endpoint, version, message_type)
           example.validate!
           JSON.dump(example.data)
         end

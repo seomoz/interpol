@@ -27,15 +27,20 @@ module Interpol
       validate_name!
     end
 
-    def find_definition!(version)
-      @definitions.fetch(version) do
-        message = "No definition found for #{name} endpoint for version #{version}"
-        raise ArgumentError.new(message)
+    def find_definition!(version, message_type)
+      @definitions.each do |definition|
+        if definition.version == version &&
+            definition.message_type == message_type
+          return definition
+        end
       end
+      message = "No definition found for #{name} endpoint for version #{version}"
+      message << " and message_type #{message_type}"
+      raise ArgumentError.new(message)
     end
 
-    def find_example_for!(version)
-      find_definition!(version).examples.first
+    def find_example_for!(version, message_type)
+      find_definition!(version, message_type).examples.first
     end
 
     def available_versions
@@ -43,7 +48,15 @@ module Interpol
     end
 
     def definitions
-      @definitions.values.sort_by(&:version)
+      # sort all requests before all responses
+      # sort higher version numbers before lower version numbers
+      @definitions.sort do |x, y|
+        if x.message_type == y.message_type
+          y.version <=> x.version
+        else
+          x.message_type <=> y.message_type
+        end
+      end
     end
 
     def route_matches?(path)
@@ -66,12 +79,15 @@ module Interpol
       end
     end
 
+    DEFAULT_MESSAGE_TYPE = 'response'
+
     def extract_definitions_from(endpoint_hash)
-      definitions = {}
+      definitions = []
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
-          definitions[version] = EndpointDefinition.new(name, version, definition)
+          message_type = definition['message_type'] || DEFAULT_MESSAGE_TYPE
+          definitions << EndpointDefinition.new(name, version, message_type, definition)
         end
       end
 
@@ -92,11 +108,9 @@ module Interpol
     include HashFetcher
     attr_reader :endpoint_name, :message_type, :version, :schema, :examples
 
-    DEFAULT_MESSAGE_TYPE = 'response'
-
-    def initialize(endpoint_name, version, definition)
+    def initialize(endpoint_name, version, message_type, definition)
       @endpoint_name  = endpoint_name
-      @message_type   = definition['message_type'] || DEFAULT_MESSAGE_TYPE
+      @message_type   = message_type
       @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
       @version        = version
       @schema         = fetch_from(definition, 'schema')
@@ -112,7 +126,11 @@ module Interpol
     end
 
     def description
-      "#{endpoint_name} (v. #{version})"
+      "#{endpoint_name} (v. #{version}, mt. #{message_type}, sc. #{status_codes})"
+    end
+
+    def status_codes
+      @status_codes.to_codes
     end
 
   private
@@ -156,6 +174,11 @@ module Interpol
       return false
     end
 
+    def to_codes
+      return 'all status codes' if codes.nil?
+      codes.keys.join(',')
+    end
+
     private
       def parse_and_validate(codes)
         return nil if codes.nil?
@@ -173,7 +196,6 @@ module Interpol
         raise StatusCodeMatcherArgumentError, "#{code} is not a valid format"
       end
   end
-
 
   # Wraps an example for a particular endpoint entry.
   class EndpointExample

@@ -54,17 +54,31 @@ module Interpol
       'examples' => ['e1', 'e2']
     }] end
 
+    let(:request_definition_array) do [{
+      'versions'      => ['1.1'],
+      'message_type'  => 'request',
+      'schema'        => {'a' => ' request schema'},
+      'examples'      => ['e1', 'e2']
+    }] end
+
     describe "#definitions" do
       it 'returns each definition object, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.definitions.map(&:version).should eq(%w[ 1.2 3.2 ])
+        endpoint.definitions.map(&:version).should eq(%w[ 3.2 1.2 ])
       end
+
+      it 'returns each definition object, ordered by message type' do
+        endpoint = Endpoint.new(build_hash('definitions' => (definitions_array + request_definition_array)))
+        endpoint.definitions.map(&:version).should eq(%w[ 1.1 3.2 1.2 ])
+        endpoint.definitions.map(&:message_type).should eq(%w[ request response response ])
+      end
+
     end
 
     describe "#available_versions" do
       it 'returns the list of available version strings, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.available_versions.should eq(%w[ 1.2 3.2 ])
+        endpoint.available_versions.should eq(%w[ 3.2 1.2 ])
       end
     end
 
@@ -72,13 +86,15 @@ module Interpol
       let(:hash) { build_hash('definitions' => definitions_array) }
       let(:endpoint) { Endpoint.new(hash) }
 
-      it 'finds the definition matching the given version' do
-        endpoint.find_definition!('1.2').version.should eq('1.2')
+      it 'finds the definition matching the given version and message_type' do
+        definition = endpoint.find_definition!('1.2', 'response')
+        definition.version.should eq('1.2')
+        definition.message_type.should eq('response')
       end
 
       it 'raises an error when given a version that matches no definition' do
         expect {
-          endpoint.find_definition!('2.1')
+          endpoint.find_definition!('2.1', 'response')
         }.to raise_error(ArgumentError)
       end
     end
@@ -88,12 +104,12 @@ module Interpol
       let(:endpoint) { Endpoint.new(hash) }
 
       it 'returns an example for the requested version' do
-        endpoint.find_example_for!('1.2').data.should eq('e1')
+        endpoint.find_example_for!('1.2', 'response').data.should eq('e1')
       end
 
       it 'raises an error when given a version it does not have' do
         expect {
-          endpoint.find_example_for!('2.1')
+          endpoint.find_example_for!('2.1', 'response')
         }.to raise_error(ArgumentError)
       end
     end
@@ -142,29 +158,29 @@ module Interpol
     let(:version)  { '1.0' }
 
     it 'initializes the endpoint_name' do
-      EndpointDefinition.new("e-name", version, build_hash).endpoint_name.should eq("e-name")
+      EndpointDefinition.new("e-name", version, 'response', build_hash).endpoint_name.should eq("e-name")
     end
 
     it 'initializes the version' do
-      EndpointDefinition.new("name", '2.3', build_hash).version.should eq('2.3')
+      EndpointDefinition.new("name", '2.3', 'response', build_hash).version.should eq('2.3')
     end
 
     it 'default initialized the message type' do
-      EndpointDefinition.new("name", '2.3', build_hash).message_type.should eq('response')
+      EndpointDefinition.new("name", '2.3', 'response', build_hash).message_type.should eq('response')
     end
 
     it 'initializes the message type' do
       hash = build_hash('message_type' => 'request')
-      EndpointDefinition.new("name", '2.3', hash).message_type.should eq('request')
+      EndpointDefinition.new("name", '2.3', 'request', hash).message_type.should eq('request')
     end
 
     it 'initializes the example data' do
-      v = EndpointDefinition.new("name", version, build_hash('examples' => [{'a' => 5}]))
+      v = EndpointDefinition.new("name", version, 'response', build_hash('examples' => [{'a' => 5}]))
       v.examples.map(&:data).should eq([{ 'a' => 5 }])
     end
 
     it 'initializes the schema' do
-      v = EndpointDefinition.new("name", version, build_hash('schema' => {'the' => 'schema'}))
+      v = EndpointDefinition.new("name", version, 'response', build_hash('schema' => {'the' => 'schema'}))
       v.schema['the'].should eq('schema')
     end
 
@@ -172,7 +188,7 @@ module Interpol
       it "raises an error if not initialized with '#{attr}'" do
         hash = build_hash.reject { |k, v| k == attr }
         expect {
-          EndpointDefinition.new("name", version, hash)
+          EndpointDefinition.new("name", version, 'response', hash)
         }.to raise_error(/key not found.*#{attr}/)
       end
     end
@@ -183,7 +199,7 @@ module Interpol
         'properties' => {'foo' => { 'type' => 'integer' } }
       } end
 
-      subject { EndpointDefinition.new("e-name", version, build_hash('schema' => schema)) }
+      subject { EndpointDefinition.new("e-name", version, 'response', build_hash('schema' => schema)) }
 
       it 'raises a validation error when given data of the wrong type' do
         expect {
