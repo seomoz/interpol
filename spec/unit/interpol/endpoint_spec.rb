@@ -329,11 +329,15 @@ module Interpol
       end
 
       it 'initializs the codes for a single code' do
-        StatusCodeMatcher.new(['200']).codes.should == {'200' => :exact}
+        StatusCodeMatcher.new(['200']).codes.should == [{:type => :exact, :value => "200"}]
       end
 
       it 'initializs the codes for a multiple codes' do
-        StatusCodeMatcher.new(['200', '4xx']).codes.should == {'200' => :exact, '4xx' => :partial}
+        expected_codes = [
+            {:type => :exact, :value => "200"},
+            {:type => :partial, :value => "4xx"}
+        ]
+        StatusCodeMatcher.new(['200', '4xx']).codes.should == expected_codes
       end
 
       it 'should raise an error for invalid status code formats' do

@@ -168,11 +168,13 @@ module Interpol
       return true if codes.nil?
 
       status_code = status_code.to_s
-      codes.each do |code, code_type| # taking advantage here 1.9 hashes are ordered
+      codes.each do |code|
+        code_value = code[:value]
+        code_type = code[:type]
         if code_type == :exact
-          return true if code == status_code # exact match
+          return true if code_value == status_code # exact match
         else # code_type == :partial
-          return true if code[0] == status_code[0] # 2xx compare to 200 case
+          return true if code_value[0] == status_code[0] # 2xx compare to 200 case
         end
       end
       return false
@@ -180,15 +182,15 @@ module Interpol
 
     def to_codes
       return 'all status codes' if codes.nil?
-      codes.keys.join(',')
+      codes.map {|z| z[:value]}.join(',')
     end
 
     private
       def parse_and_validate(codes)
         return nil if codes.nil?
-        {}.tap do |hsh|
+        [].tap do |arr|
           codes.each do |code|
-            hsh[code] = code_type_for(code)
+            arr << {:value => code, :type => code_type_for(code)}
           end
         end
       end
