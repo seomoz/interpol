@@ -31,5 +31,8 @@ module Interpol
   # Error raised when the schema validator cannot find a matching
   # endpoint definition for the request.
   class NoEndpointDefinitionFoundError < Error; end
+
+  # Raised when an invalid status code is found during validate_codes!
+  class StatusCodeMatcherArgumentError < ArgumentError; end
 end
 

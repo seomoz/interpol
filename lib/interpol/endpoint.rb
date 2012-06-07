@@ -95,11 +95,12 @@ module Interpol
     DEFAULT_MESSAGE_TYPE = 'response'
 
     def initialize(endpoint_name, version, definition)
-      @endpoint_name = endpoint_name
-      @message_type  = definition['message_type'] || DEFAULT_MESSAGE_TYPE
-      @version       = version
-      @schema        = fetch_from(definition, 'schema')
-      @examples      = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
+      @endpoint_name  = endpoint_name
+      @message_type   = definition['message_type'] || DEFAULT_MESSAGE_TYPE
+      @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
+      @version        = version
+      @schema         = fetch_from(definition, 'schema')
+      @examples       = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
     end
 
@@ -130,6 +131,50 @@ module Interpol
     end
   end
 
+  # Holds the acceptable status codes for an enpoint entry
+  # Acceptable status code are either exact status codes (200, 404, etc)
+  # or partial status codes (2xx, 3xx, 4xx, etc). Currently, partial status
+  # codes can only be a digit followed by two lower-case x's.
+  class StatusCodeMatcher
+    attr_reader :codes
+
+    def initialize(codes)
+      @codes = parse_and_validate(codes)
+    end
+
+    def matches?(status_code)
+      return true if codes.nil?
+
+      status_code = status_code.to_s
+      codes.each do |code, code_type| # taking advantage here 1.9 hashes are ordered
+        if code_type == :exact
+          return true if code == status_code # exact match
+        else # code_type == :partial
+          return true if code[0] == status_code[0] # 2xx compare to 200 case
+        end
+      end
+      return false
+    end
+
+    private
+      def parse_and_validate(codes)
+        return nil if codes.nil?
+        {}.tap do |hsh|
+          codes.each do |code|
+            hsh[code] = code_type_for(code)
+          end
+        end
+      end
+
+      def code_type_for(code)
+        # http://rubular.com/r/gvx8TztkRE - match either 3-digits or 1 digit then xx
+        return :exact if code =~ /\d{3}/ # match 3 digits
+        return :partial if code =~ /\dxx/ # match 1 digit then xx
+        raise StatusCodeMatcherArgumentError, "#{code} is not a valid format"
+      end
+  end
+
+
   # Wraps an example for a particular endpoint entry.
   class EndpointExample
     attr_reader :data, :definition
@@ -143,5 +188,3 @@ module Interpol
     end
   end
 end
-
-

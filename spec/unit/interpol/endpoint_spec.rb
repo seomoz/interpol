@@ -155,7 +155,7 @@ module Interpol
 
     it 'initializes the message type' do
       hash = build_hash('message_type' => 'request')
-      EndpointDefinition.new("name", '2.3', build_hash).message_type.should eq('request')
+      EndpointDefinition.new("name", '2.3', hash).message_type.should eq('request')
     end
 
     it 'initializes the example data' do
@@ -293,6 +293,52 @@ module Interpol
             subject.validate_data!('foo' => [{'name' => 3, 'bar' => 7}])
           }.to raise_error(ValidationError)
         end
+      end
+    end
+  end
+
+  describe StatusCodeMatcher do
+    describe "#new" do
+      it 'initializes the codes for nil' do
+        StatusCodeMatcher.new(nil).codes.should be_nil
+      end
+
+      it 'initializs the codes for a single code' do
+        StatusCodeMatcher.new(['200']).codes.should == {'200' => :exact}
+      end
+
+      it 'initializs the codes for a multiple codes' do
+        StatusCodeMatcher.new(['200', '4xx']).codes.should == {'200' => :exact, '4xx' => :partial}
+      end
+
+      it 'should raise an error for invalid status code formats' do
+        expect {
+          StatusCodeMatcher.new(['x00', '4xx'])
+        }.to raise_error(StatusCodeMatcherArgumentError)
+
+        expect {
+          StatusCodeMatcher.new(['200', '4y4'])
+        }.to raise_error(StatusCodeMatcherArgumentError)
+      end
+    end
+
+    describe "#matches?" do
+      let(:nil_codes_subject) { StatusCodeMatcher.new(nil) }
+      it 'returns true when codes is nil' do
+        nil_codes_subject.matches?('200').should be_true
+      end
+
+      subject { StatusCodeMatcher.new(['200', '4xx']) }
+      it 'returns true for an exact match' do
+        subject.matches?('200').should be_true
+      end
+
+      it 'returns true for a partial match' do
+        subject.matches?('401').should be_true
+      end
+
+      it 'returns false for no matches' do
+        subject.matches?('202').should be_false
       end
     end
   end
