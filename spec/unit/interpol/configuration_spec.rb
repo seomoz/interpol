@@ -4,40 +4,44 @@ require 'interpol/configuration'
 module Interpol
   describe DefinitionFinder do
     describe '#find_definition' do
-      def endpoint(name, method, route, *versions)
+      def endpoint(name, method, route, message_type, *versions)
         Endpoint.new \
           'name' => 'endpoint_name',
           'route' => route,
           'method' => method,
           'definitions' => [{
             'versions' => versions,
+            'message_type' => message_type,
             'schema' => {},
             'examples' => {}
           }]
       end
 
-      let(:endpoint_1)    { endpoint 'e1', 'GET', '/users/:user_id/overview', '1.3' }
-      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', '2.3', '2.7' }
+      let(:endpoint_1)    { endpoint 'e1', 'GET', '/users/:user_id/overview', 'response', '1.3' }
+      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', 'request', '2.3', '2.7' }
       let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
 
       def find(options)
-        all_endpoints.find_definition(options[:method], options[:path]) { |e| options[:version] }
+        all_endpoints.find_definition(options[:method], options[:path],
+          options[:message_type]) { |e| options[:version] }
       end
 
       it 'finds a matching endpoint definition' do
-        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.3')
+        found = find(:method => 'POST', :path => '/foo/bar',
+          :version => '2.3', :message_type => 'request')
         found.endpoint_name.should eq(endpoint_2.name)
         found.version.should eq('2.3')
       end
 
       it 'finds the correct versioned definition of the endpoint' do
-        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.7')
+        found = find(:method => 'POST', :path => '/foo/bar',
+          :version => '2.7', :message_type => 'request')
         found.version.should eq('2.7')
       end
 
       it 'calls the version block with the endpoint' do
         endpoint = nil
-        all_endpoints.find_definition('POST', '/foo/bar') do |e|
+        all_endpoints.find_definition('POST', '/foo/bar', 'request') do |e|
           endpoint = e
         end
 
@@ -45,17 +49,20 @@ module Interpol
       end
 
       it 'returns NoDefinitionFound if it cannot find a matching route' do
-        result = find(:method => 'POST', :path => '/goo/bar', :version => '2.7')
+        result = find(:method => 'POST', :path => '/goo/bar',
+          :version => '2.7', :message_type => 'request')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'returns nil if the endpoint does not have a matching version' do
-        result = find(:method => 'POST', :path => '/foo/bar', :version => '13.7')
+        result = find(:method => 'POST', :path => '/foo/bar',
+          :version => '13.7', :message_type => 'request')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'handles route params properly' do
-        found = find(:method => 'GET', :path => '/users/17/overview', :version => '1.3')
+        found = find(:method => 'GET', :path => '/users/17/overview',
+          :version => '1.3', :message_type => 'response')
         found.endpoint_name.should be(endpoint_1.name)
       end
     end
