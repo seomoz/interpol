@@ -325,29 +325,40 @@ module Interpol
   describe StatusCodeMatcher do
     describe "#new" do
       it 'initializes the codes for nil' do
-        StatusCodeMatcher.new(nil).codes.should be_nil
+        StatusCodeMatcher.new(nil).code_strings.should == ['xxx']
       end
 
       it 'initializs the codes for a single code' do
-        StatusCodeMatcher.new(['200']).codes.should == [{:type => :exact, :value => "200"}]
+        StatusCodeMatcher.new(['200']).code_strings.should == ["200"]
       end
 
       it 'initializs the codes for a multiple codes' do
-        expected_codes = [
-            {:type => :exact, :value => "200"},
-            {:type => :partial, :value => "4xx"}
-        ]
-        StatusCodeMatcher.new(['200', '4xx']).codes.should == expected_codes
+        StatusCodeMatcher.new(['200', '4xx', 'x0x']).code_strings.should == ['200', '4xx', 'x0x']
       end
 
       it 'should raise an error for invalid status code formats' do
         expect {
-          StatusCodeMatcher.new(['x00', '4xx'])
+          StatusCodeMatcher.new(['200', '4y4'])
         }.to raise_error(StatusCodeMatcherArgumentError)
 
         expect {
-          StatusCodeMatcher.new(['200', '4y4'])
+          StatusCodeMatcher.new(['2000', '404'])
         }.to raise_error(StatusCodeMatcherArgumentError)
+      end
+    end
+
+    describe "#code_regexes" do
+      it 'correctly generates the array of regexes when there are no codes' do
+        StatusCodeMatcher.new(nil).code_regexes.should == [/\A\d\d\d\z/]
+      end
+
+      it 'correctly generates the array of regexes when there is one code' do
+        StatusCodeMatcher.new(['2xx']).code_regexes.should == [/\A2\d\d\z/]
+      end
+
+      it 'correctly generates the array of regexes when there are multiple codes' do
+        StatusCodeMatcher.new(['200', '4xx', 'x2x']).code_regexes.should ==
+          [/\A200\z/, /\A4\d\d\z/, /\A\d2\d\z/]
       end
     end
 
@@ -357,27 +368,18 @@ module Interpol
         nil_codes_subject.matches?('200').should be_true
       end
 
-      subject { StatusCodeMatcher.new(['200', '4xx']) }
+      subject { StatusCodeMatcher.new(['200', '4xx', 'x5x']) }
       it 'returns true for an exact match' do
         subject.matches?('200').should be_true
       end
 
-      it 'returns true for a partial match' do
+      it 'returns true for a partial matches' do
         subject.matches?('401').should be_true
+        subject.matches?('454').should be_true
       end
 
       it 'returns false for no matches' do
         subject.matches?('202').should be_false
-      end
-    end
-
-    describe '#to_codes' do
-      it 'returns a string when no status codes exist' do
-        StatusCodeMatcher.new(nil).to_codes.should eq('all status codes')
-      end
-
-      it 'returns the status codes as a comma separated list' do
-        StatusCodeMatcher.new(['200', '4xx']).to_codes.should eq('200,4xx')
       end
     end
   end

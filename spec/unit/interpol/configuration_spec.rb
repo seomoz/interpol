@@ -86,7 +86,7 @@ module Interpol
         found = find_with_status_code('403', :method => 'GET', :path => '/users/17/overview',
           :version => '1.3', :message_type => 'response')
         found.endpoint_name.should be(endpoint_1.name)
-        found.status_codes.should eq('all status codes')
+        found.status_codes.should eq('xxx')
       end
     end
   end

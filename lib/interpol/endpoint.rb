@@ -130,7 +130,7 @@ module Interpol
     end
 
     def status_codes
-      @status_codes.to_codes
+      @status_codes.code_strings.join(',')
     end
 
     def matches_status_code?(status_code)
@@ -158,48 +158,33 @@ module Interpol
   # or partial status codes (2xx, 3xx, 4xx, etc). Currently, partial status
   # codes can only be a digit followed by two lower-case x's.
   class StatusCodeMatcher
-    attr_reader :codes
+    attr_reader :code_strings
 
     def initialize(codes)
-      @codes = parse_and_validate(codes)
+      codes = ["xxx"] if codes.nil? || codes.none?
+      @code_strings = codes
+      validate!
+    end
+
+    def code_regexes
+      @code_regexes ||= code_strings.map do |string|
+        /\A#{string.gsub('x', '\d')}\z/
+      end
     end
 
     def matches?(status_code)
-      return true if codes.nil?
-
-      status_code = status_code.to_s
-      codes.each do |code|
-        code_value = code[:value]
-        code_type = code[:type]
-        if code_type == :exact
-          return true if code_value == status_code # exact match
-        else # code_type == :partial
-          return true if code_value[0] == status_code[0] # 2xx compare to 200 case
-        end
-      end
-      return false
-    end
-
-    def to_codes
-      return 'all status codes' if codes.nil?
-      codes.map {|z| z[:value]}.join(',')
+      code_regexes.any? { |re| re =~ status_code.to_s }
     end
 
     private
-      def parse_and_validate(codes)
-        return nil if codes.nil?
-        [].tap do |arr|
-          codes.each do |code|
-            arr << {:value => code, :type => code_type_for(code)}
+      def validate!
+        code_strings.each do |code|
+          # ensure code is 3 characters and all chars are a number or 'x'
+          # http://rubular.com/r/4sl68Bb4XO
+          unless code =~ /\A[\dx]{3}\Z/
+            raise StatusCodeMatcherArgumentError, "#{code} is not a valid format"
           end
         end
-      end
-
-      def code_type_for(code)
-        # http://rubular.com/r/gvx8TztkRE - match either 3-digits or 1 digit then xx
-        return :exact if code =~ /\d{3}/ # match 3 digits
-        return :partial if code =~ /\dxx/ # match 1 digit then xx
-        raise StatusCodeMatcherArgumentError, "#{code} is not a valid format"
       end
   end
 
