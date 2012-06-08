@@ -86,7 +86,7 @@ module Interpol
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
-          message_type = definition['message_type'] || DEFAULT_MESSAGE_TYPE
+          message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
           definitions << EndpointDefinition.new(name, version, message_type, definition)
         end
       end
