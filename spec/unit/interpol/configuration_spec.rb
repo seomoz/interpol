@@ -168,7 +168,9 @@ module Interpol
         def assert_expected_endpoint
           config.endpoints.size.should eq(1)
           endpoint = config.endpoints.first
-          endpoint.definitions.first.schema.fetch("properties").should have_key("name")
+          endpoint.definitions.first.each do |definitions|
+            definitions.schema.fetch("properties").should have_key("name")
+          end
         end
 
         it 'supports the merge keys when configured before the endpoint definition files' do

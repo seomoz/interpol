@@ -64,14 +64,14 @@ module Interpol
     describe "#definitions" do
       it 'returns each definition object, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.definitions.map(&:version).should eq(%w[ 3.2 1.2 ])
+        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 3.2 1.2 ])
       end
 
       it 'returns each definition object, ordered by message type' do
         full_definitions_array = (definitions_array + request_definition_array)
         endpoint = Endpoint.new(build_hash('definitions' => full_definitions_array))
-        endpoint.definitions.map(&:version).should eq(%w[ 1.1 3.2 1.2 ])
-        endpoint.definitions.map(&:message_type).should eq(%w[ request response response ])
+        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 1.1 3.2 1.2 ])
+        endpoint.definitions.map{|d|d.first.message_type}.should eq(%w[ request response response ])
       end
 
     end
@@ -88,9 +88,9 @@ module Interpol
       let(:endpoint) { Endpoint.new(hash) }
 
       it 'finds the definition matching the given version and message_type' do
-        definition = endpoint.find_definition!('1.2', 'response')
-        definition.version.should eq('1.2')
-        definition.message_type.should eq('response')
+        definitions = endpoint.find_definition!('1.2', 'response')
+        definitions.first.version.should eq('1.2')
+        definitions.first.message_type.should eq('response')
       end
 
       it 'raises an error when given a version that matches no definition' do

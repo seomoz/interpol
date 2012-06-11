@@ -28,33 +28,29 @@ module Interpol
     end
 
     def find_definition!(version, message_type)
-      @definitions.each do |definition|
-        if definition.version == version &&
-            definition.message_type == message_type
-          return definition
-        end
+      @definitions.fetch(key_for(message_type, version)) do
+        message = "No definition found for #{name} endpoint for version #{version}"
+        message << " and message_type #{message_type}"
+        raise ArgumentError.new(message)
       end
-      message = "No definition found for #{name} endpoint for version #{version}"
-      message << " and message_type #{message_type}"
-      raise ArgumentError.new(message)
     end
 
     def find_example_for!(version, message_type)
-      find_definition!(version, message_type).examples.first
+      find_definition!(version, message_type).first.examples.first
     end
 
     def available_versions
-      definitions.map(&:version)
+      definitions.map { |d| d.first.version }
     end
 
     def definitions
       # sort all requests before all responses
       # sort higher version numbers before lower version numbers
-      @definitions.sort do |x, y|
-        if x.message_type == y.message_type
-          y.version <=> x.version
+      @definitions.values.sort do |x,y|
+        if x.first.message_type == y.first.message_type
+          y.first.version <=> x.first.version
         else
-          x.message_type <=> y.message_type
+          x.first.message_type <=> y.first.message_type
         end
       end
     end
@@ -82,16 +78,22 @@ module Interpol
     DEFAULT_MESSAGE_TYPE = 'response'
 
     def extract_definitions_from(endpoint_hash)
-      definitions = []
+      definitions = {}
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
           message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
-          definitions << EndpointDefinition.new(name, version, message_type, definition)
+          key = key_for(message_type, version)
+          definitions[key] = [] unless definitions[key]
+          definitions[key] << EndpointDefinition.new(name, version, message_type, definition)
         end
       end
 
       definitions
+    end
+
+    def key_for(message_type, version)
+      "#{message_type}$#{version}"
     end
 
     def validate_name!
