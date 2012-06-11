@@ -39,6 +39,10 @@ module Interpol
       find_definition!(version, message_type).first.examples.first
     end
 
+    def find_example_status_code_for!(version)
+      find_definition!(version, 'response').first.example_status_code
+    end
+
     def available_versions
       definitions.map { |d| d.first.version }
     end
@@ -139,6 +143,10 @@ module Interpol
       @status_codes.matches?(status_code)
     end
 
+    def example_status_code
+      @example_status_code ||= @status_codes.example_status_code
+    end
+
   private
 
     def make_schema_strict!(raw_schema, modify_object=true)
@@ -163,22 +171,30 @@ module Interpol
     attr_reader :code_strings
 
     def initialize(codes)
-      codes = ["xxx"] if codes.nil? || codes.none?
+      codes = ["xxx"] if Array(codes).empty?
       @code_strings = codes
       validate!
-    end
-
-    def code_regexes
-      @code_regexes ||= code_strings.map do |string|
-        /\A#{string.gsub('x', '\d')}\z/
-      end
     end
 
     def matches?(status_code)
       code_regexes.any? { |re| re =~ status_code.to_s }
     end
 
+    def example_status_code
+      example_status_code = "200"
+      code_strings.first.chars.each_with_index do |char, index|
+        example_status_code[index] = char if char != 'x'
+      end
+      example_status_code
+    end
+
     private
+      def code_regexes
+        @code_regexes ||= code_strings.map do |string|
+          /\A#{string.gsub('x', '\d')}\z/
+        end
+      end
+
       def validate!
         code_strings.each do |code|
           # ensure code is 3 characters and all chars are a number or 'x'

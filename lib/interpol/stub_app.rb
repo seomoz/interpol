@@ -52,6 +52,7 @@ module Interpol
           message_type = 'response'
           example = example_for(endpoint, version, message_type)
           example.validate!
+          status endpoint.find_example_status_code_for!(version)
           JSON.dump(example.data)
         end
       end

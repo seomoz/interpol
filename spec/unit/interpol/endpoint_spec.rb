@@ -347,21 +347,6 @@ module Interpol
       end
     end
 
-    describe "#code_regexes" do
-      it 'correctly generates the array of regexes when there are no codes' do
-        StatusCodeMatcher.new(nil).code_regexes.should == [/\A\d\d\d\z/]
-      end
-
-      it 'correctly generates the array of regexes when there is one code' do
-        StatusCodeMatcher.new(['2xx']).code_regexes.should == [/\A2\d\d\z/]
-      end
-
-      it 'correctly generates the array of regexes when there are multiple codes' do
-        StatusCodeMatcher.new(['200', '4xx', 'x2x']).code_regexes.should ==
-          [/\A200\z/, /\A4\d\d\z/, /\A\d2\d\z/]
-      end
-    end
-
     describe "#matches?" do
       let(:nil_codes_subject) { StatusCodeMatcher.new(nil) }
       it 'returns true when codes is nil' do
@@ -380,6 +365,20 @@ module Interpol
 
       it 'returns false for no matches' do
         subject.matches?('202').should be_false
+      end
+    end
+
+    describe '#example_status_code' do
+      it 'returns a valid example status code when a specific status code was given' do
+        StatusCodeMatcher.new(['404']).example_status_code.should == '404'
+      end
+
+      it 'returns a valid example status code when no status codes were given' do
+        StatusCodeMatcher.new(nil).example_status_code.should == '200'
+      end
+
+      it 'returns a valid example status code based on the first status code' do
+        StatusCodeMatcher.new(['4xx', 'x0x']).example_status_code.should == '400'
       end
     end
   end
