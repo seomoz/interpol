@@ -80,7 +80,7 @@ module Interpol
       validator.should_receive(:validate_data!).with("a" => "b")
 
       default_definition_finder.should_receive(:find_definition).
-        with("GET", "/search/200/overview").
+        with("GET", "/search/200/overview", "response", 200).
         and_return(validator)
 
       get '/search/200/overview'

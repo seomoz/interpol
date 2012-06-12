@@ -5,9 +5,11 @@ module Interpol
     module Common
       def each_example_from(endpoints)
         endpoints.each do |endpoint|
-          endpoint.definitions.each do |definition|
-            definition.examples.each_with_index do |example, index|
-              yield endpoint, definition, example, index
+          endpoint.definitions.each do |definitions|
+            definitions.each do |definition|
+              definition.examples.each_with_index do |example, index|
+                yield endpoint, definition, example, index
+              end
             end
           end
         end

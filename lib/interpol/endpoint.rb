@@ -27,23 +27,36 @@ module Interpol
       validate_name!
     end
 
-    def find_definition!(version)
-      @definitions.fetch(version) do
+    def find_definition!(version, message_type)
+      @definitions.fetch([message_type, version]) do
         message = "No definition found for #{name} endpoint for version #{version}"
+        message << " and message_type #{message_type}"
         raise ArgumentError.new(message)
       end
     end
 
-    def find_example_for!(version)
-      find_definition!(version).examples.first
+    def find_example_for!(version, message_type)
+      find_definition!(version, message_type).first.examples.first
+    end
+
+    def find_example_status_code_for!(version)
+      find_definition!(version, 'response').first.example_status_code
     end
 
     def available_versions
-      definitions.map(&:version)
+      definitions.map { |d| d.first.version }
     end
 
     def definitions
-      @definitions.values.sort_by(&:version)
+      # sort all requests before all responses
+      # sort higher version numbers before lower version numbers
+      @definitions.values.sort do |x,y|
+        if x.first.message_type == y.first.message_type
+          y.first.version <=> x.first.version
+        else
+          x.first.message_type <=> y.first.message_type
+        end
+      end
     end
 
     def route_matches?(path)
@@ -66,12 +79,16 @@ module Interpol
       end
     end
 
+    DEFAULT_MESSAGE_TYPE = 'response'
+
     def extract_definitions_from(endpoint_hash)
-      definitions = {}
+      definitions = Hash.new { |h, k| h[k] = [] }
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
-          definitions[version] = EndpointDefinition.new(name, version, definition)
+          message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
+          key = [message_type, version]
+          definitions[key] << EndpointDefinition.new(name, version, message_type, definition)
         end
       end
 
@@ -90,13 +107,15 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint_name, :version, :schema, :examples
+    attr_reader :endpoint_name, :message_type, :version, :schema, :examples
 
-    def initialize(endpoint_name, version, definition)
-      @endpoint_name = endpoint_name
-      @version       = version
-      @schema        = fetch_from(definition, 'schema')
-      @examples      = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
+    def initialize(endpoint_name, version, message_type, definition)
+      @endpoint_name  = endpoint_name
+      @message_type   = message_type
+      @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
+      @version        = version
+      @schema         = fetch_from(definition, 'schema')
+      @examples       = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
     end
 
@@ -108,7 +127,19 @@ module Interpol
     end
 
     def description
-      "#{endpoint_name} (v. #{version})"
+      "#{endpoint_name} (v. #{version}, mt. #{message_type}, sc. #{status_codes})"
+    end
+
+    def status_codes
+      @status_codes.code_strings.join(',')
+    end
+
+    def matches_status_code?(status_code)
+      status_code.nil? || @status_codes.matches?(status_code)
+    end
+
+    def example_status_code
+      @example_status_code ||= @status_codes.example_status_code
     end
 
   private
@@ -127,6 +158,49 @@ module Interpol
     end
   end
 
+  # Holds the acceptable status codes for an enpoint entry
+  # Acceptable status code are either exact status codes (200, 404, etc)
+  # or partial status codes (2xx, 3xx, 4xx, etc). Currently, partial status
+  # codes can only be a digit followed by two lower-case x's.
+  class StatusCodeMatcher
+    attr_reader :code_strings
+
+    def initialize(codes)
+      codes = ["xxx"] if Array(codes).empty?
+      @code_strings = codes
+      validate!
+    end
+
+    def matches?(status_code)
+      code_regexes.any? { |re| re =~ status_code.to_s }
+    end
+
+    def example_status_code
+      example_status_code = "200"
+      code_strings.first.chars.each_with_index do |char, index|
+        example_status_code[index] = char if char != 'x'
+      end
+      example_status_code
+    end
+
+    private
+      def code_regexes
+        @code_regexes ||= code_strings.map do |string|
+          /\A#{string.gsub('x', '\d')}\z/
+        end
+      end
+
+      def validate!
+        code_strings.each do |code|
+          # ensure code is 3 characters and all chars are a number or 'x'
+          # http://rubular.com/r/4sl68Bb4XO
+          unless code =~ /\A[\dx]{3}\Z/
+            raise StatusCodeMatcherArgumentError, "#{code} is not a valid format"
+          end
+        end
+      end
+  end
+
   # Wraps an example for a particular endpoint entry.
   class EndpointExample
     attr_reader :data, :definition
@@ -140,5 +214,3 @@ module Interpol
     end
   end
 end
-
-

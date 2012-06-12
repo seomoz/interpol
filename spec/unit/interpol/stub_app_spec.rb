@@ -101,7 +101,7 @@ module Interpol
     end
 
     let(:endpoint_example) do
-      endpoint.find_example_for!('1.0')
+      endpoint.find_example_for!('1.0', 'response')
     end
 
     it 'performs validations by default' do

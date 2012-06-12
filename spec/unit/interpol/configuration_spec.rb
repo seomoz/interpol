@@ -4,40 +4,59 @@ require 'interpol/configuration'
 module Interpol
   describe DefinitionFinder do
     describe '#find_definition' do
-      def endpoint(name, method, route, *versions)
-        Endpoint.new \
-          'name' => 'endpoint_name',
-          'route' => route,
-          'method' => method,
-          'definitions' => [{
-            'versions' => versions,
-            'schema' => {},
-            'examples' => {}
-          }]
+      def endpoint_def(message_type, status_codes, *versions)
+        {
+          'versions' => versions,
+          'message_type' => message_type,
+          'status_codes' => status_codes,
+          'schema' => {},
+          'examples' => {}
+        }
       end
 
-      let(:endpoint_1)    { endpoint 'e1', 'GET', '/users/:user_id/overview', '1.3' }
-      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', '2.3', '2.7' }
+      def endpoint(name, method, route, *endpoint_defs)
+        Endpoint.new \
+          'name' => name,
+          'route' => route,
+          'method' => method,
+          'definitions' => endpoint_defs
+      end
+
+      let(:endpoint_def_1a) { endpoint_def('response', ['2xx'], '1.3') }
+      let(:endpoint_def_1b) { endpoint_def('response', nil, '1.3') }
+      let(:endpoint_def_2a) { endpoint_def('request', nil, '2.3', '2.7') }
+
+      let(:endpoint_1) do
+        endpoint 'e1', 'GET', '/users/:user_id/overview', endpoint_def_1a, endpoint_def_1b
+      end
+      let(:endpoint_2)    { endpoint 'e2', 'POST', '/foo/bar', endpoint_def_2a}
       let(:all_endpoints) { [endpoint_1, endpoint_2].extend(DefinitionFinder) }
 
       def find(options)
-        all_endpoints.find_definition(options[:method], options[:path]) { |e| options[:version] }
+        find_with_status_code(nil, options)
+      end
+
+      def find_with_status_code(status_code, options)
+        all_endpoints.find_definition(options[:method], options[:path],
+          options[:message_type], status_code) { |e| options[:version] }
       end
 
       it 'finds a matching endpoint definition' do
-        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.3')
+        found = find(:method => 'POST', :path => '/foo/bar',
+          :version => '2.3', :message_type => 'request')
         found.endpoint_name.should eq(endpoint_2.name)
         found.version.should eq('2.3')
       end
 
       it 'finds the correct versioned definition of the endpoint' do
-        found = find(:method => 'POST', :path => '/foo/bar', :version => '2.7')
+        found = find(:method => 'POST', :path => '/foo/bar',
+          :version => '2.7', :message_type => 'request')
         found.version.should eq('2.7')
       end
 
       it 'calls the version block with the endpoint' do
         endpoint = nil
-        all_endpoints.find_definition('POST', '/foo/bar') do |e|
+        all_endpoints.find_definition('POST', '/foo/bar', 'request') do |e|
           endpoint = e
         end
 
@@ -45,18 +64,29 @@ module Interpol
       end
 
       it 'returns NoDefinitionFound if it cannot find a matching route' do
-        result = find(:method => 'POST', :path => '/goo/bar', :version => '2.7')
+        result = find(:method => 'POST', :path => '/goo/bar',
+          :version => '2.7', :message_type => 'request')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'returns nil if the endpoint does not have a matching version' do
-        result = find(:method => 'POST', :path => '/foo/bar', :version => '13.7')
+        result = find(:method => 'POST', :path => '/foo/bar',
+          :version => '13.7', :message_type => 'request')
         result.should be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'handles route params properly' do
-        found = find(:method => 'GET', :path => '/users/17/overview', :version => '1.3')
+        found = find_with_status_code('200', :method => 'GET', :path => '/users/17/overview',
+          :version => '1.3', :message_type => 'response')
         found.endpoint_name.should be(endpoint_1.name)
+        found.status_codes.should eq('2xx')
+      end
+
+      it 'handles status code params properly' do
+        found = find_with_status_code('403', :method => 'GET', :path => '/users/17/overview',
+          :version => '1.3', :message_type => 'response')
+        found.endpoint_name.should be(endpoint_1.name)
+        found.status_codes.should eq('xxx')
       end
     end
   end
@@ -138,7 +168,9 @@ module Interpol
         def assert_expected_endpoint
           config.endpoints.size.should eq(1)
           endpoint = config.endpoints.first
-          endpoint.definitions.first.schema.fetch("properties").should have_key("name")
+          endpoint.definitions.first.each do |definitions|
+            definitions.schema.fetch("properties").should have_key("name")
+          end
         end
 
         it 'supports the merge keys when configured before the endpoint definition files' do

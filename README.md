@@ -51,7 +51,9 @@ name: user_projects
 route: /users/:user_id/projects
 method: GET
 definitions:
-  - versions: ["1.0"]
+  - message_type: response
+    versions: ["1.0"]
+    status_codes: ["2xx", "404"]
     schema:
       description: Returns a list of projects for the given user.
       type: object
@@ -94,8 +96,17 @@ Let's look at this YAML file, point-by-point:
 * The `definitions` array contains a list of versioned schema definitions, with
   corresponding examples.  Everytime you modify your schema and change the version,
   you should add a new entry here.
+* The `message_type` describes whether the following schema is for requests or responses.
+  It is an optional attribute that when omitted defaults to response. The only valid values
+  are `request` and `response`.
 * The `versions` array lists the endpoint versions that should be associated with a
   particular schema definition.
+* The `status_codes` is an optional array of status code strings describing for which
+  status code or codes this schema applies to. `status_codes` is ignored if used with the
+  `request` `message_type`. When used with the `response` `message_type` it is an optional
+  attribute that defaults to all status codes. Valid formats for a status code are 3
+  characters. Each character must be a digit (0-9) or 'x' (wildcard). The following strings
+  are all valid: "200", "4xx", "x0x".
 * The `schema` contains a [JSON schema](http://tools.ietf.org/html/draft-zyp-json-schema-03)
   description of the contents of the endpoint. This schema definition is used by the
   `SchemaValidation` middleware to ensure that your implementation of the endpoint

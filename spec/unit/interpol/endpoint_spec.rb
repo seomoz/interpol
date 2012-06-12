@@ -54,17 +54,32 @@ module Interpol
       'examples' => ['e1', 'e2']
     }] end
 
+    let(:request_definition_array) do [{
+      'versions'      => ['1.1'],
+      'message_type'  => 'request',
+      'schema'        => {'a' => ' request schema'},
+      'examples'      => ['e1', 'e2']
+    }] end
+
     describe "#definitions" do
       it 'returns each definition object, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.definitions.map(&:version).should eq(%w[ 1.2 3.2 ])
+        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 3.2 1.2 ])
       end
+
+      it 'returns each definition object, ordered by message type' do
+        full_definitions_array = (definitions_array + request_definition_array)
+        endpoint = Endpoint.new(build_hash('definitions' => full_definitions_array))
+        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 1.1 3.2 1.2 ])
+        endpoint.definitions.map{|d|d.first.message_type}.should eq(%w[ request response response ])
+      end
+
     end
 
     describe "#available_versions" do
       it 'returns the list of available version strings, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.available_versions.should eq(%w[ 1.2 3.2 ])
+        endpoint.available_versions.should eq(%w[ 3.2 1.2 ])
       end
     end
 
@@ -72,13 +87,15 @@ module Interpol
       let(:hash) { build_hash('definitions' => definitions_array) }
       let(:endpoint) { Endpoint.new(hash) }
 
-      it 'finds the definition matching the given version' do
-        endpoint.find_definition!('1.2').version.should eq('1.2')
+      it 'finds the definition matching the given version and message_type' do
+        definitions = endpoint.find_definition!('1.2', 'response')
+        definitions.first.version.should eq('1.2')
+        definitions.first.message_type.should eq('response')
       end
 
       it 'raises an error when given a version that matches no definition' do
         expect {
-          endpoint.find_definition!('2.1')
+          endpoint.find_definition!('2.1', 'response')
         }.to raise_error(ArgumentError)
       end
     end
@@ -88,12 +105,12 @@ module Interpol
       let(:endpoint) { Endpoint.new(hash) }
 
       it 'returns an example for the requested version' do
-        endpoint.find_example_for!('1.2').data.should eq('e1')
+        endpoint.find_example_for!('1.2', 'response').data.should eq('e1')
       end
 
       it 'raises an error when given a version it does not have' do
         expect {
-          endpoint.find_example_for!('2.1')
+          endpoint.find_example_for!('2.1', 'response')
         }.to raise_error(ArgumentError)
       end
     end
@@ -142,20 +159,35 @@ module Interpol
     let(:version)  { '1.0' }
 
     it 'initializes the endpoint_name' do
-      EndpointDefinition.new("e-name", version, build_hash).endpoint_name.should eq("e-name")
+      endpoint_def = EndpointDefinition.new("e-name", version, 'response', build_hash)
+      endpoint_def.endpoint_name.should eq("e-name")
     end
 
     it 'initializes the version' do
-      EndpointDefinition.new("name", '2.3', build_hash).version.should eq('2.3')
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def.version.should eq('2.3')
+    end
+
+    it 'default initialized the message type' do
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def.message_type.should eq('response')
+    end
+
+    it 'initializes the message type' do
+      hash = build_hash('message_type' => 'request')
+      endpoint_def = EndpointDefinition.new("name", '2.3', 'request', hash)
+      endpoint_def.message_type.should eq('request')
     end
 
     it 'initializes the example data' do
-      v = EndpointDefinition.new("name", version, build_hash('examples' => [{'a' => 5}]))
+      hash = build_hash('examples' => [{'a' => 5}])
+      v = EndpointDefinition.new("name", version, 'response', hash)
       v.examples.map(&:data).should eq([{ 'a' => 5 }])
     end
 
     it 'initializes the schema' do
-      v = EndpointDefinition.new("name", version, build_hash('schema' => {'the' => 'schema'}))
+      hash = build_hash('schema' => {'the' => 'schema'})
+      v = EndpointDefinition.new("name", version, 'response', hash)
       v.schema['the'].should eq('schema')
     end
 
@@ -163,7 +195,7 @@ module Interpol
       it "raises an error if not initialized with '#{attr}'" do
         hash = build_hash.reject { |k, v| k == attr }
         expect {
-          EndpointDefinition.new("name", version, hash)
+          EndpointDefinition.new("name", version, 'response', hash)
         }.to raise_error(/key not found.*#{attr}/)
       end
     end
@@ -174,7 +206,9 @@ module Interpol
         'properties' => {'foo' => { 'type' => 'integer' } }
       } end
 
-      subject { EndpointDefinition.new("e-name", version, build_hash('schema' => schema)) }
+      subject {
+        EndpointDefinition.new("e-name", version, 'response', build_hash('schema' => schema))
+      }
 
       it 'raises a validation error when given data of the wrong type' do
         expect {
@@ -194,7 +228,8 @@ module Interpol
       end
 
       it 'rejects unrecognized data types' do
-        pending "waiting for my json-schema PR to be merged: https://github.com/hoxworth/json-schema/pull/37" do
+        pending "waiting for my json-schema PR to be merged: " +
+           "https://github.com/hoxworth/json-schema/pull/37" do
           schema['properties']['foo']['type'] = 'sting'
           expect {
             subject.validate_data!('foo' => 'bar')
@@ -284,6 +319,67 @@ module Interpol
             subject.validate_data!('foo' => [{'name' => 3, 'bar' => 7}])
           }.to raise_error(ValidationError)
         end
+      end
+    end
+  end
+
+  describe StatusCodeMatcher do
+    describe "#new" do
+      it 'initializes the codes for nil' do
+        StatusCodeMatcher.new(nil).code_strings.should == ['xxx']
+      end
+
+      it 'initializs the codes for a single code' do
+        StatusCodeMatcher.new(['200']).code_strings.should == ["200"]
+      end
+
+      it 'initializs the codes for a multiple codes' do
+        StatusCodeMatcher.new(['200', '4xx', 'x0x']).code_strings.should == ['200', '4xx', 'x0x']
+      end
+
+      it 'should raise an error for invalid status code formats' do
+        expect {
+          StatusCodeMatcher.new(['200', '4y4'])
+        }.to raise_error(StatusCodeMatcherArgumentError)
+
+        expect {
+          StatusCodeMatcher.new(['2000', '404'])
+        }.to raise_error(StatusCodeMatcherArgumentError)
+      end
+    end
+
+    describe "#matches?" do
+      let(:nil_codes_subject) { StatusCodeMatcher.new(nil) }
+      it 'returns true when codes is nil' do
+        nil_codes_subject.matches?('200').should be_true
+      end
+
+      subject { StatusCodeMatcher.new(['200', '4xx', 'x5x']) }
+      it 'returns true for an exact match' do
+        subject.matches?('200').should be_true
+      end
+
+      it 'returns true for a partial matches' do
+        subject.matches?('401').should be_true
+        subject.matches?('454').should be_true
+      end
+
+      it 'returns false for no matches' do
+        subject.matches?('202').should be_false
+      end
+    end
+
+    describe '#example_status_code' do
+      it 'returns a valid example status code when a specific status code was given' do
+        StatusCodeMatcher.new(['404']).example_status_code.should == '404'
+      end
+
+      it 'returns a valid example status code when no status codes were given' do
+        StatusCodeMatcher.new(nil).example_status_code.should == '200'
+      end
+
+      it 'returns a valid example status code based on the first status code' do
+        StatusCodeMatcher.new(['4xx', 'x0x']).example_status_code.should == '400'
       end
     end
   end
