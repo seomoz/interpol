@@ -28,7 +28,7 @@ module Interpol
     end
 
     def find_definition!(version, message_type)
-      @definitions.fetch(key_for(message_type, version)) do
+      @definitions.fetch([message_type, version]) do
         message = "No definition found for #{name} endpoint for version #{version}"
         message << " and message_type #{message_type}"
         raise ArgumentError.new(message)
@@ -82,22 +82,17 @@ module Interpol
     DEFAULT_MESSAGE_TYPE = 'response'
 
     def extract_definitions_from(endpoint_hash)
-      definitions = {}
+      definitions = Hash.new { |h, k| h[k] = [] }
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
           message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
-          key = key_for(message_type, version)
-          definitions[key] = [] unless definitions[key]
+          key = [message_type, version]
           definitions[key] << EndpointDefinition.new(name, version, message_type, definition)
         end
       end
 
       definitions
-    end
-
-    def key_for(message_type, version)
-      "#{message_type}$#{version}"
     end
 
     def validate_name!
