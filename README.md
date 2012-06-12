@@ -103,13 +103,10 @@ Let's look at this YAML file, point-by-point:
   particular schema definition.
 * The `status_codes` is an optional array of status code strings describing for which
   status code or codes this schema applies to. `status_codes` is ignored if used with the
-  `request` `message_type`. When used with the `response` `message_type`
-  It is an optional attribute that when omitted defaults to all status codes. The attribute
-  is ignored if part of a `request` `message_type`. Valid formats for a status code are either
-  a 3 digit string (i.e. `"200"`, `"403"`, etc.) which will match against the exact status code,
-  or 1 digit followed by 2 x's (i.e. `"2xx") which will match any status code starting with the
-  same digit. In the schema example above it will match all status codes between 200 and 299
-  inclusive and 404.
+  `request` `message_type`. When used with the `response` `message_type` it is an optional
+  attribute that defaults to all status codes. Valid formats for a status code are 3
+  characters. Each character must be a digit (0-9) or 'x' (wildcard). The following strings
+  are all valid: "200", "4xx", "x0x".
 * The `schema` contains a [JSON schema](http://tools.ietf.org/html/draft-zyp-json-schema-03)
   description of the contents of the endpoint. This schema definition is used by the
   `SchemaValidation` middleware to ensure that your implementation of the endpoint
