@@ -140,7 +140,7 @@ module Interpol
     end
 
     def matches_status_code?(status_code)
-      @status_codes.matches?(status_code)
+      status_code.nil? || @status_codes.matches?(status_code)
     end
 
     def example_status_code

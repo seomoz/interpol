@@ -12,7 +12,7 @@ module Interpol
       with_endpoint_matching(method, path) do |endpoint|
         version = yield endpoint
         find_definitions_for(endpoint, version, message_type).find do |definition|
-          (status_code.nil? || definition.matches_status_code?(status_code))
+          definition.matches_status_code?(status_code)
         end
       end
     end
