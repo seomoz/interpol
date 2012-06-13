@@ -1,6 +1,27 @@
 require 'json-schema'
 require 'interpol/errors'
 
+module JSON
+  # The JSON-schema namespace
+  class Schema
+    # Monkey patch json-schema to reject unrecognized types.
+    # It allows them because the spec says they should be allowed,
+    # but we don't want to allow them.
+    # For more info, see:
+    # - https://github.com/hoxworth/json-schema/pull/37
+    # - https://github.com/hoxworth/json-schema/pull/38
+    class TypeAttribute
+      (class << self; self; end).class_eval do
+        alias original_data_valid_for_type? data_valid_for_type?
+        def data_valid_for_type?(data, type)
+          return false unless TYPE_CLASS_MAPPINGS.has_key?(type)
+          original_data_valid_for_type?(data, type)
+        end
+      end
+    end
+  end
+end
+
 module Interpol
   module HashFetcher
     # Unfortunately, on JRuby 1.9, the error raised from Hash#fetch when

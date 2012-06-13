@@ -228,13 +228,10 @@ module Interpol
       end
 
       it 'rejects unrecognized data types' do
-        pending "waiting for my json-schema PR to be merged: " +
-           "https://github.com/hoxworth/json-schema/pull/37" do
-          schema['properties']['foo']['type'] = 'sting'
-          expect {
-            subject.validate_data!('foo' => 'bar')
-          }.to raise_error(ValidationError)
-        end
+        schema['properties']['foo']['type'] = 'sting'
+        expect {
+          subject.validate_data!('foo' => 'bar')
+        }.to raise_error(ValidationError)
       end
 
       it 'requires all properties' do

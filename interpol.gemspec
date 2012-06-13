@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Interpol::VERSION
 
-  gem.add_dependency 'json-schema', '~> 1.0.5'
+  gem.add_dependency 'json-schema', '~> 1.0.8'
   gem.add_dependency 'nokogiri', '~> 1.5'
 
   gem.add_development_dependency 'rspec', '~> 2.9'
