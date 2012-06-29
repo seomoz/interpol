@@ -200,6 +200,22 @@ module Interpol
       end
     end
 
+    %w[ path_params query_params ].each do |attr|
+      it "returns an empty hash if not initialized with '#{attr}'" do
+        v = EndpointDefinition.new("name", version, 'response', build_hash)
+        v.send(attr).should eq({})
+      end
+    end
+
+    %w[ path_params query_params ].each do |attr|
+      it "returns #{attr} when initialized" do
+        params = {'key' => 'param'}
+        hash = build_hash(attr => params)
+        v = EndpointDefinition.new("name", version, 'response', hash)
+        v.send(attr).should eq(params)
+      end
+    end
+
     describe "#validate_data" do
       let(:schema) do {
         'type'       => 'object',

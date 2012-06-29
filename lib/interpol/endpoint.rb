@@ -128,7 +128,7 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint_name, :message_type, :version, :schema, :examples
+    attr_reader :endpoint_name, :message_type, :version, :schema, :path_params, :query_params, :examples
 
     def initialize(endpoint_name, version, message_type, definition)
       @endpoint_name  = endpoint_name
@@ -136,6 +136,8 @@ module Interpol
       @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
       @version        = version
       @schema         = fetch_from(definition, 'schema')
+      @path_params    = definition.fetch('path_params', {})
+      @query_params   = definition.fetch('query_params', {})
       @examples       = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
     end
