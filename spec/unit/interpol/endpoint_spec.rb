@@ -201,14 +201,14 @@ module Interpol
     end
 
     %w[ path_params query_params ].each do |attr|
-      it "returns an empty hash if not initialized with '#{attr}'" do
+      it "initializes #{attr} to an empty hash if no value is provided" do
         v = EndpointDefinition.new("name", version, 'response', build_hash)
         v.send(attr).should eq({})
       end
     end
 
     %w[ path_params query_params ].each do |attr|
-      it "returns #{attr} when initialized" do
+      it "initializes #{attr} to the provided value" do
         params = {'key' => 'param'}
         hash = build_hash(attr => params)
         v = EndpointDefinition.new("name", version, 'response', hash)
