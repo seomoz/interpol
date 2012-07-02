@@ -238,8 +238,10 @@ module Interpol
     end
 
     def apply_filters(filter_blocks, request_env)
-      filter_blocks.each_with_object(deep_dup) do |filter, example|
-        filter.call(example, request_env)
+      deep_dup.tap do |example|
+        filter_blocks.each do |filter|
+          filter.call(example, request_env)
+        end
       end
     end
 
