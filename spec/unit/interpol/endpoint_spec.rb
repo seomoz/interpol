@@ -411,7 +411,7 @@ module Interpol
     end
 
     describe '#apply_filters' do
-      let(:filter_1) { ->(example, request_env) { example.data["the"] = "data1" } }
+      let(:filter_1) { lambda { |example, request_env| example.data["the"] = "data1" } }
       let(:request_env) { { "a" => "hash" } }
 
       it 'applies a filter and returns modified data' do
