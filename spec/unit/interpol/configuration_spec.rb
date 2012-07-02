@@ -254,7 +254,7 @@ module Interpol
         end
 
         it 'always returns a string, even when configured as a string' do
-          config.api_version { |_| 3 }
+          config.api_version { |*a| 3 }
           config.api_version_for({}, stub.as_null_object).should eq('3')
         end
       end
