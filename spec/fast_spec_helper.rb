@@ -47,12 +47,15 @@ module TestHelpers
   end
 end
 
+if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI']
+  require 'debugger'
+end
+
 RSpec.configure do |c|
   c.include RSpec::Fire
   c.treat_symbols_as_metadata_keys_with_true_values = true
   c.filter_run :f
   c.run_all_when_everything_filtered = true
-  c.debug = defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI']
   c.include TestHelpers
   c.extend TestHelpers::ClassMethods
 
