@@ -398,13 +398,66 @@ module Interpol
   end
 
   describe EndpointExample do
-    describe "#validate!" do
-      let(:definition) { fire_double("Interpol::EndpointDefinition") }
-      let(:data)       { { "the" => "data" } }
 
+    let(:definition) { fire_double("Interpol::EndpointDefinition") }
+    let(:data)       { { "the" => "data" } }
+    let(:example)    { EndpointExample.new(data, definition) }
+
+    describe "#validate!" do
       it 'validates against the schema' do
         definition.should_receive(:validate_data!).with(data)
-        EndpointExample.new(data, definition).validate!
+        example.validate!
+      end
+    end
+
+    describe '#apply_filters' do
+      let(:filter_1) { ->(example, request_env) { example.data["the"] = "data1" } }
+      let(:request_env) { { "a" => "hash" } }
+
+      it 'applies a filter and returns modified data' do
+        modified_example = example.apply_filters([filter_1], request_env)
+        modified_example.data.should eq("the" => "data1")
+      end
+
+      it 'chains multiple filters, passing the modified example onto each' do
+        filter_2 = lambda do |example, request_env|
+          example.data.should eq("the" => "data1")
+          example.data["the"].upcase!
+        end
+
+        modified_example = example.apply_filters([filter_1, filter_2], request_env)
+        modified_example.data.should eq("the" => "DATA1")
+      end
+
+      it 'does not modify the original example object' do
+        data_1 = { "hash" => { "a" => 5 }, "array" => [1, { "b" => 6 }] }
+        data_2 = { "hash" => { "a" => 5 }, "array" => [1, { "b" => 6 }] }
+
+        example = EndpointExample.new(data_1, definition)
+        filter = lambda do |example, request_env|
+          example.data["other"] = :foo
+          example.data["hash"]["a"] = 6
+          example.data["array"].last["c"] = 3
+          example.data["array"] << 0
+        end
+
+        modified_example = example.apply_filters([filter], request_env)
+        example.data.should eq(data_2)
+      end
+
+      it 'returns an unmodified example when given no filters' do
+        example.apply_filters([], request_env)
+        example.data.should eq(data)
+      end
+
+      it 'passes the given request_env onto the filters' do
+        passed_request_env = nil
+        filter = lambda do |_, req_env|
+          passed_request_env = req_env
+        end
+
+        example.apply_filters([filter], :the_request_env)
+        passed_request_env.should be(:the_request_env)
       end
     end
   end

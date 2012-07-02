@@ -236,5 +236,45 @@ module Interpol
     def validate!
       definition.validate_data!(data)
     end
+
+    def apply_filters(filter_blocks, request_env)
+      filter_blocks.each_with_object(deep_dup) do |filter, example|
+        filter.call(example, request_env)
+      end
+    end
+
+  protected
+
+    attr_writer :data
+
+  private
+
+    def deep_dup
+      dup.tap { |d| d.data = dup_hash(d.data) }
+    end
+
+    DUPPERS = { Hash => :dup_hash, Array => :dup_array }
+
+    def dup_hash(hash)
+      duplicate = hash.dup
+      duplicate.each_pair do |k,v|
+        duplicate[k] = dup_object(v)
+      end
+      duplicate
+    end
+
+    def dup_array(array)
+      duplicate = array.dup
+      duplicate.each_with_index do |o, index|
+        duplicate[index] = dup_object(o)
+      end
+      duplicate
+    end
+
+    def dup_object(o)
+      dupper = DUPPERS[o.class]
+      return o unless dupper
+      send(dupper, o)
+    end
   end
 end
