@@ -411,7 +411,7 @@ module Interpol
     end
 
     describe '#apply_filters' do
-      let(:filter_1) { lambda { |example, request_env| example.data["the"] = "data1" } }
+      let(:filter_1) { lambda { |ex, request_env| ex.data["the"] = "data1" } }
       let(:request_env) { { "a" => "hash" } }
 
       it 'applies a filter and returns modified data' do
@@ -420,9 +420,9 @@ module Interpol
       end
 
       it 'chains multiple filters, passing the modified example onto each' do
-        filter_2 = lambda do |example, request_env|
-          example.data.should eq("the" => "data1")
-          example.data["the"].upcase!
+        filter_2 = lambda do |ex, request_env|
+          ex.data.should eq("the" => "data1")
+          ex.data["the"].upcase!
         end
 
         modified_example = example.apply_filters([filter_1, filter_2], request_env)
@@ -434,11 +434,11 @@ module Interpol
         data_2 = { "hash" => { "a" => 5 }, "array" => [1, { "b" => 6 }] }
 
         example = EndpointExample.new(data_1, definition)
-        filter = lambda do |example, request_env|
-          example.data["other"] = :foo
-          example.data["hash"]["a"] = 6
-          example.data["array"].last["c"] = 3
-          example.data["array"] << 0
+        filter = lambda do |ex, request_env|
+          ex.data["other"] = :foo
+          ex.data["hash"]["a"] = 6
+          ex.data["array"].last["c"] = 3
+          ex.data["array"] << 0
         end
 
         modified_example = example.apply_filters([filter], request_env)
