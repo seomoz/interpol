@@ -19,9 +19,11 @@ module Interpol
       end
 
       def example_for(endpoint, version, message_type)
-        endpoint.find_example_for!(version, message_type)
+        example = endpoint.find_example_for!(version, message_type)
       rescue ArgumentError
         interpol_config.request_version_unavailable(self, version, endpoint.available_versions)
+      else
+        example.apply_filters(interpol_config.filter_example_data_blocks, request.env)
       end
     end
 
