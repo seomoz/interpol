@@ -128,7 +128,8 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint_name, :message_type, :version, :schema, :path_params, :query_params, :examples
+    attr_reader :endpoint_name, :message_type, :version, :schema,
+                :path_params, :query_params, :examples
 
     def initialize(endpoint_name, version, message_type, definition)
       @endpoint_name  = endpoint_name
