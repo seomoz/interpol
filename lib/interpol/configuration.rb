@@ -33,7 +33,7 @@ module Interpol
 
   # Public: Defines interpol configuration.
   class Configuration
-    attr_reader :endpoint_definition_files, :endpoints
+    attr_reader :endpoint_definition_files, :endpoints, :filter_example_data_blocks
     attr_accessor :validation_mode, :documentation_title, :endpoint_definition_merge_key_files
 
     def initialize
@@ -41,6 +41,7 @@ module Interpol
       self.endpoint_definition_merge_key_files = []
       self.documentation_title = "API Documentation Provided by Interpol"
       register_default_callbacks
+      @filter_example_data_blocks = []
 
       yield self if block_given?
     end
@@ -83,6 +84,10 @@ module Interpol
 
     def request_version_unavailable(execution_context, *args)
       execution_context.instance_exec(*args, &@unavailable_request_version_block)
+    end
+
+    def filter_example_data(&block)
+      filter_example_data_blocks << block
     end
 
     def self.default

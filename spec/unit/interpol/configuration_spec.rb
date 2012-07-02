@@ -266,6 +266,18 @@ module Interpol
       end
     end
 
+    describe "#filter_example_data" do
+      it 'adds the block to the #filter_example_data_blocks list' do
+        block_1 = lambda { }
+        block_2 = lambda { }
+
+        config.filter_example_data(&block_1)
+        config.filter_example_data(&block_2)
+
+        config.filter_example_data_blocks.should eq([block_1, block_2])
+      end
+    end
+
     describe "#customized_duplicate" do
       it 'yields a configuration instance' do
         cd = nil
