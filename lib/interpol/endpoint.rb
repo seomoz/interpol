@@ -252,7 +252,7 @@ module Interpol
   private
 
     def deep_dup
-      dup.tap { |d| d.data = dup_hash(d.data) }
+      dup.tap { |d| d.data = dup_object(d.data) }
     end
 
     DUPPERS = { Hash => :dup_hash, Array => :dup_array }

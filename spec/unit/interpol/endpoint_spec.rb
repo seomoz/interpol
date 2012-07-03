@@ -429,7 +429,7 @@ module Interpol
         modified_example.data.should eq("the" => "DATA1")
       end
 
-      it 'does not modify the original example object' do
+      it 'does not modify the original example hash' do
         data_1 = { "hash" => { "a" => 5 }, "array" => [1, { "b" => 6 }] }
         data_2 = { "hash" => { "a" => 5 }, "array" => [1, { "b" => 6 }] }
 
@@ -444,6 +444,21 @@ module Interpol
         modified_example = example.apply_filters([filter], request_env)
         example.data.should eq(data_2)
       end
+
+      it 'does not modify the original example array' do
+        data_1 = [1, { "b" => 6 }]
+        data_2 = [1, { "b" => 6 }]
+
+        example = EndpointExample.new(data_1, definition)
+        filter = lambda do |ex, request_env|
+          ex.data.last["c"] = 3
+          ex.data << 0
+        end
+
+        modified_example = example.apply_filters([filter], request_env)
+        example.data.should eq(data_2)
+      end
+
 
       it 'returns an unmodified example when given no filters' do
         example.apply_filters([], request_env)
