@@ -1,5 +1,6 @@
 require 'fast_spec_helper'
 require 'interpol/test_helper'
+require 'rack/request'
 
 module Interpol
   describe TestHelper, :clean_endpoint_dir do
@@ -50,6 +51,19 @@ module Interpol
         Interpol.default_configuration { |c| c.endpoint_definition_files = Dir["#{dir}/*.yml"] }
         group = within_group { define_interpol_example_tests }
         num_tests_from(group).should eq(3)
+      end
+
+      it 'applies any filter_ex_data blocks before validating the examples' do
+        Interpol.default_configuration do |c|
+          c.filter_example_data do |example, request_env|
+            request = Rack::Request.new(request_env)
+            example.data["name"] = request.url
+          end
+        end
+
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+        run(test_group)
+        results_from(test_group).should =~ ['passed', 'passed', 'passed']
       end
     end
 

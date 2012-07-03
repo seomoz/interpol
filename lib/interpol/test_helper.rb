@@ -1,8 +1,22 @@
 require 'interpol'
+require 'rack/mock'
 
 module Interpol
   module TestHelper
     module Common
+      def define_interpol_example_tests(&block)
+        config = Configuration.default.customized_duplicate(&block)
+
+        each_example_from(config.endpoints) do |endpoint, definition, example, example_index|
+          description = "#{endpoint.name} (v #{definition.version}) has " +
+                        "valid data for example #{example_index + 1}"
+          example = filtered_example(config, endpoint, example)
+          define_test(description) { example.validate! }
+        end
+      end
+
+    private
+
       def each_example_from(endpoints)
         endpoints.each do |endpoint|
           endpoint.definitions.each do |definitions|
@@ -15,14 +29,10 @@ module Interpol
         end
       end
 
-      def define_interpol_example_tests(&block)
-        config = Configuration.default.customized_duplicate(&block)
-
-        each_example_from(config.endpoints) do |endpoint, definition, example, example_index|
-          description = "#{endpoint.name} (v #{definition.version}) has " +
-                        "valid data for example #{example_index + 1}"
-          define_test(description) { example.validate! }
-        end
+      def filtered_example(config, endpoint, example)
+        path = endpoint.route.gsub(':', '') # turn path params into static segments
+        rack_env = ::Rack::MockRequest.env_for(path)
+        example.apply_filters(config.filter_example_data_blocks, rack_env)
       end
     end
 
