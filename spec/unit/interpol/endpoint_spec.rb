@@ -459,7 +459,6 @@ module Interpol
         example.data.should eq(data_2)
       end
 
-
       it 'returns an unmodified example when given no filters' do
         example.apply_filters([], request_env)
         example.data.should eq(data)
