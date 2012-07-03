@@ -178,6 +178,17 @@ Interpol.default_configuration do |config|
   #
   # Used by Interpol::DocumentationApp.
   config.documentation_title = "Acme Widget API Documentaton"
+
+  # Sets a callback that can be used to filter example data.
+  # This is useful when you want your stub app to serve data
+  # that is a bit dynamic. You can set multiple of these, and
+  # each will be called in declared order.
+  #
+  # Used by Interpol::StubApp, Interpol::TestHelper::RSpec and
+  # Interpol::TestHelper::TestUnit.
+  config.filter_example_data do |example, request_env|
+    example.data["current_url"] = Rack::Request.new(request_env).url
+  end
 end
 
 ```
