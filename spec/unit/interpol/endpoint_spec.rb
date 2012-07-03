@@ -96,7 +96,7 @@ module Interpol
       it 'raises an error when given a version that matches no definition' do
         expect {
           endpoint.find_definition!('2.1', 'response')
-        }.to raise_error(ArgumentError)
+        }.to raise_error(NoEndpointDefinitionFoundError)
       end
     end
 
@@ -111,7 +111,7 @@ module Interpol
       it 'raises an error when given a version it does not have' do
         expect {
           endpoint.find_example_for!('2.1', 'response')
-        }.to raise_error(ArgumentError)
+        }.to raise_error(NoEndpointDefinitionFoundError)
       end
     end
 

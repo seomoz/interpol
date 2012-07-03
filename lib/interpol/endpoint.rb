@@ -52,7 +52,7 @@ module Interpol
       @definitions.fetch([message_type, version]) do
         message = "No definition found for #{name} endpoint for version #{version}"
         message << " and message_type #{message_type}"
-        raise ArgumentError.new(message)
+        raise NoEndpointDefinitionFoundError.new(message)
       end
     end
 
