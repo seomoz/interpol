@@ -117,7 +117,7 @@ should render valid JSON) and `http://localhost:4567/contacts/bad`
 generated from the endpoint definition. Let's start it:
 
 ```
-rake boot_stub_app
+rake boot_doc_app
 ```
 
 Then visit `localhost:3200/` in your web browser.
