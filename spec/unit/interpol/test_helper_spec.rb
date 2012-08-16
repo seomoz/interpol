@@ -70,7 +70,7 @@ module Interpol
     describe "RSpec" do
       it_behaves_like "interpol example test definer" do
         def within_group(&block)
-          describe "generated examples" do
+          RSpec::Core::ExampleGroup.describe "generated examples" do
             extend Interpol::TestHelper::RSpec
             module_eval(&block)
           end
