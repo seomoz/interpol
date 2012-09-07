@@ -157,37 +157,44 @@ module Interpol
     end
 
     let(:version)  { '1.0' }
+    let(:endpoint) { fire_double("Interpol::Endpoint").as_null_object }
 
-    it 'initializes the endpoint_name' do
-      endpoint_def = EndpointDefinition.new("e-name", version, 'response', build_hash)
-      endpoint_def.endpoint_name.should eq("e-name")
+    it 'initializes the endpoint' do
+      endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)
+      endpoint_def.endpoint.should be(endpoint)
+    end
+
+    it 'exposes the endpoint name' do
+      endpoint.stub(:name => 'e-name')
+      endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)
+      endpoint_def.endpoint_name.should eq('e-name')
     end
 
     it 'initializes the version' do
-      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'response', build_hash)
       endpoint_def.version.should eq('2.3')
     end
 
     it 'default initialized the message type' do
-      endpoint_def = EndpointDefinition.new("name", '2.3', 'response', build_hash)
+      endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'response', build_hash)
       endpoint_def.message_type.should eq('response')
     end
 
     it 'initializes the message type' do
       hash = build_hash('message_type' => 'request')
-      endpoint_def = EndpointDefinition.new("name", '2.3', 'request', hash)
+      endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'request', hash)
       endpoint_def.message_type.should eq('request')
     end
 
     it 'initializes the example data' do
       hash = build_hash('examples' => [{'a' => 5}])
-      v = EndpointDefinition.new("name", version, 'response', hash)
+      v = EndpointDefinition.new(endpoint, version, 'response', hash)
       v.examples.map(&:data).should eq([{ 'a' => 5 }])
     end
 
     it 'initializes the schema' do
       hash = build_hash('schema' => {'the' => 'schema'})
-      v = EndpointDefinition.new("name", version, 'response', hash)
+      v = EndpointDefinition.new(endpoint, version, 'response', hash)
       v.schema['the'].should eq('schema')
     end
 
@@ -195,14 +202,14 @@ module Interpol
       it "raises an error if not initialized with '#{attr}'" do
         hash = build_hash.reject { |k, v| k == attr }
         expect {
-          EndpointDefinition.new("name", version, 'response', hash)
+          EndpointDefinition.new(endpoint, version, 'response', hash)
         }.to raise_error(/key not found.*#{attr}/)
       end
     end
 
     %w[ path_params query_params ].each do |attr|
       it "initializes #{attr} to an empty hash if no value is provided" do
-        v = EndpointDefinition.new("name", version, 'response', build_hash)
+        v = EndpointDefinition.new(endpoint, version, 'response', build_hash)
         v.send(attr).should eq({})
       end
     end
@@ -211,7 +218,7 @@ module Interpol
       it "initializes #{attr} to the provided value" do
         params = {'key' => 'param'}
         hash = build_hash(attr => params)
-        v = EndpointDefinition.new("name", version, 'response', hash)
+        v = EndpointDefinition.new(endpoint, version, 'response', hash)
         v.send(attr).should eq(params)
       end
     end
@@ -223,7 +230,7 @@ module Interpol
       } end
 
       subject {
-        EndpointDefinition.new("e-name", version, 'response', build_hash('schema' => schema))
+        EndpointDefinition.new(endpoint, version, 'response', build_hash('schema' => schema))
       }
 
       it 'raises a validation error when given data of the wrong type' do

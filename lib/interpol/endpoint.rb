@@ -1,5 +1,6 @@
 require 'json-schema'
 require 'interpol/errors'
+require 'forwardable'
 
 module JSON
   # The JSON-schema namespace
@@ -118,7 +119,7 @@ module Interpol
         fetch_from(definition, 'versions').each do |version|
           message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
           key = [message_type, version]
-          endpoint_definition = EndpointDefinition.new(name, version, message_type, definition)
+          endpoint_definition = EndpointDefinition.new(self, version, message_type, definition)
           definitions[key] << endpoint_definition
           all_definitions << endpoint_definition
         end
@@ -139,11 +140,13 @@ module Interpol
   # Provides the means to validate data against that version of the schema.
   class EndpointDefinition
     include HashFetcher
-    attr_reader :endpoint_name, :message_type, :version, :schema,
+    attr_reader :endpoint, :message_type, :version, :schema,
                 :path_params, :query_params, :examples
+    extend Forwardable
+    def_delegators :endpoint, :route
 
-    def initialize(endpoint_name, version, message_type, definition)
-      @endpoint_name  = endpoint_name
+    def initialize(endpoint, version, message_type, definition)
+      @endpoint       = endpoint
       @message_type   = message_type
       @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
       @version        = version
@@ -152,6 +155,10 @@ module Interpol
       @query_params   = definition.fetch('query_params', {})
       @examples       = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
       make_schema_strict!(@schema)
+    end
+
+    def endpoint_name
+      @endpoint.name
     end
 
     def validate_data!(data)
