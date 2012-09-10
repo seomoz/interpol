@@ -184,7 +184,15 @@ module Interpol
       @example_status_code ||= @status_codes.example_status_code
     end
 
+    def parse_request_params(request_params)
+      request_params_parser.parse(request_params)
+    end
+
   private
+
+    def request_params_parser
+      @request_params_parser ||= RequestParamsParser.new(self)
+    end
 
     def make_schema_strict!(raw_schema, modify_object=true)
       return unless Hash === raw_schema

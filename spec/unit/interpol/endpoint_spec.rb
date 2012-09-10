@@ -223,6 +223,25 @@ module Interpol
       end
     end
 
+    describe "#parse_request_params" do
+      let(:parser_class) { fire_replaced_class_double("Interpol::RequestParamsParser") }
+      let(:parser)       { fire_double("Interpol::RequestParamsParser") }
+      let(:definition)   { EndpointDefinition.new(endpoint, version, 'response', build_hash) }
+
+      it 'parses the given params using a RequestParamsParser' do
+        parser_class.should_receive(:new).
+                     with(definition).
+                     and_return(parser)
+
+        parser.should_receive(:parse).
+               with("the" => "params").
+               and_return("parsed" => "params")
+
+        parsed = definition.parse_request_params("the" => "params")
+        parsed.should eq("parsed" => "params")
+      end
+    end
+
     describe "#validate_data" do
       let(:schema) do {
         'type'       => 'object',
