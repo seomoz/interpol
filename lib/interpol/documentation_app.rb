@@ -94,7 +94,7 @@ module Interpol
       attr_reader :app
 
       def initialize(config)
-        @app = Sinatra.new do
+        @app = ::Sinatra.new do
           dir = File.dirname(File.expand_path(__FILE__))
           set :views, "#{dir}/documentation_app/views"
           set :public_folder, "#{dir}/documentation_app/public"

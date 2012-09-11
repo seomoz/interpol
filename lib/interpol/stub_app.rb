@@ -33,7 +33,7 @@ module Interpol
       attr_reader :app
 
       def initialize(config)
-        @app = Sinatra.new do
+        @app = ::Sinatra.new do
           set            :interpol_config, config
           helpers        Helpers
           not_found      { JSON.dump(:error => "The requested resource could not be found") }
