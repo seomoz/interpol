@@ -15,6 +15,10 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
     cane.abc_max = 13
     cane.add_threshold 'coverage/coverage_percent.txt', :==, 100
     cane.style_measure = 100
+
+    cane.abc_exclude = %w[
+      Interpol::Configuration#register_default_callbacks
+    ]
   end
 else
   task(:quality) { } # no-op

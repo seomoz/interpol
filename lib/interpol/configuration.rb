@@ -85,6 +85,14 @@ module Interpol
       execution_context.instance_exec(*args, &@unavailable_request_version_block)
     end
 
+    def on_invalid_sinatra_request_params(&block)
+      @invalid_sinatra_request_params_block = block
+    end
+
+    def sinatra_request_params_invalid(execution_context, *args)
+      execution_context.instance_exec(*args, &@invalid_sinatra_request_params_block)
+    end
+
     def filter_example_data(&block)
       filter_example_data_blocks << block
     end
@@ -143,6 +151,10 @@ module Interpol
                   "Requested: #{requested}. " +
                   "Available: #{available}"
         halt 406, JSON.dump(:error => message)
+      end
+
+      on_invalid_sinatra_request_params do |error|
+        halt 400, JSON.dump(:error => error.message)
       end
     end
   end
