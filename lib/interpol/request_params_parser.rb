@@ -69,7 +69,19 @@ module Interpol
       end
 
       def property_defs_from(meth)
-        @endpoint_definition.send(meth).fetch('properties')
+        schema = @endpoint_definition.send(meth)
+
+        unless schema['type'] == 'object'
+          raise InvalidParamsDefinitionError,
+            "The #{meth} of #{@endpoint_definition.description} " +
+            "is not typed as an object expected."
+        end
+
+        schema.fetch('properties') do
+          raise InvalidParamsDefinitionError,
+            "The #{meth} of #{@endpoint_definition.description} " +
+            "does not contain 'properties' as required."
+        end
       end
 
       def build_params_schema
@@ -243,6 +255,9 @@ module Interpol
 
     # Raised when a parameter value cannot be parsed.
     CannotBeParsedError = Class.new(ArgumentError)
+
+    # Raised when a params definition is invalid.
+    InvalidParamsDefinitionError = Class.new(ArgumentError)
   end
 end
 

@@ -28,6 +28,26 @@ module Interpol
           expect { parser }.to raise_error(/#{type} params are not supported/)
         end
       end
+
+      %w[ path_params query_params ].each do |param_type|
+        it "raises an error if #{param_type} does not have 'type: object'" do
+          endpoint_definition.send(param_type)['type'] = 'array'
+          expect { parser }.to raise_error { |error|
+            error.message.should include(param_type)
+            error.message.should include(endpoint_definition.endpoint_name)
+            error.message.should include("object")
+          }
+        end
+
+        it "raises an error if #{param_type} lacks property definitions" do
+          endpoint_definition.send(param_type).delete('properties')
+          expect { parser }.to raise_error { |error|
+            error.message.should include(param_type)
+            error.message.should include(endpoint_definition.endpoint_name)
+            error.message.should include("properties")
+          }
+        end
+      end
     end
 
     describe '#validate!' do
