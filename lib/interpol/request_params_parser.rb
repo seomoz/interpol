@@ -44,7 +44,7 @@ module Interpol
 
       def validate_path_params_valid_for_route!
         route = @endpoint_definition.route
-        invalid_params = @endpoint_definition.path_params.keys.reject do |param|
+        invalid_params = property_defs_from(:path_params).keys.reject do |param|
           route =~ %r</:#{Regexp.escape(param)}(/|$)>
         end
 
@@ -58,8 +58,8 @@ module Interpol
       end
 
       def param_definitions
-        @param_definitions ||= @endpoint_definition.path_params.merge \
-          @endpoint_definition.query_params
+        @param_definitions ||= property_defs_from(:path_params).merge \
+          property_defs_from(:query_params)
       end
 
     private
@@ -68,16 +68,31 @@ module Interpol
         @description ||= "#{@endpoint_definition.description} - request params"
       end
 
+      def property_defs_from(meth)
+        @endpoint_definition.send(meth).fetch('properties')
+      end
+
       def build_params_schema
-        { 'type'                 => 'object',
-          'properties'           => adjusted_definitions,
-          'additionalProperties' => false }
+        path_params = @endpoint_definition.path_params
+        query_params = @endpoint_definition.query_params
+
+        query_params.merge(path_params).tap do |schema|
+          schema['properties'] = adjusted_definitions
+          schema['additionalProperties'] = false if no_additional_properties?
+        end
       end
 
       def adjusted_definitions
         param_definitions.each_with_object({}) do |(name, schema), hash|
           hash[name] = adjusted_schema(schema)
         end
+      end
+
+      def no_additional_properties?
+        [
+          @endpoint_definition.path_params,
+          @endpoint_definition.query_params
+        ].none? { |params| params['additionalProperties'] }
       end
 
       STRING_EQUIVALENTS = {

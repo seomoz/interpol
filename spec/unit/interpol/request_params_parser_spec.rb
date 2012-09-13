@@ -17,7 +17,8 @@ module Interpol
 
     context 'when instantiated' do
       it 'validates that all path_params are part of the route' do
-        endpoint_definition.path_params['foo'] = { :type => 'string' }
+        properties = endpoint_definition.path_params.fetch("properties")
+        properties['foo'] = { :type => 'string' }
         expect { parser }.to raise_error(/foo/)
       end
 
@@ -129,16 +130,39 @@ module Interpol
         }.to raise_error(/user_id/)
 
         endpoint_definition.path_params.
+                            fetch('properties').
                             fetch('user_id')['optional'] = true
 
         new_parser = RequestParamsParser.new(endpoint_definition)
         new_parser.validate!(without_user_id)
       end
 
-      it 'does not allow undefined params' do
+      it 'does not allow additional undefined params' do
         expect {
           parser.validate!(valid_params.merge 'something_else' => 'a')
         }.to raise_error(/something_else/)
+      end
+
+      it 'allows additional properties if path_params has additionalProperties: true' do
+        endpoint_definition.path_params['additionalProperties'] = true
+        parser.validate!(valid_params.merge 'something_else' => 'a')
+      end
+
+      it 'allows additional properties if query_params has additionalProperties: true' do
+        endpoint_definition.query_params['additionalProperties'] = true
+        parser.validate!(valid_params.merge 'something_else' => 'a')
+      end
+
+      it 'supports top-level schema declarations like patternProperties' do
+        endpoint_definition.path_params['patternProperties'] = {
+          '\\d+ Feet' => { 'type' => 'integer' }
+        }
+
+        parser.validate!(valid_params.merge '23 Feet' => 18)
+
+        expect {
+          parser.validate!(valid_params.merge '23 Feet' => 'string')
+        }.to raise_error(/23 Feet/)
       end
     end
 
@@ -225,7 +249,7 @@ module Interpol
       end
 
       def ordered_formats_for(name)
-        param = endpoint_definition.query_params.fetch(name)
+        param = endpoint_definition.query_params.fetch('properties').fetch(name)
         param.fetch('type').map { |t| t.fetch('format') }
       end
 
