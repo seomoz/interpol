@@ -42,6 +42,11 @@ module Interpol
       JSON.parse(last_response.body)
     end
 
+    it 'has a name since some tools except all classes to have a name' do
+      app.should be_a(Class)
+      app.name.should include("Interpol", "StubApp", "anon")
+    end
+
     it 'falls back to the default configuration' do
       Interpol.default_configuration { |c| c.api_version '1.0' }
 

@@ -38,6 +38,11 @@ module Interpol
       end
     end
 
+    it 'has a name since some tools except all classes to have a name' do
+      app.should be_a(Class)
+      app.name.should include("Interpol", "DocumentationApp", "anon")
+    end
+
     it 'renders documentation' do
       get '/'
       last_response.body.should include("project_list", "/users/:user_id/projects")

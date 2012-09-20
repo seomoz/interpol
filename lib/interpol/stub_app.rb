@@ -39,6 +39,10 @@ module Interpol
           not_found      { JSON.dump(:error => "The requested resource could not be found") }
           before         { content_type "application/json;charset=utf-8" }
           get('/__ping') { JSON.dump(:message => "Interpol stub app running.") }
+
+          def self.name
+            "Interpol::StubApp (anonymous)"
+          end
         end
       end
 

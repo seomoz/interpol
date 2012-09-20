@@ -105,6 +105,10 @@ module Interpol
             erb :layout, :locals => { :endpoints => endpoints,
                                       :current_endpoint => current_endpoint }
           end
+
+          def self.name
+            "Interpol::DocumentationApp (anonymous)"
+          end
         end
       end
     end
