@@ -2,15 +2,34 @@ require 'interpol/request_params_parser'
 
 module Interpol
   module Sinatra
-    module RequestParamsParser
-      def self.add_to(app, &block)
+    # Parses and validates a sinatra params hash based on the
+    # endpoint definitions.
+    # Note that you use this like a sinatra middleware
+    # (using a `use` directive in the body of the sinatra class), but
+    # it hooks into sinatra differently so that it has access to the params.
+    # It's more like a mix-in, honestly, but we piggyback on `use` so that
+    # it can take a config block.
+    class RequestParamsParser
+      def initialize(app, &block)
+        @app = app
+        hook_into(app, &block)
+      end
+
+      def call(env)
+        @app.call(env)
+      end
+
+    private
+
+      def hook_into(app, &block)
+        return if defined?(app.settings.interpol_config)
         config = Configuration.default.customized_duplicate(&block)
 
-        app.class_eval do
+        app.class.class_eval do
           alias unparsed_params params
           helpers SinatraHelpers
           set :interpol_config, config
-          enable :parse_params
+          enable :parse_params unless settings.respond_to?(:parse_params)
           include SinatraOverriddes
         end
       end

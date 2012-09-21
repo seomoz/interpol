@@ -26,7 +26,7 @@ module Interpol
         _endpoint = endpoint
 
         ::Sinatra.new do
-          RequestParamsParser.add_to self do |config|
+          use RequestParamsParser do |config|
             config.endpoints = [_endpoint]
             config.api_version '1.0'
             parser_configuration.call(config)
