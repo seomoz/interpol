@@ -208,9 +208,9 @@ module Interpol
     end
 
     %w[ path_params query_params ].each do |attr|
-      it "initializes #{attr} to an empty hash if no value is provided" do
+      it "initializes #{attr} to a default hash if no value is provided" do
         v = EndpointDefinition.new(endpoint, version, 'response', build_hash)
-        v.send(attr).should eq({})
+        v.send(attr).should eq(EndpointDefinition::DEFAULT_PARAM_HASH)
       end
     end
 

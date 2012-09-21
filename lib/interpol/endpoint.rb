@@ -145,15 +145,17 @@ module Interpol
     extend Forwardable
     def_delegators :endpoint, :route
 
+    DEFAULT_PARAM_HASH = { 'type' => 'object', 'properties' => {} }
+
     def initialize(endpoint, version, message_type, definition)
       @endpoint       = endpoint
       @message_type   = message_type
       @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
       @version        = version
       @schema         = fetch_from(definition, 'schema')
-      @path_params    = definition.fetch('path_params', {})
-      @query_params   = definition.fetch('query_params', {})
-      @examples       = fetch_from(definition, 'examples').map { |e| EndpointExample.new(e, self) }
+      @path_params    = definition.fetch('path_params', DEFAULT_PARAM_HASH.dup)
+      @query_params   = definition.fetch('query_params', DEFAULT_PARAM_HASH.dup)
+      @examples       = extract_examples_from(definition)
       make_schema_strict!(@schema)
     end
 
@@ -205,6 +207,12 @@ module Interpol
 
       raw_schema['additionalProperties'] ||= false
       raw_schema['required'] = !raw_schema.delete('optional')
+    end
+
+    def extract_examples_from(definition)
+      fetch_from(definition, 'examples').map do |ex|
+        EndpointExample.new(ex, self)
+      end
     end
   end
 
