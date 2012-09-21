@@ -223,6 +223,23 @@ module Interpol
       end
     end
 
+    describe "#request?" do
+      it 'returns true if message_type == request' do
+        ed = EndpointDefinition.new(endpoint, version, 'request', build_hash)
+        ed.should be_request
+      end
+
+      it 'returns false if message_type == response' do
+        ed = EndpointDefinition.new(endpoint, version, 'response', build_hash)
+        ed.should_not be_request
+      end
+
+      it 'returns false if message_type == something else' do
+        ed = EndpointDefinition.new(endpoint, version, 'something_else', build_hash)
+        ed.should_not be_request
+      end
+    end
+
     describe "#parse_request_params" do
       let(:parser_class) { fire_replaced_class_double("Interpol::RequestParamsParser") }
       let(:parser)       { fire_double("Interpol::RequestParamsParser") }

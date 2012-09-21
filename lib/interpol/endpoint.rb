@@ -159,6 +159,10 @@ module Interpol
       make_schema_strict!(@schema)
     end
 
+    def request?
+      message_type == "request"
+    end
+
     def endpoint_name
       @endpoint.name
     end
@@ -190,11 +194,11 @@ module Interpol
       request_params_parser.parse(request_params)
     end
 
-  private
-
     def request_params_parser
       @request_params_parser ||= RequestParamsParser.new(self)
     end
+
+  private
 
     def make_schema_strict!(raw_schema, modify_object=true)
       return unless Hash === raw_schema

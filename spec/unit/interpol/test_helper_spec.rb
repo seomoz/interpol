@@ -12,6 +12,7 @@ module Interpol
         method: GET
         definitions:
           - versions: ["1.0"]
+            message_type: response
             schema:
               type: object
               properties:
@@ -34,7 +35,7 @@ module Interpol
         end
       end
 
-      it 'generates a test per data example per definition per endpoint' do
+      it 'generates a test per data example per definition per endpoint + a test per definition' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('["1.0"]', '["1.0", "2.0"]')
         write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project_list", "project_list_2")
         num_tests_from(test_group).should eq(9)
@@ -64,6 +65,43 @@ module Interpol
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
         results_from(test_group).should =~ ['passed', 'passed', 'passed']
+      end
+
+      context 'request path schema validation' do
+        let_without_indentation(:endpoint_definition_yml) do <<-EOF
+          ---
+          name: project_list
+          route: /users/:user_id/projects
+          method: GET
+          definitions:
+            - versions: ["1.0"]
+              message_type: request
+              path_params:
+                type: object
+                properties:
+                  user_id: { type: string }
+              schema: {}
+              examples: {}
+          EOF
+        end
+
+        it 'generates a test per endpoint definition' do
+          write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('["1.0"]', '["1.0", "2.0"]')
+          write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project_list", "project_list_2")
+          num_tests_from(test_group).should eq(3)
+        end
+
+        it 'generates tests that pass if the params are declared correctly' do
+          write_file "#{dir}/e1.yml", endpoint_definition_yml
+          run(test_group)
+          results_from(test_group).should == ['passed']
+        end
+
+        it 'generates tests that fail if the params are declared incorrectly' do
+          write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('object', 'oject')
+          run(test_group)
+          results_from(test_group).should == ['failed']
+        end
       end
     end
 
