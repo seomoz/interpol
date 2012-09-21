@@ -10,6 +10,7 @@ module Interpol
           alias unparsed_params params
           helpers SinatraHelpers
           set :interpol_config, config
+          enable :parse_params
           include SinatraOverriddes
         end
       end
@@ -71,7 +72,7 @@ module Interpol
         # matching.
         def process_route(*method_args)
           super do |*block_args|
-            validate_params
+            validate_params if settings.parse_params?
             yield *block_args
           end
         end

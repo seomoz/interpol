@@ -143,6 +143,16 @@ module Interpol
         last_response.status.should eq(404)
       end
 
+      it 'provides a means to disable param parsing' do
+        on_get { 'OK' } # don't use the params
+
+        app.disable :parse_params
+
+        get '/users/foo/projects/ruby'
+        last_response.status.should eq(200)
+        last_response.body.should eq("OK")
+      end
+
       context 'when the sinatra app is mounted using Rack::Builder' do
         alias sinatra_app app
 
