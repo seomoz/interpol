@@ -44,16 +44,22 @@ module Interpol
       @name        = fetch_from(endpoint_hash, 'name')
       @route       = fetch_from(endpoint_hash, 'route')
       @method      = fetch_from(endpoint_hash, 'method').downcase.to_sym
-      @definitions = extract_definitions_from(endpoint_hash)
+
+      @definitions_hash, @all_definitions = extract_definitions_from(endpoint_hash)
+
       validate_name!
     end
 
     def find_definition!(version, message_type)
-      @definitions.fetch([message_type, version]) do
+      find_definition(version, message_type) do
         message = "No definition found for #{name} endpoint for version #{version}"
         message << " and message_type #{message_type}"
         raise NoEndpointDefinitionFoundError.new(message)
       end
+    end
+
+    def find_definition(version, message_type, &block)
+      @definitions_hash.fetch([message_type, version], &block)
     end
 
     def find_example_for!(version, message_type)
@@ -65,17 +71,19 @@ module Interpol
     end
 
     def available_versions
-      definitions.map { |d| d.first.version }
+      @all_definitions.inject(Set.new) do |set, definition|
+        set << definition.version
+      end.to_a
     end
 
     def definitions
       # sort all requests before all responses
       # sort higher version numbers before lower version numbers
-      @definitions.values.sort do |x,y|
-        if x.first.message_type == y.first.message_type
-          y.first.version <=> x.first.version
+      @all_definitions.sort do |x,y|
+        if x.message_type == y.message_type
+          y.version <=> x.version
         else
-          x.first.message_type <=> y.first.message_type
+          x.message_type <=> y.message_type
         end
       end
     end
@@ -104,16 +112,19 @@ module Interpol
 
     def extract_definitions_from(endpoint_hash)
       definitions = Hash.new { |h, k| h[k] = [] }
+      all_definitions = []
 
       fetch_from(endpoint_hash, 'definitions').each do |definition|
         fetch_from(definition, 'versions').each do |version|
           message_type = definition.fetch('message_type', DEFAULT_MESSAGE_TYPE)
           key = [message_type, version]
-          definitions[key] << EndpointDefinition.new(name, version, message_type, definition)
+          endpoint_definition = EndpointDefinition.new(name, version, message_type, definition)
+          definitions[key] << endpoint_definition
+          all_definitions << endpoint_definition
         end
       end
 
-      definitions
+      return definitions, all_definitions
     end
 
     def validate_name!

@@ -64,14 +64,14 @@ module Interpol
     describe "#definitions" do
       it 'returns each definition object, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 3.2 1.2 ])
+        endpoint.definitions.map { |d| d.version }.should eq(%w[ 3.2 1.2 ])
       end
 
       it 'returns each definition object, ordered by message type' do
         full_definitions_array = (definitions_array + request_definition_array)
         endpoint = Endpoint.new(build_hash('definitions' => full_definitions_array))
-        endpoint.definitions.map{|d|d.first.version}.should eq(%w[ 1.1 3.2 1.2 ])
-        endpoint.definitions.map{|d|d.first.message_type}.should eq(%w[ request response response ])
+        endpoint.definitions.map { |d| d.version }.should eq(%w[ 1.1 3.2 1.2 ])
+        endpoint.definitions.map { |d| d.message_type }.should eq(%w[ request response response ])
       end
 
     end

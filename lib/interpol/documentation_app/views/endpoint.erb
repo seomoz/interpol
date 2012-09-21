@@ -3,15 +3,13 @@
     <h1><%= endpoint.name %></h1>
     <h2><%= endpoint.method.to_s.upcase %> <%= endpoint.route %></h2>
 
-    <% endpoint.definitions.each do |definitions| %>
-      <% definitions.each do |definition| %>
-        <div class="versioned-endpoint-definition">
-          <h3><%= definition.message_type.capitalize %> - Version <%= definition.version %> - <%= definition.status_codes %></h3>
-          <br/>
-          <%= Interpol::Documentation.html_for_schema(definition.schema) %>
-        </div>
-        <hr/>
-      <% end %>
+    <% endpoint.definitions.each do |definition| %>
+      <div class="versioned-endpoint-definition">
+        <h3><%= definition.message_type.capitalize %> - Version <%= definition.version %> - <%= definition.status_codes %></h3>
+        <br/>
+        <%= Interpol::Documentation.html_for_schema(definition.schema) %>
+      </div>
+      <hr/>
     <% end %>
   </div>
 </div><!--/span-->

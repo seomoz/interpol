@@ -168,7 +168,9 @@ module Interpol
         def assert_expected_endpoint
           config.endpoints.size.should eq(1)
           endpoint = config.endpoints.first
-          endpoint.definitions.first.each do |definitions|
+          defs = endpoint.definitions
+          defs.should have_at_least(1).entry
+          defs.each do |definitions|
             definitions.schema.fetch("properties").should have_key("name")
           end
         end

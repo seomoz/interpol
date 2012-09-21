@@ -18,10 +18,9 @@ module Interpol
     end
 
   private
+
     def find_definitions_for(endpoint, version, message_type)
-      endpoint.definitions.find do |d|
-          d.first.version == version && d.first.message_type == message_type
-      end || []
+      endpoint.find_definition(version, message_type) { [] }
     end
 
     def with_endpoint_matching(method, path)
