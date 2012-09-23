@@ -79,7 +79,7 @@ module Interpol
     def definitions
       # sort all requests before all responses
       # sort higher version numbers before lower version numbers
-      @all_definitions.sort do |x,y|
+      @sorted_definitions ||= @all_definitions.sort do |x, y|
         if x.message_type == y.message_type
           y.version <=> x.version
         else
