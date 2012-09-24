@@ -22,6 +22,9 @@ definitions:
   ensure that your real API returns valid responses.
 * `Interpol::DocumentationApp` builds a sinatra app that renders
   documentation for your API based on the endpoint definitions.
+* `Interpol::Sinatra::RequestParamsParser` validates and parses
+  a sinatra `params` hash based on your endpoint params schema
+  definitions.
 
 You can use any of these tools individually or some combination of all
 of them.
@@ -51,6 +54,15 @@ name: user_projects
 route: /users/:user_id/projects
 method: GET
 definitions:
+  - message_type: request
+    versions: ["1.0"]
+    path_params:
+      type: object
+      properties:
+        user_id:
+          type: integer
+    schema: {}
+    examples: []
   - message_type: response
     versions: ["1.0"]
     status_codes: ["2xx", "404"]
@@ -107,6 +119,9 @@ Let's look at this YAML file, point-by-point:
   attribute that defaults to all status codes. Valid formats for a status code are 3
   characters. Each character must be a digit (0-9) or 'x' (wildcard). The following strings
   are all valid: "200", "4xx", "x0x".
+* `path_params` lists the path parameters that are used by a request to
+  this endpoint. You can also list `query_params` in the same manner.
+  These are both used by `Interpol::Sinatra::RequestParamsParser`.
 * The `schema` contains a [JSON schema](http://tools.ietf.org/html/draft-zyp-json-schema-03)
   description of the contents of the endpoint. This schema definition is used by the
   `SchemaValidation` middleware to ensure that your implementation of the endpoint
@@ -136,14 +151,15 @@ Interpol.default_configuration do |config|
   # This is useful when you need to extract the version from a
   # request header (e.g. Accept) or from the request URI.
   #
-  # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
+  # Needed by Interpol::StubApp, Interpol::ResponseSchemaValidator
+  # and Interpol::Sinatra::RequestParamsParser.
   config.api_version '1.0'
 
   # Determines the stub app response when the requested version is not
-  # available. This block will be eval'd in the context of the stub app
+  # available. This block will be eval'd in the context of a
   # sinatra application, so you can use sinatra helpers like `halt` here.
   #
-  # Needed by Interpol::StubApp.
+  # Needed by Interpol::StubApp and Interpol::Sinatra::RequestParamsParser.
   config.on_unavailable_request_version do |requested_version, available_versions|
     message = JSON.dump(
       "message" => "Not Acceptable",
@@ -188,6 +204,17 @@ Interpol.default_configuration do |config|
   # Interpol::TestHelper::TestUnit.
   config.filter_example_data do |example, request_env|
     example.data["current_url"] = Rack::Request.new(request_env).url
+  end
+
+  # Determines what to do when Interpol::Sinatra::RequestParamsParser
+  # detects invalid path or query parameters based on their schema
+  # definitions. This block will be eval'd in the context of your
+  # sinatra application so you can use any helper methods such as
+  # `halt`.
+  #
+  # Used by Interpol::Sinatra::RequestParamsParser.
+  config.on_invalid_sinatra_request_params do |error|
+    halt 400, JSON.dump(:error => error.message)
   end
 end
 
@@ -306,6 +333,56 @@ run doc_app
 
 Note: the documentation app is definitely a work-in-progress and I'm not
 a front-end/UI developer. I'd happily accept a pull request improving it!
+
+### Interpol::Sinatra::RequestParamsParser
+
+This Sinatra middleware does a few things:
+
+* It validates the path and query params according to the schema
+  definitions in your YAML files.
+* It replaces the `params` hash with an object that:
+  * Exposes a method for each defined parameter--so you can use
+    `params.user_id` rather than `params[:user_id]`. Undefined
+    params will raise a `NoMethodError` rather than getting `nil`
+    as you would with the normal params hash.
+  * Exposes a predicate method for each defined parameter -- so
+    you can use `params.user_id?` in a conditional rather than
+    `params.user_id`.
+  * Parses each parameter value into an appropriate object based on
+    the defined schema:
+    * An `integer` param will be exposed as a `Fixnum`.
+    * A `number` param will be exposed as a `Float`.
+    * A `null` param will be exposed as `nil` (rather than the empty
+      string).
+    * A `boolean` param will be exposed as `true` or `false` (rather
+      than the corresponding strings).
+    * A `string` param with a `date` format will be exposed as a `Date`.
+    * A `string` param with a `date-time` format will be exposed as a `Time`.
+    * A `string` param with a `uri` format will be exposed as `URI`.
+    * Anything that cannot be parsed into an object will be exposed as
+      its original `string` value.
+* It exposes the original params hash as `unparsed_params`.
+
+Usage:
+
+``` ruby
+require 'sinatra/base'
+require 'interpol/sinatra/request_params_parser'
+
+class MySinatraApp < Sinatra::Base
+  # The block is only necessary if you want to override the
+  # default config or have not set a default config.
+  use Interpol::Sinatra::RequestParamsParser do |config|
+    config.on_invalid_sinatra_request_params do |error|
+      halt 400, JSON.dump(:error => error.message)
+    end
+  end
+
+  get '/users/:user_id' do
+    JSON.dump User.find(params.user_id)
+  end
+end
+```
 
 ## Contributing
 

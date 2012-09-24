@@ -64,7 +64,7 @@ shared_context "an endpoint definition", :uses_request_params_parser_definition 
                 - type: string
                   format: date
         schema: {}
-        examples: {}
+        examples: []
     EOF
   end
 end
