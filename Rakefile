@@ -19,6 +19,10 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
     cane.abc_exclude = %w[
       Interpol::Configuration#register_default_callbacks
     ]
+
+    cane.style_exclude = %w[
+      spec/unit/interpol/sinatra/request_params_parser_spec.rb
+    ]
   end
 else
   task(:quality) { } # no-op

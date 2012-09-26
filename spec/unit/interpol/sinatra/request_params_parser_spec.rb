@@ -17,15 +17,22 @@ module Interpol
         @parser_configuration = block
       end
 
+      def sinatra_overrides(&block)
+        @sinatra_overrides = block
+      end
+
       let(:raw_endpoint_definition) { YAML.load endpoint_definition_yml }
       let(:endpoint) { Endpoint.new(raw_endpoint_definition) }
 
       let(:app) do
         endpoint_logic = @endpoint_logic || Proc.new { }
         parser_configuration = @parser_configuration || Proc.new { }
+        sinatra_overrides = @sinatra_overrides || Proc.new { }
         _endpoint = endpoint
 
         ::Sinatra.new do
+          include Module.new(&sinatra_overrides)
+
           use RequestParamsParser do |config|
             config.endpoints = [_endpoint]
             config.api_version '1.0'
@@ -172,6 +179,35 @@ module Interpol
 
           get '/mounted_path/users/12.23/projects/ruby'
           last_response.status.should eq(200)
+        end
+      end
+
+      context 'when a sinatra extension is loaded that processes routes multiple times (such as NewRelic)' do
+        before do
+          # This simulates how NewRelic hooks into Sinatra and runs `process_route`
+          # once on its own before allowing sinatra to do its normal dispatch.
+          # https://github.com/newrelic/rpm/blob/3.4.2.1/lib/new_relic/agent/instrumentation/sinatra.rb#L37
+          sinatra_overrides do
+            def dispatch!
+              process_route(/^\/users\/([^\/?#]+)\/projects\/([^\/?#]+)$/,
+                            ["user_id", "project_language"],
+                            []) { }
+
+              super
+            end
+          end
+        end
+
+        it 'does not fail due to double parsing the params (as originally occurred)' do
+          on_get { 'OK' } # don't use the params
+
+          get '/users/foo/projects/ruby'
+          last_response.status.should eq(400)
+          last_response.body.should include('user_id')
+
+          get '/users/12.23/projects/ruby'
+          last_response.status.should eq(200)
+          last_response.body.should eq("OK")
         end
       end
     end

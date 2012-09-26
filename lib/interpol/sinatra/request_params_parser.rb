@@ -89,11 +89,22 @@ module Interpol
         # We cannot access the full params (w/ path params) in a before hook,
         # due to the order that sinatra runs the hooks in relation to route
         # matching.
-        def process_route(*method_args)
+        def process_route(*method_args, &block)
+          return super unless SinatraOverriddes.being_processed_by_sinatra?(block)
+
           super do |*block_args|
             validate_params if settings.parse_params?
             yield *block_args
           end
+        end
+
+        def self.being_processed_by_sinatra?(block)
+          # In case the block is nil or we're on 1.8 w/o #source_location...
+          # Just assume the route is being processed by sinatra.
+          # It's an exceptional case for it to not be (e.g. NewRelic's
+          # Sinatra hook).
+          return true unless block.respond_to?(:source_location)
+          block.source_location.first.end_with?('sinatra/base.rb')
         end
       end
     end
