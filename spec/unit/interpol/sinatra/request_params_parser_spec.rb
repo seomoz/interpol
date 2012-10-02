@@ -21,6 +21,8 @@ module Interpol
         @sinatra_overrides = block
       end
 
+      attr_accessor :before_parser_middleware, :after_parser_middleware
+
       let(:raw_endpoint_definition) { YAML.load endpoint_definition_yml }
       let(:endpoint) { Endpoint.new(raw_endpoint_definition) }
 
@@ -28,16 +30,23 @@ module Interpol
         endpoint_logic = @endpoint_logic || Proc.new { }
         parser_configuration = @parser_configuration || Proc.new { }
         sinatra_overrides = @sinatra_overrides || Proc.new { }
+        _after_parser_middleware = after_parser_middleware
+        _before_parser_middleware = before_parser_middleware
+
         _endpoint = endpoint
 
         ::Sinatra.new do
           include Module.new(&sinatra_overrides)
+
+          use _before_parser_middleware if _before_parser_middleware
 
           use RequestParamsParser do |config|
             config.endpoints = [_endpoint]
             config.api_version '1.0'
             parser_configuration.call(config)
           end
+
+          use _after_parser_middleware if _after_parser_middleware
 
           set :raise_errors,    true
           set :show_exceptions, false
@@ -191,6 +200,41 @@ module Interpol
         it 'does not fail due to double parsing the params (as originally occurred)' do
           get '/users/12.23/projects/ruby'
           last_response.status.should eq(500)
+        end
+      end
+
+      context 'when other middlewares are used' do
+        let(:identity_middleware) do
+          Class.new do
+            def initialize(app)
+              @app = app
+            end
+
+            def call(env)
+              @app.call(env)
+            end
+          end
+        end
+
+        before do
+          stub_const("IdentityMiddleware", identity_middleware)
+          on_get { 'OK' }
+        end
+
+        it 'works when adding middlewares before the parser' do
+          self.before_parser_middleware = IdentityMiddleware
+
+          get '/users/foo/projects/ruby'
+          last_response.status.should eq(400)
+          last_response.body.should include('user_id')
+        end
+
+        it 'raises a helpful error when adding middlewares after the parser' do
+          self.after_parser_middleware = IdentityMiddleware
+
+          expect {
+            get '/users/foo/projects/ruby'
+          }.to raise_error(/RequestParamsParser must come last/)
         end
       end
 

@@ -19,10 +19,14 @@ module Interpol
         @app.call(env)
       end
 
+      ConfigurationError = Class.new(StandardError)
+
     private
 
       def hook_into(app, &block)
         return if defined?(app.settings.interpol_config)
+        check_configuration_validity(app)
+
         config = Configuration.default.customized_duplicate(&block)
 
         app.class.class_eval do
@@ -32,6 +36,13 @@ module Interpol
           enable :parse_params unless settings.respond_to?(:parse_params)
           include SinatraOverriddes
         end
+      end
+
+      def check_configuration_validity(app)
+        return if app.class.ancestors.include?(::Sinatra::Base)
+
+        raise ConfigurationError, "#{self.class} must come last in the Sinatra " +
+                                  "middleware list but #{app.class} currently comes after."
       end
 
       module SinatraHelpers
