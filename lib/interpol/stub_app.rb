@@ -13,29 +13,17 @@ module Interpol
       builder.app
     end
 
-    module Helpers
-      def interpol_config
-        self.class.interpol_config
-      end
-
-      def example_for(endpoint, version, message_type)
-        example = endpoint.find_example_for!(version, message_type)
-      rescue NoEndpointDefinitionFoundError
-        interpol_config.request_version_unavailable(self, version, endpoint.available_versions)
-      else
-        example.apply_filters(interpol_config.filter_example_data_blocks, request.env)
-      end
-    end
-
     # Private: Builds a stub sinatra app for the given interpol
     # configuration.
     class Builder
-      attr_reader :app
+      attr_reader :app, :config
 
       def initialize(config)
+        builder = self
+        @config = config
+
         @app = ::Sinatra.new do
-          set            :interpol_config, config
-          helpers        Helpers
+          set            :stub_app_builder, builder
           not_found      { JSON.dump(:error => "The requested resource could not be found") }
           before         { content_type "application/json;charset=utf-8" }
           get('/__ping') { JSON.dump(:message => "Interpol stub app running.") }
@@ -47,20 +35,30 @@ module Interpol
       end
 
       def build
-        @app.interpol_config.endpoints.each do |endpoint|
+        config.endpoints.each do |endpoint|
           app.send(endpoint.method, endpoint.route, &endpoint_definition(endpoint))
         end
       end
 
       def endpoint_definition(endpoint)
         lambda do
-          version = interpol_config.api_version_for(request.env, endpoint)
-          message_type = 'response'
-          example = example_for(endpoint, version, message_type)
+          example, version = settings.
+                             stub_app_builder.
+                             example_and_version_for(endpoint, self)
           example.validate!
           status endpoint.find_example_status_code_for!(version)
           JSON.dump(example.data)
         end
+      end
+
+      def example_and_version_for(endpoint, app)
+        version = config.api_version_for(app.request.env, endpoint)
+        example = endpoint.find_example_for!(version, 'response')
+      rescue NoEndpointDefinitionFoundError
+        config.request_version_unavailable(app, version, endpoint.available_versions)
+      else
+        example.apply_filters(config.filter_example_data_blocks, app.request.env)
+        return example, version
       end
     end
   end

@@ -1,5 +1,6 @@
 require 'fast_spec_helper'
 require 'interpol/stub_app'
+require 'interpol/sinatra/request_params_parser'
 require 'rack/test'
 
 module Interpol
@@ -13,6 +14,7 @@ module Interpol
       method: GET
       definitions:
         - versions: ["1.0"]
+          message_type: response
           schema:
             type: object
             properties:
@@ -20,19 +22,33 @@ module Interpol
                 type: string
           examples:
             - name: "some project"
+        - versions: ["1.0"]
+          message_type: request
+          path_params:
+            type: object
+            properties:
+              user_id:
+                type: integer
+          schema: {}
+          examples: []
       EOF
     end
 
     let(:endpoint) { Endpoint.new(YAML.load endpoint_definition_yml) }
-
-    let(:app) do
-      StubApp.build do |config|
-        config.stub(:endpoints => [endpoint])
+    let(:default_config) do
+      lambda do |config|
+        config.endpoints = [endpoint]
 
         unless api_version_configured?(config) # allow default config to take precedence
           config.api_version { |env, _| env.fetch('HTTP_API_VERSION') }
         end
-      end.tap do |a|
+      end
+    end
+
+    let(:config) { app.stub_app_builder.config }
+
+    let(:app) do
+      StubApp.build(&default_config).tap do |a|
         a.set :raise_errors, true
         a.set :show_exceptions, false
       end
@@ -77,7 +93,7 @@ module Interpol
     end
 
     it 'uses any provided filters to modify the example data' do
-      app.interpol_config.filter_example_data do |example, request_env|
+      app.settings.stub_app_builder.config.filter_example_data do |example, request_env|
         example.data["name"] << " for #{request_env["REQUEST_METHOD"]}"
       end
 
@@ -89,14 +105,14 @@ module Interpol
     end
 
     it 'allows errors in filters to bubble up' do
-      app.interpol_config.filter_example_data { raise ArgumentError }
+      config.filter_example_data { raise ArgumentError }
 
       header 'API-Version', '1.0'
       expect { get '/users/3/projects' }.to raise_error(ArgumentError)
     end
 
     it 'uses the unavailable_request_version hook when an invalid version is requested' do
-      app.interpol_config.on_unavailable_request_version do |requested_version, available_versions|
+      config.on_unavailable_request_version do |requested_version, available_versions|
         halt 405, JSON.dump(:requested => requested_version, :available => available_versions)
       end
 
@@ -140,6 +156,18 @@ module Interpol
     it 'responds to a ping' do
       get '/__ping'
       parsed_body.should eq("message" => "Interpol stub app running.")
+    end
+
+    it 'can be used together with the RequestParamsParser' do
+      app.use Interpol::Sinatra::RequestParamsParser, &default_config
+
+      header 'API-Version', '1.0'
+      get '/users/3/projects'
+      last_response.status.should eq(200)
+
+      get '/users/not-a-number/projects'
+      last_response.body.should include('user_id')
+      last_response.status.should eq(400)
     end
   end
 end

@@ -56,14 +56,6 @@ module Interpol
         end
       end
 
-      it 'makes the endpoint definition available as `endpoint_definition`' do
-        on_get { endpoint_definition.endpoint_name }
-
-        get '/users/23.12/projects/ruby'
-        last_response.status.should eq(200)
-        last_response.body.should eq(endpoint.name)
-      end
-
       it 'makes the original unparsed params available as `unparsed_params`' do
         on_get { JSON.dump(unparsed_params) }
 
@@ -138,20 +130,6 @@ module Interpol
         last_response.status.should eq(406)
         version.should eq('2.0')
         available_versions.should eq(['1.0'])
-      end
-
-      it 'provides a means to add additional validations' do
-        configure_parser do |config|
-          config.on_invalid_sinatra_request_params do |error|
-            halt 412, error
-          end
-        end
-
-        on_get { request_params_invalid("bad") }
-
-        get '/users/12.23/projects/ruby'
-        last_response.status.should eq(412)
-        last_response.body.should eq("bad")
       end
 
       it 'allows unmatched routes to 404 as normal' do
