@@ -61,17 +61,25 @@ module Interpol
         end
 
         def params
-          @_parsed_params || super
+          (@_use_parsed_params && @_parsed_params) || super
         end
 
         def validate_params
-          @_parsed_params = endpoint_definition.parse_request_params(params_to_parse)
+          @_parsed_params ||= endpoint_definition.parse_request_params(params_to_parse)
         rescue Interpol::ValidationError => error
           request_params_invalid(error)
         end
 
         def request_params_invalid(error)
           interpol_config.sinatra_request_params_invalid(self, error)
+        end
+
+        def with_parsed_params
+          @_use_parsed_params = true
+          validate_params if settings.parse_params?
+          yield
+        ensure
+          @_use_parsed_params = false
         end
 
         # Sinatra includes a couple of "meta" params that are always
@@ -93,8 +101,9 @@ module Interpol
           return super unless SinatraOverriddes.being_processed_by_sinatra?(block)
 
           super do |*block_args|
-            validate_params if settings.parse_params?
-            yield *block_args
+            with_parsed_params do
+              yield *block_args
+            end
           end
         end
 

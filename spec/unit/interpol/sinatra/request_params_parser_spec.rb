@@ -182,6 +182,18 @@ module Interpol
         end
       end
 
+      context 'when the endpoint raises an error and the raise_errors setting is off' do
+        before do
+          on_get { raise "boom" }
+          app.set :raise_errors, false
+        end
+
+        it 'does not fail due to double parsing the params (as originally occurred)' do
+          get '/users/12.23/projects/ruby'
+          last_response.status.should eq(500)
+        end
+      end
+
       context 'when a sinatra extension is loaded that processes routes multiple times (such as NewRelic)' do
         before do
           # This simulates how NewRelic hooks into Sinatra and runs `process_route`
