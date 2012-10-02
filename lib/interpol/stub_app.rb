@@ -57,7 +57,7 @@ module Interpol
       rescue NoEndpointDefinitionFoundError
         config.request_version_unavailable(app, version, endpoint.available_versions)
       else
-        example.apply_filters(config.filter_example_data_blocks, app.request.env)
+        example = example.apply_filters(config.filter_example_data_blocks, app.request.env)
         return example, version
       end
     end

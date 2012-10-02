@@ -94,7 +94,7 @@ module Interpol
 
     it 'uses any provided filters to modify the example data' do
       app.settings.stub_app_builder.config.filter_example_data do |example, request_env|
-        example.data["name"] << " for #{request_env["REQUEST_METHOD"]}"
+        example.data["name"] += " for #{request_env["REQUEST_METHOD"]}"
       end
 
       header 'API-Version', '1.0'
