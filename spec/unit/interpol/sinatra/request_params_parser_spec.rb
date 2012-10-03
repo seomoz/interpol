@@ -147,6 +147,21 @@ module Interpol
         last_response.body.should eq("OK")
       end
 
+      context 'when the app class is instantiated multiple times' do
+        alias app_class app
+        attr_accessor :app
+
+        it 'allows `unparsed_params` to work each time' do
+          on_get { unparsed_params.fetch('integer') }
+
+          2.times do
+            self.app = app_class.new
+            get '/users/23.12/projects/ruby?integer=3'
+            last_response.body.should eq('3')
+          end
+        end
+      end
+
       context 'when the sinatra app is mounted using Rack::Builder' do
         alias sinatra_app app
 

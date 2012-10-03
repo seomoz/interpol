@@ -13,6 +13,7 @@ module Interpol
     class RequestParamsParser
       def initialize(app, &block)
         @original_app_instance = app
+        @config = Configuration.default.customized_duplicate(&block)
         hook_into_app(&block)
       end
 
@@ -34,10 +35,8 @@ module Interpol
       attr_reader :config, :original_app_instance
 
       def hook_into_app(&block)
-        return if defined?(@config)
+        return if original_app_instance.respond_to?(:unparsed_params)
         check_configuration_validity
-
-        @config = Configuration.default.customized_duplicate(&block)
         parser = self
 
         original_app_instance.class.class_eval do
