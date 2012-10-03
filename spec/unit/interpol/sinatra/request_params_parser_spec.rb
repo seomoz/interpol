@@ -21,6 +21,10 @@ module Interpol
         @sinatra_overrides = block
       end
 
+      def sinatra_before(&block)
+        @sinatra_before = block
+      end
+
       attr_accessor :before_parser_middleware, :after_parser_middleware
 
       let(:raw_endpoint_definition) { YAML.load endpoint_definition_yml }
@@ -30,6 +34,8 @@ module Interpol
         endpoint_logic = @endpoint_logic || Proc.new { }
         parser_configuration = @parser_configuration || Proc.new { }
         sinatra_overrides = @sinatra_overrides || Proc.new { }
+        sinatra_before = @sinatra_before || Proc.new { }
+
         _after_parser_middleware = after_parser_middleware
         _before_parser_middleware = before_parser_middleware
 
@@ -50,6 +56,8 @@ module Interpol
 
           set :raise_errors,    true
           set :show_exceptions, false
+
+          before &sinatra_before
 
           get('/users/:user_id/projects/:project_language', &endpoint_logic)
           get('/no/definition') { 'OK' }
@@ -137,10 +145,20 @@ module Interpol
         last_response.status.should eq(404)
       end
 
-      it 'provides a means to disable param parsing' do
+      it 'provides a means to disable param parsing at an app level' do
         on_get { 'OK' } # don't use the params
 
         app.disable :parse_params
+
+        get '/users/foo/projects/ruby'
+        last_response.status.should eq(200)
+        last_response.body.should eq("OK")
+      end
+
+      it 'provides a means to disable param in a before hook' do
+        on_get { 'OK' } # don't use the params
+
+        sinatra_before { skip_param_parsing! }
 
         get '/users/foo/projects/ruby'
         last_response.status.should eq(200)

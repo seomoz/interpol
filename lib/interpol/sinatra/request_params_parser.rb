@@ -142,10 +142,17 @@ module Interpol
         end
 
         def with_parsed_params
-          @_parsed_params = request_params_parser.validate_and_parse_params(self)
+          unless @_skip_param_parsing
+            @_parsed_params = request_params_parser.validate_and_parse_params(self)
+          end
+
           yield
         ensure
           @_parsed_params = nil
+        end
+
+        def skip_param_parsing!
+          @_skip_param_parsing = true
         end
       end
     end

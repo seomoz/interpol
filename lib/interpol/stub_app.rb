@@ -23,10 +23,11 @@ module Interpol
         @config = config
 
         @app = ::Sinatra.new do
-          set            :stub_app_builder, builder
-          not_found      { JSON.dump(:error => "The requested resource could not be found") }
-          before         { content_type "application/json;charset=utf-8" }
-          get('/__ping') { JSON.dump(:message => "Interpol stub app running.") }
+          set               :stub_app_builder, builder
+          not_found         { JSON.dump(:error => "The requested resource could not be found") }
+          before            { content_type "application/json;charset=utf-8" }
+          before('/__ping') { skip_param_parsing! if respond_to?(:skip_param_parsing!) }
+          get('/__ping')    { JSON.dump(:message => "Interpol stub app running.") }
 
           def self.name
             "Interpol::StubApp (anonymous)"

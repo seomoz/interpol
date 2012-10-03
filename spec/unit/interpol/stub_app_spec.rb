@@ -168,6 +168,9 @@ module Interpol
       get '/users/not-a-number/projects'
       last_response.body.should include('user_id')
       last_response.status.should eq(400)
+
+      get '/__ping'
+      parsed_body.should eq("message" => "Interpol stub app running.")
     end
   end
 end
