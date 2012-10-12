@@ -22,6 +22,7 @@ module Interpol
                 type: string
           examples:
             - name: "some project"
+            - name: "some other project"
         - versions: ["1.0"]
           message_type: request
           path_params:

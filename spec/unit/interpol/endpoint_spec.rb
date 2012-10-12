@@ -157,7 +157,7 @@ module Interpol
     end
 
     let(:version)  { '1.0' }
-    let(:endpoint) { fire_double("Interpol::Endpoint").as_null_object }
+    let(:endpoint) { fire_double("Interpol::Endpoint", name: 'my-endpoint').as_null_object }
 
     it 'initializes the endpoint' do
       endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)
@@ -184,6 +184,17 @@ module Interpol
       hash = build_hash('message_type' => 'request')
       endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'request', hash)
       endpoint_def.message_type.should eq('request')
+    end
+
+    it 'provides a readable description for a request definition' do
+      endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'request', build_hash)
+      endpoint_def.description.should eq("#{endpoint.name} (request v. 2.3)")
+    end
+
+    it 'provides a readable description for a response definition' do
+      hash = build_hash('status_codes' => ['2xx'])
+      endpoint_def = EndpointDefinition.new(endpoint, '2.3', 'response', hash)
+      endpoint_def.description.should eq("#{endpoint.name} (response v. 2.3 for status: 2xx)")
     end
 
     it 'initializes the example data' do

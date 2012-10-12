@@ -175,7 +175,9 @@ module Interpol
     end
 
     def description
-      "#{endpoint_name} (v. #{version}, mt. #{message_type}, sc. #{status_codes})"
+      subdescription = "#{message_type} v. #{version}"
+      subdescription << " for status: #{status_codes}" if message_type == 'response'
+      "#{endpoint_name} (#{subdescription})"
     end
 
     def status_codes
