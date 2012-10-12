@@ -1,4 +1,5 @@
 #!/usr/bin/env rake
+require File.expand_path('../config/setup_load_paths', __FILE__)
 require "bundler/gem_tasks"
 
 require 'rspec/core/rake_task'
