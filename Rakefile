@@ -41,9 +41,6 @@ end
 
 desc "Import the twitter bootstrap assets from the compass_twitter_bootstrap gem"
 task :import_bootstrap_assets do
-  require 'bundler'
-  Bundler.setup
-
   # when the gem installed as a :git gem, it has "-" as a separator;
   # when it's installed as a released rubygem, it has "_" as a separator.
   gem_lib_path = $LOAD_PATH.grep(/compass[-_]twitter[-_]bootstrap/).first
