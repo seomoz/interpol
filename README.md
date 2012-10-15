@@ -145,15 +145,23 @@ Interpol.default_configuration do |config|
   # Needed by all tools.
   config.endpoint_definition_files = Dir["config/endpoints/*.yml"]
 
-  # Determines which versioned endpoint definition Interpol uses
+  # Determines which versioned response endpoint definition Interpol uses
   # for a request. You can also use a block form, which yields
   # the rack env hash and the endpoint object as arguments.
   # This is useful when you need to extract the version from a
   # request header (e.g. Accept) or from the request URI.
   #
-  # Needed by Interpol::StubApp, Interpol::ResponseSchemaValidator
-  # and Interpol::Sinatra::RequestParamsParser.
-  config.api_version '1.0'
+  # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
+  config.response_version '1.0'
+
+  # Determines which versioned response endpoint definition Interpol uses
+  # for a request. You can also use a block form, which yields
+  # the rack env hash and the endpoint object as arguments.
+  # This is useful when you need to extract the version from a
+  # request header (e.g. Content-Type) or from the request URI.
+  #
+  # Needed by Interpol::Sinatra::RequestParamsParser.
+  config.request_version '1.0'
 
   # Determines the stub app response when the requested version is not
   # available. This block will be eval'd in the context of a
@@ -275,7 +283,7 @@ require 'interpol/stub_app'
 # config or if you have not set a default config.
 stub_app = Interpol::StubApp.build do |app|
   app.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
-  app.api_version do |env|
+  app.response_version do |env|
     RequestVersion.extract_from(env['HTTP_ACCEPT'])
   end
 end
@@ -300,7 +308,7 @@ unless ENV['RACK_ENV'] == 'production'
   # config or if you have not set a default config.
   use Interpol::ResponseSchemaValidator do |config|
     config.endpoint_definition_files = Dir["config/endpoints_definitions/*.yml"]
-    config.api_version do |env|
+    config.response_version do |env|
       RequestVersion.extract_from(env['HTTP_ACCEPT'])
     end
   end

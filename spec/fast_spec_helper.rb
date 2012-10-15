@@ -21,8 +21,8 @@ module TestHelpers
     File.open(filename, 'w') { |f| f.write(contents) }
   end
 
-  def api_version_configured?(config)
-    config.api_version_for(nil)
+  def response_version_configured?(config)
+    config.response_version_for(nil)
   rescue
     false
   else

@@ -40,8 +40,9 @@ module Interpol
       lambda do |config|
         config.endpoints = [endpoint]
 
-        unless api_version_configured?(config) # allow default config to take precedence
-          config.api_version { |env, _| env.fetch('HTTP_API_VERSION') }
+        unless response_version_configured?(config) # allow default config to take precedence
+          config.response_version { |env, _| env.fetch('HTTP_RESPONSE_VERSION') }
+          config.request_version { |env, _| env.fetch('HTTP_REQUEST_VERSION') }
         end
       end
     end
@@ -65,17 +66,17 @@ module Interpol
     end
 
     it 'falls back to the default configuration' do
-      Interpol.default_configuration { |c| c.api_version '1.0' }
+      Interpol.default_configuration { |c| c.response_version '1.0' }
 
-      header 'API-Version', '2.0'
+      header 'Response-Version', '2.0'
       get '/users/3/projects'
       parsed_body.should include('name' => 'some project')
     end
 
-    it 'calls the api_version callback with the rack env and the endpoint' do
+    it 'calls the response_version callback with the rack env and the endpoint' do
       yielded_args = nil
       Interpol.default_configuration do |c|
-        c.api_version do |*args|
+        c.response_version do |*args|
           yielded_args = args
           '1.0'
         end
@@ -87,7 +88,7 @@ module Interpol
     end
 
     it 'renders the example data' do
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
       get '/users/3/projects'
       parsed_body.should include('name' => 'some project')
       last_response.should be_ok
@@ -98,7 +99,7 @@ module Interpol
         example.data["name"] += " for #{request_env["REQUEST_METHOD"]}"
       end
 
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
       get '/users/3/projects'
 
       parsed_body.should include('name' => 'some project for GET')
@@ -108,7 +109,7 @@ module Interpol
     it 'allows errors in filters to bubble up' do
       config.filter_example_data { raise ArgumentError }
 
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
       expect { get '/users/3/projects' }.to raise_error(ArgumentError)
     end
 
@@ -117,20 +118,20 @@ module Interpol
         halt 405, JSON.dump(:requested => requested_version, :available => available_versions)
       end
 
-      header 'API-Version', '2.0'
+      header 'Response-Version', '2.0'
       get '/users/3/projects'
       last_response.status.should eq(405)
       parsed_body.should eq("requested" => "2.0", "available" => ["1.0"])
     end
 
     it 'renders a 405 when an invalid version is requested and there is no configured callback' do
-      header 'API-Version', '2.0'
+      header 'Response-Version', '2.0'
       get '/users/3/projects'
       last_response.status.should eq(406)
     end
 
     it 'responds with a 404 for an undefined endpoint' do
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
       get '/some/undefined/endpoint'
       last_response.should be_not_found
       last_response.status.should eq(404)
@@ -149,7 +150,7 @@ module Interpol
       endpoint_example.stub(:apply_filters) { endpoint_example }
       endpoint_example.should respond_to(:validate!).with(0).arguments
       endpoint_example.should_receive(:validate!).with(no_args)
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
       get '/users/3/projects'
       last_response.should be_ok
     end
@@ -162,7 +163,9 @@ module Interpol
     it 'can be used together with the RequestParamsParser' do
       app.use Interpol::Sinatra::RequestParamsParser, &default_config
 
-      header 'API-Version', '1.0'
+      header 'Response-Version', '1.0'
+      header 'Request-Version', '1.0'
+
       get '/users/3/projects'
       last_response.status.should eq(200)
 

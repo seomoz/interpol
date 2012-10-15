@@ -53,7 +53,7 @@ module Interpol
       end
 
       def example_and_version_for(endpoint, app)
-        version = config.api_version_for(app.request.env, endpoint)
+        version = config.response_version_for(app.request.env, endpoint)
         example = endpoint.find_example_for!(version, 'response')
       rescue NoEndpointDefinitionFoundError
         config.request_version_unavailable(app, version, endpoint.available_versions)

@@ -10,7 +10,7 @@ module Interpol
     def configuration
       lambda do |config|
         config.stub(:endpoints => definition_finder)
-        config.api_version '1.0' unless api_version_configured?(config)
+        config.response_version '1.0' unless response_version_configured?(config)
         config.validate_if(&validate_if_block) if validate_if_block
         config.validation_mode = validation_mode
       end
@@ -99,13 +99,13 @@ module Interpol
       default_config_called.should be_true
     end
 
-    it 'calls the api_version callback with the rack env and the endpoint' do
+    it 'calls the response_version callback with the rack env and the endpoint' do
       endpoint.stub(:method => :get, :route_matches? => true)
       self.definition_finder = [endpoint].extend(Interpol::DefinitionFinder)
 
       yielded_args = nil
       Interpol.default_configuration do |c|
-        c.api_version do |*args|
+        c.response_version do |*args|
           yielded_args = args
           '1.0'
         end

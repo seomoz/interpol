@@ -222,49 +222,63 @@ module Interpol
       end
     end
 
-    describe "#api_version" do
-      it 'raises an error when given a static version and a dynamic block' do
-        expect {
-          config.api_version('1.0') { }
-        }.to raise_error(ConfigurationError)
+    [:request, :response].each do |version_type|
+      set_method = "#{version_type}_version"
+
+      describe "##{set_method}" do
+        it 'raises an error when given a static version and a dynamic block' do
+          expect {
+            config.send(set_method, '1.0') { }
+          }.to raise_error(ConfigurationError)
+        end
+
+        it 'raises an error when given neither a static version or dynamic block' do
+          expect {
+            config.send(set_method)
+          }.to raise_error(ConfigurationError)
+        end
       end
 
-      it 'raises an error when given neither a static version or dynamic block' do
-        expect {
-          config.api_version
-        }.to raise_error(ConfigurationError)
+      get_method = "#{version_type}_version_for"
+
+      describe "##{get_method}" do
+        context 'when configured with a static version' do
+          it 'returns the configured static api version number' do
+            config.send(set_method, '1.2')
+            config.send(get_method, {}, stub.as_null_object).should eq('1.2')
+          end
+
+          it 'always returns a string, even when configured as an integer' do
+            config.send(set_method, 3)
+            config.send(get_method, {}, stub.as_null_object).should eq('3')
+          end
+        end
+
+        context 'when configured with a block' do
+          it "returns the blocks's return value" do
+            config.send(set_method) { |e, _| e[:path][%r|/api/v(\d+)/|, 1] }
+            config.send(get_method, { :path => "/api/v2/foo" }, stub.as_null_object).should eq('2')
+          end
+
+          it 'always returns a string, even when configured as an integer' do
+            config.send(set_method) { |*a| 3 }
+            config.send(get_method, {}, stub.as_null_object).should eq('3')
+          end
+        end
+
+        it "raises a helpful error when ##{set_method} has not been configured" do
+          expect {
+            config.send(get_method, {}, stub.as_null_object)
+          }.to raise_error(ConfigurationError)
+        end
       end
     end
 
-    describe "#api_version_for" do
-      context 'when configured with a static version' do
-        it 'returns the configured static api version number' do
-          config.api_version '1.2'
-          config.api_version_for({}, stub.as_null_object).should eq('1.2')
-        end
-
-        it 'always returns a string, even when configured as an integer' do
-          config.api_version 3
-          config.api_version_for({}, stub.as_null_object).should eq('3')
-        end
-      end
-
-      context 'when configured with a block' do
-        it "returns the blocks's return value" do
-          config.api_version { |e, _| e[:path][%r|/api/v(\d+)/|, 1] }
-          config.api_version_for({ :path => "/api/v2/foo" }, stub.as_null_object).should eq('2')
-        end
-
-        it 'always returns a string, even when configured as a string' do
-          config.api_version { |*a| 3 }
-          config.api_version_for({}, stub.as_null_object).should eq('3')
-        end
-      end
-
-      it 'raises a helpful error when api_version has not been configured' do
-        expect {
-          config.api_version_for({}, stub.as_null_object)
-        }.to raise_error(ConfigurationError)
+    describe "#api_version" do
+      it 'configures both request_version and response_version' do
+        config.api_version '23.14'
+        config.request_version_for({}, stub.as_null_object).should eq('23.14')
+        config.response_version_for({}, stub.as_null_object).should eq('23.14')
       end
     end
 

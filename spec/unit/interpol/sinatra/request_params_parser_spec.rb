@@ -48,7 +48,7 @@ module Interpol
 
           use RequestParamsParser do |config|
             config.endpoints = [_endpoint]
-            config.api_version '1.0'
+            config.request_version '1.0'
             parser_configuration.call(config)
           end
 
@@ -127,7 +127,7 @@ module Interpol
         version, available_versions = nil, nil
 
         configure_parser do |config|
-          config.api_version '2.0'
+          config.request_version '2.0'
           config.on_unavailable_request_version do |_v, _av|
             version, available_versions = _v, _av
             halt 406

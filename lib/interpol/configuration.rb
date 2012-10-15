@@ -56,17 +56,24 @@ module Interpol
       @endpoints = endpoints.extend(DefinitionFinder)
     end
 
-    def api_version(version=nil, &block)
-      if [version, block].compact.size.even?
-        raise ConfigurationError.new("api_version requires a static version " +
-                                     "or a dynamic block, but not both")
+    [:request, :response].each do |type|
+      define_method :"#{type}_version" do |version=nil, &block|
+        if [version, block].compact.size.even?
+          raise ConfigurationError.new("#{__method__} requires a static version " +
+                                       "or a dynamic block, but not both")
+        end
+
+        instance_variable_set(:"@#{type}_version_block", block || lambda { |*a| version })
       end
 
-      @api_version_block = block || lambda { |*a| version }
+      define_method :"#{type}_version_for" do |rack_env, endpoint=nil|
+        instance_variable_get(:"@#{type}_version_block").call(rack_env, endpoint).to_s
+      end
     end
 
-    def api_version_for(rack_env, endpoint=nil)
-      @api_version_block.call(rack_env, endpoint).to_s
+    def api_version(version=nil, &block)
+      request_version(version, &block)
+      response_version(version, &block)
     end
 
     def validate_if(&block)
@@ -137,8 +144,12 @@ module Interpol
     end
 
     def register_default_callbacks
-      api_version do
-        raise ConfigurationError, "api_version has not been configured"
+      request_version do
+        raise ConfigurationError, "request_version has not been configured"
+      end
+
+      response_version do
+        raise ConfigurationError, "response_version has not been configured"
       end
 
       validate_if do |env, status, headers, body|

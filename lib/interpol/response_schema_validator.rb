@@ -69,7 +69,7 @@ module Interpol
       def validator
         @validator ||= @config.endpoints.
             find_definition(request_method, path, 'response', status) do |endpoint|
-          @config.api_version_for(env, endpoint)
+          @config.response_version_for(env, endpoint)
         end
       end
     end

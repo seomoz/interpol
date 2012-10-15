@@ -84,7 +84,7 @@ module Interpol
           definition = config.endpoints.find_definition \
             request.env.fetch('REQUEST_METHOD'), request.path, 'request', nil do |endpoint|
               available_versions ||= endpoint.available_versions
-              config.api_version_for(request.env, endpoint).tap do |_version|
+              config.request_version_for(request.env, endpoint).tap do |_version|
                 version ||= _version
               end
             end
