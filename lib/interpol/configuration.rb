@@ -66,8 +66,8 @@ module Interpol
         instance_variable_set(:"@#{type}_version_block", block || lambda { |*a| version })
       end
 
-      define_method :"#{type}_version_for" do |rack_env, endpoint=nil|
-        instance_variable_get(:"@#{type}_version_block").call(rack_env, endpoint).to_s
+      define_method :"#{type}_version_for" do |rack_env, *extra_args|
+        instance_variable_get(:"@#{type}_version_block").call(rack_env, *extra_args).to_s
       end
     end
 

@@ -69,8 +69,12 @@ module Interpol
       def validator
         @validator ||= @config.endpoints.
             find_definition(request_method, path, 'response', status) do |endpoint|
-          @config.response_version_for(env, endpoint)
+          @config.response_version_for(env, endpoint, response_triplet)
         end
+      end
+
+      def response_triplet
+        [status, headers, extracted_body]
       end
     end
 

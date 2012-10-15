@@ -99,7 +99,7 @@ module Interpol
       default_config_called.should be_true
     end
 
-    it 'calls the response_version callback with the rack env and the endpoint' do
+    it 'calls the response_version hook with the rack env, the endpoint and the response triplet' do
       endpoint.stub(:method => :get, :route_matches? => true)
       self.definition_finder = [endpoint].extend(Interpol::DefinitionFinder)
 
@@ -113,7 +113,14 @@ module Interpol
 
       expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
 
-      yielded_args.map(&:class).should eq([Hash, Interpol::Endpoint])
+      yielded_args[0].should be_a(Hash) # rack env
+      yielded_args[1].should be_a(Interpol::Endpoint)
+
+      response = yielded_args[2]
+      response.should be_an(Array)
+      response[0].should eq(200)
+      response[1].should have_key("Content-Type")
+      response[2].should eq([%|{"a":"b"}|])
     end
 
     it 'yields the env, status, headers and body from the validate_if callback' do
