@@ -275,10 +275,17 @@ module Interpol
     end
 
     describe "#api_version" do
+      before { config.stub(:warn) }
+
       it 'configures both request_version and response_version' do
         config.api_version '23.14'
         config.request_version_for({}, stub.as_null_object).should eq('23.14')
         config.response_version_for({}, stub.as_null_object).should eq('23.14')
+      end
+
+      it 'prints a warning' do
+        config.should_receive(:warn).with(/api_version.*request_version.*response_version/)
+        config.api_version '1.0'
       end
     end
 

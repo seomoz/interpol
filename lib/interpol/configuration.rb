@@ -72,6 +72,10 @@ module Interpol
     end
 
     def api_version(version=nil, &block)
+      warn "WARNING: Interpol's #api_version config option is deprecated. " +
+           "Instead, use separate #request_version and #response_version " +
+           "config options."
+
       request_version(version, &block)
       response_version(version, &block)
     end
