@@ -36,7 +36,7 @@ module Interpol
 
     it 'exposes the attribute names as a list of symbols' do
       ds = DynamicStruct.new("a" => 3, "c" => 2)
-      ds.attribute_names.should eq([:a, :c])
+      ds.attribute_names.should match_array([:a, :c])
     end
 
     it 'provides a means to be converted to a hash' do

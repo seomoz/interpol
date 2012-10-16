@@ -79,7 +79,7 @@ module Interpol
     describe "#available_versions" do
       it 'returns the list of available version strings, ordered by version' do
         endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.available_versions.should eq(%w[ 3.2 1.2 ])
+        endpoint.available_versions.should match_array(%w[ 3.2 1.2 ])
       end
     end
 
