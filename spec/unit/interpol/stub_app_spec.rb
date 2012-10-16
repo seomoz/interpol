@@ -113,8 +113,8 @@ module Interpol
       expect { get '/users/3/projects' }.to raise_error(ArgumentError)
     end
 
-    it 'uses the unavailable_request_version hook when an invalid version is requested' do
-      config.on_unavailable_request_version do |requested_version, available_versions|
+    it 'uses the unavailable_sinatra_request_version hook when an invalid version is requested' do
+      config.on_unavailable_sinatra_request_version do |requested_version, available_versions|
         halt 405, JSON.dump(:requested => requested_version, :available => available_versions)
       end
 

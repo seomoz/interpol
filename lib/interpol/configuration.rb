@@ -97,12 +97,12 @@ module Interpol
       validate_response_if(&block)
     end
 
-    def on_unavailable_request_version(&block)
-      @unavailable_request_version_block = block
+    def on_unavailable_sinatra_request_version(&block)
+      @unavailable_sinatra_request_version_block = block
     end
 
-    def request_version_unavailable(execution_context, *args)
-      execution_context.instance_exec(*args, &@unavailable_request_version_block)
+    def sinatra_request_version_unavailable(execution_context, *args)
+      execution_context.instance_exec(*args, &@unavailable_sinatra_request_version_block)
     end
 
     def on_invalid_sinatra_request_params(&block)
@@ -170,7 +170,7 @@ module Interpol
         status >= 200 && status <= 299 && status != 204 # No Content
       end
 
-      on_unavailable_request_version do |requested, available|
+      on_unavailable_sinatra_request_version do |requested, available|
         message = "The requested API version is invalid. " +
                   "Requested: #{requested}. " +
                   "Available: #{available}"

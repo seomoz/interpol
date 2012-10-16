@@ -114,7 +114,7 @@ module Interpol
 
       it 'allows users to configure how to respond when no definition is found' do
         configure_parser do |config|
-          config.on_unavailable_request_version do
+          config.on_unavailable_sinatra_request_version do
             halt 412
           end
         end
@@ -123,12 +123,12 @@ module Interpol
         last_response.status.should eq(412)
       end
 
-      it 'passes the version args to the on_unavailable_request_version hook when available' do
+      it 'passes the version args to the on_unavailable_sinatra_request_version hook when available' do
         version, available_versions = nil, nil
 
         configure_parser do |config|
           config.request_version '2.0'
-          config.on_unavailable_request_version do |_v, _av|
+          config.on_unavailable_sinatra_request_version do |_v, _av|
             version, available_versions = _v, _av
             halt 406
           end

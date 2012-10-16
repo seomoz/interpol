@@ -90,7 +90,7 @@ module Interpol
             end
 
           if definition == DefinitionFinder::NoDefinitionFound
-            config.request_version_unavailable(app, version, available_versions)
+            config.sinatra_request_version_unavailable(app, version, available_versions)
           end
 
           definition

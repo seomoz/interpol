@@ -56,7 +56,7 @@ module Interpol
         version = config.response_version_for(app.request.env, endpoint)
         example = endpoint.find_example_for!(version, 'response')
       rescue NoEndpointDefinitionFoundError
-        config.request_version_unavailable(app, version, endpoint.available_versions)
+        config.sinatra_request_version_unavailable(app, version, endpoint.available_versions)
       else
         example = example.apply_filters(config.filter_example_data_blocks, app.request.env)
         return example, version
