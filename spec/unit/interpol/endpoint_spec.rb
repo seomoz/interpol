@@ -157,7 +157,7 @@ module Interpol
     end
 
     let(:version)  { '1.0' }
-    let(:endpoint) { fire_double("Interpol::Endpoint", name: 'my-endpoint').as_null_object }
+    let(:endpoint) { fire_double("Interpol::Endpoint", :name => 'my-endpoint').as_null_object }
 
     it 'initializes the endpoint' do
       endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)

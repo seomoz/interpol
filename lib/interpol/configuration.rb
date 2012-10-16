@@ -57,18 +57,20 @@ module Interpol
     end
 
     [:request, :response].each do |type|
-      define_method :"#{type}_version" do |version=nil, &block|
-        if [version, block].compact.size.even?
-          raise ConfigurationError.new("#{__method__} requires a static version " +
-                                       "or a dynamic block, but not both")
+      class_eval <<-EOEVAL, __FILE__, __LINE__ + 1
+        def #{type}_version(version = nil, &block)
+          if [version, block].compact.size.even?
+            raise ConfigurationError.new("#{type}_version requires a static version " +
+                                         "or a dynamic block, but not both")
+          end
+
+          @#{type}_version_block = block || lambda { |*a| version }
         end
 
-        instance_variable_set(:"@#{type}_version_block", block || lambda { |*a| version })
-      end
-
-      define_method :"#{type}_version_for" do |rack_env, *extra_args|
-        instance_variable_get(:"@#{type}_version_block").call(rack_env, *extra_args).to_s
-      end
+        def #{type}_version_for(rack_env, *extra_args)
+          @#{type}_version_block.call(rack_env, *extra_args).to_s
+        end
+      EOEVAL
     end
 
     def api_version(version=nil, &block)
