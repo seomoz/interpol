@@ -289,6 +289,21 @@ module Interpol
       end
     end
 
+    describe "#validate_if" do
+      before { config.stub(:warn) }
+
+      it 'configures validate_response_if' do
+        config.validate_if { |a| a }
+        config.validate_response?(true).should be_true
+        config.validate_response?(false).should be_false
+      end
+
+      it 'prints a warning' do
+        config.should_receive(:warn).with(/validate_if.*validate_response_if/)
+        config.validate_if { true }
+      end
+    end
+
     describe "#filter_example_data" do
       it 'adds the block to the #filter_example_data_blocks list' do
         block_1 = lambda { }

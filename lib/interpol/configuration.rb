@@ -82,12 +82,19 @@ module Interpol
       response_version(version, &block)
     end
 
-    def validate_if(&block)
-      @validate_if_block = block
+    def validate_response_if(&block)
+      @validate_response_if_block = block
     end
 
-    def validate?(*args)
-      @validate_if_block.call(*args)
+    def validate_response?(*args)
+      @validate_response_if_block.call(*args)
+    end
+
+    def validate_if(&block)
+      warn "WARNING: Interpol's #validate_if config option is deprecated. " +
+           "Instead, use #validate_response_if."
+
+      validate_response_if(&block)
     end
 
     def on_unavailable_request_version(&block)
@@ -158,7 +165,7 @@ module Interpol
         raise ConfigurationError, "response_version has not been configured"
       end
 
-      validate_if do |env, status, headers, body|
+      validate_response_if do |env, status, headers, body|
         headers['Content-Type'].to_s.include?('json') &&
         status >= 200 && status <= 299 && status != 204 # No Content
       end

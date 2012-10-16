@@ -15,7 +15,9 @@ module Interpol
 
     def call(env)
       status, headers, body = @app.call(env)
-      return status, headers, body unless @config.validate?(env, status, headers, body)
+      unless @config.validate_response?(env, status, headers, body)
+        return status, headers, body
+      end
 
       handler = @handler_class.new(status, headers, body, env, @config)
       handler.validate!

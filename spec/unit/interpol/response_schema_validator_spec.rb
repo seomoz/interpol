@@ -11,19 +11,19 @@ module Interpol
       lambda do |config|
         config.stub(:endpoints => definition_finder)
         config.response_version '1.0' unless response_version_configured?(config)
-        config.validate_if(&validate_if_block) if validate_if_block
+        config.validate_response_if(&validate_response_if_block) if validate_response_if_block
         config.validation_mode = validation_mode
       end
     end
 
-    attr_accessor :validation_mode, :validate_if_block, :definition_finder
+    attr_accessor :validation_mode, :validate_response_if_block, :definition_finder
 
     def set_validation_mode(mode)
       self.validation_mode = mode
     end
 
-    def validate_if(&block)
-      self.validate_if_block = block
+    def validate_response_if(&block)
+      self.validate_response_if_block = block
     end
 
     let(:closable_body) do
@@ -89,7 +89,7 @@ module Interpol
     it 'falls back to the default configuration' do
       default_config_called = false
       Interpol.default_configuration do |c|
-        c.validate_if do
+        c.validate_response_if do
           default_config_called = true
           false
         end
@@ -123,9 +123,9 @@ module Interpol
       response[2].should eq([%|{"a":"b"}|])
     end
 
-    it 'yields the env, status, headers and body from the validate_if callback' do
+    it 'yields the env, status, headers and body from the validate_response_if callback' do
       yielded_args = nil
-      validate_if { |*args| yielded_args = args; false }
+      validate_response_if { |*args| yielded_args = args; false }
 
       get '/search/200/overview'
 
@@ -135,14 +135,14 @@ module Interpol
       yielded_args[3].should eq([%|{"a":"b"}|]) # body
     end
 
-    it 'does not validate if the validate_if config returns false' do
-      validate_if { |*args| false }
+    it 'does not validate if the validate_response_if config returns false' do
+      validate_response_if { |*args| false }
       validator.should_not_receive(:validate_data!)
       default_definition_finder.should_not_receive(:find_definition)
       get '/search/200/overview'
     end
 
-    context 'when no validate_if callback has been set' do
+    context 'when no validate_response_if callback has been set' do
       it 'does not validate if the response is not 2xx' do
         validator.should_not_receive(:validate_data!)
         default_definition_finder.should_not_receive(:find_definition)
