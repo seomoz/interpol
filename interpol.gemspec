@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Interpol::VERSION
 
+  gem.add_dependency 'rack'
   gem.add_dependency 'json-schema', '~> 1.0.10'
   gem.add_dependency 'nokogiri', '~> 1.5'
 
