@@ -163,7 +163,7 @@ module Interpol
       end
     end
 
-    it 'closes the body when done interating it as per the rack spec' do
+    it 'closes the body when done iterating it as per the rack spec' do
       stub_lookup
       closable_body.should_receive(:close).once
       get '/closable/body'
