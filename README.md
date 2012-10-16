@@ -182,11 +182,11 @@ Interpol.default_configuration do |config|
   # definition when you use Interpol::ResponseSchemaValidator. The
   # validation is meant to run against the "happy path" response.
   # For responses like "404 Not Found", you probably don't want any
-  # validation performed. The default validate_if hook will cause
+  # validation performed. The default validate_response_if hook will cause
   # validation to run against any 2xx response except 204 ("No Content").
   #
   # Used by Interpol::ResponseSchemaValidator.
-  config.validate_if do |env, status, headers, body|
+  config.validate_response_if do |env, status, headers, body|
     headers['Content-Type'] == my_custom_mime_type
   end
 
