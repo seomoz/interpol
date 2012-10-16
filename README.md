@@ -25,6 +25,8 @@ definitions:
 * `Interpol::Sinatra::RequestParamsParser` validates and parses
   a sinatra `params` hash based on your endpoint params schema
   definitions.
+* `Interpol::RequestBodyValidator` is a rack middleware that validates
+  and parses request bodies based on your schema definitions.
 
 You can use any of these tools individually or some combination of all
 of them.
@@ -167,7 +169,7 @@ Interpol.default_configuration do |config|
   # available. This block will be eval'd in the context of a
   # sinatra application, so you can use sinatra helpers like `halt` here.
   #
-  # Needed by Interpol::StubApp and Interpol::Sinatra::RequestParamsParser.
+  # Used by Interpol::StubApp and Interpol::Sinatra::RequestParamsParser.
   config.on_unavailable_sinatra_request_version do |requested_version, available_versions|
     message = JSON.dump(
       "message" => "Not Acceptable",
@@ -176,6 +178,13 @@ Interpol.default_configuration do |config|
     )
 
     halt 406, message
+  end
+
+  # Determines the response when the requested version is not available.
+  #
+  # Used by Interpol::RequestBodyValidator.
+  config.on_unavailable_request_version do |env, requested_version, available_versions|
+    [406, { 'Content-Type' => 'text/plain' }, ['Wrong Version!']]
   end
 
   # Determines which responses will be validated against the endpoint
@@ -188,6 +197,14 @@ Interpol.default_configuration do |config|
   # Used by Interpol::ResponseSchemaValidator.
   config.validate_response_if do |env, status, headers, body|
     headers['Content-Type'] == my_custom_mime_type
+  end
+
+  # Determines which request bodies to validate.
+  #
+  # Used by Interpol::RequestBodyValidator.
+  config.validate_request_if do |env|
+    env.fetch('CONTENT_TYPE').to_s.include?('json') &&
+    %w[ POST PUT ].include?(env.fetch('REQUEST_METHOD'))
   end
 
   # Determines how Interpol::ResponseSchemaValidator handles
@@ -223,6 +240,14 @@ Interpol.default_configuration do |config|
   # Used by Interpol::Sinatra::RequestParamsParser.
   config.on_invalid_sinatra_request_params do |error|
     halt 400, JSON.dump(:error => error.message)
+  end
+
+  # Determines how to respond when the request body is invalid
+  # based on your schema definition.
+  #
+  # Used by Interpol::RequestBodyValidator.
+  config.on_invalid_request_body do |env, error|
+    [400, { 'Content-Type' => 'text/plain' }, [error.message]]
   end
 end
 
@@ -388,6 +413,38 @@ class MySinatraApp < Sinatra::Base
 
   get '/users/:user_id' do
     JSON.dump User.find(params.user_id)
+  end
+end
+```
+
+### Interpol::RequestBodyValidator
+
+This rack middleware validates request body (e.g. for POST or PUT
+requests) based on your endpoint request schema definitions.
+It also makes the parsed request body available as
+`interpol.parsed_body` in the rack env hash.
+
+``` ruby
+require 'sinatra/base'
+require 'interpol/request_body_validator'
+
+class MySinatraApp < Sinatra::Base
+  # The block is only necessary if you want to override the
+  # default config or have not set a default config.
+  use Interpol::RequestBodyValidator do |config|
+    config.on_invalid_request_body do |error|
+      [400, { 'Content-Type' => 'text/plain' }, [error.message]]
+    end
+  end
+
+  helpers do
+    def parsed_body
+      env.fetch('interpol.parsed_body')
+    end
+  end
+
+  put '/users/:user_id' do
+    User.create_or_replace(parsed_body.user_id, parsed_body.attributes)
   end
 end
 ```
