@@ -97,6 +97,14 @@ module Interpol
       validate_response_if(&block)
     end
 
+    def validate_request?(env)
+      @validate_request_if_block.call(env)
+    end
+
+    def validate_request_if(&block)
+      @validate_request_if_block = block
+    end
+
     def on_unavailable_sinatra_request_version(&block)
       @unavailable_sinatra_request_version_block = block
     end
@@ -105,12 +113,28 @@ module Interpol
       execution_context.instance_exec(*args, &@unavailable_sinatra_request_version_block)
     end
 
+    def on_unavailable_request_version(&block)
+      @unavailable_request_version_block = block
+    end
+
+    def request_version_unavailable(*args)
+      @unavailable_request_version_block.call(*args)
+    end
+
     def on_invalid_sinatra_request_params(&block)
       @invalid_sinatra_request_params_block = block
     end
 
     def sinatra_request_params_invalid(execution_context, *args)
       execution_context.instance_exec(*args, &@invalid_sinatra_request_params_block)
+    end
+
+    def on_invalid_request_body(&block)
+      @invalid_request_body_block = block
+    end
+
+    def request_body_invalid(*args)
+      @invalid_request_body_block.call(*args)
     end
 
     def filter_example_data(&block)
@@ -156,6 +180,13 @@ module Interpol
       }.join("\n\n")
     end
 
+    def rack_json_response(status, hash)
+      json = JSON.dump(hash)
+
+      [status, { 'Content-Type'   => 'application/json',
+                 'Content-Length' => json.bytesize }, [json]]
+    end
+
     def register_default_callbacks
       request_version do
         raise ConfigurationError, "request_version has not been configured"
@@ -170,11 +201,29 @@ module Interpol
         status >= 200 && status <= 299 && status != 204 # No Content
       end
 
+      validate_request_if do |env|
+        env.fetch('CONTENT_TYPE').to_s.include?('json') &&
+        %w[ POST PUT ].include?(env.fetch('REQUEST_METHOD'))
+      end
+
+      on_unavailable_request_version do |env, requested, available|
+        message = "The requested API version is invalid. " +
+                  "Requested: #{requested}. " +
+                  "Available: #{available}"
+
+        rack_json_response(406, :error => message)
+      end
+
       on_unavailable_sinatra_request_version do |requested, available|
         message = "The requested API version is invalid. " +
                   "Requested: #{requested}. " +
                   "Available: #{available}"
+
         halt 406, JSON.dump(:error => message)
+      end
+
+      on_invalid_request_body do |env, error|
+        rack_json_response(400, :error => error.message)
       end
 
       on_invalid_sinatra_request_params do |error|
