@@ -203,7 +203,7 @@ module Interpol
 
       validate_request_if do |env|
         env['CONTENT_TYPE'].to_s.include?('json') &&
-        %w[ POST PUT ].include?(env.fetch('REQUEST_METHOD'))
+        %w[ POST PUT PATCH ].include?(env.fetch('REQUEST_METHOD'))
       end
 
       on_unavailable_request_version do |env, requested, available|
