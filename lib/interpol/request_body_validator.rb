@@ -66,7 +66,7 @@ module Interpol
 
       def endpoint_definition(&block)
         config.endpoints.find_definition(request_method, path, 'request', nil) do |endpoint|
-          available = endpoint.available_versions
+          available = endpoint.available_request_versions
 
           @config.request_version_for(env, endpoint).tap do |requested|
             unless available.include?(requested)

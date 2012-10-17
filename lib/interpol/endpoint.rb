@@ -71,10 +71,12 @@ module Interpol
       find_definition!(version, 'response').first.example_status_code
     end
 
-    def available_versions
-      @all_definitions.inject(Set.new) do |set, definition|
-        set << definition.version
-      end.to_a
+    def available_request_versions
+      available_versions_matching &:request?
+    end
+
+    def available_response_versions
+      available_versions_matching &:response?
     end
 
     def definitions
@@ -94,6 +96,12 @@ module Interpol
     end
 
   private
+
+    def available_versions_matching
+      @all_definitions.each_with_object(Set.new) do |definition, set|
+        set << definition.version if yield definition
+      end.to_a
+    end
 
     def route_regex
       @route_regex ||= begin
@@ -161,6 +169,10 @@ module Interpol
 
     def request?
       message_type == "request"
+    end
+
+    def response?
+      message_type == "response"
     end
 
     def endpoint_name

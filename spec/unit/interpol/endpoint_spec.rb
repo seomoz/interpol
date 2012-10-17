@@ -76,10 +76,23 @@ module Interpol
 
     end
 
-    describe "#available_versions" do
-      it 'returns the list of available version strings, ordered by version' do
-        endpoint = Endpoint.new(build_hash('definitions' => definitions_array))
-        endpoint.available_versions.should match_array(%w[ 3.2 1.2 ])
+    describe "#available_request_versions" do
+      let(:endpoint) do
+        Endpoint.new(build_hash('definitions' => definitions_array + request_definition_array))
+      end
+
+      it 'returns the list of available request version strings' do
+        endpoint.available_request_versions.should match_array(%w[ 1.1 ])
+      end
+    end
+
+    describe "#available_response_versions" do
+      let(:endpoint) do
+        Endpoint.new(build_hash('definitions' => definitions_array + request_definition_array))
+      end
+
+      it 'returns the list of available response version strings' do
+        endpoint.available_response_versions.should match_array(%w[ 3.2 1.2 ])
       end
     end
 
