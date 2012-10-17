@@ -202,7 +202,7 @@ module Interpol
       end
 
       validate_request_if do |env|
-        env.fetch('CONTENT_TYPE').to_s.include?('json') &&
+        env['CONTENT_TYPE'].to_s.include?('json') &&
         %w[ POST PUT ].include?(env.fetch('REQUEST_METHOD'))
       end
 

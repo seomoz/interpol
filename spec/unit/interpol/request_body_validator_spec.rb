@@ -118,6 +118,12 @@ module Interpol
       last_response.status.should eq(200)
     end
 
+    it 'does not blow up if given no content type' do
+      header 'Read-Body', 'true'
+      get '/parsed_body', invalid_json_body
+      last_response.status.should eq(200)
+    end
+
     it 'does not attempt to validate non-JSON by default' do
       header 'Read-Body', 'true'
       header  'Content-Type', 'text/plain'
