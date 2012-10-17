@@ -207,7 +207,7 @@ module Interpol
       end
 
       on_unavailable_request_version do |env, requested, available|
-        message = "The requested API version is invalid. " +
+        message = "The requested request version is invalid. " +
                   "Requested: #{requested}. " +
                   "Available: #{available}"
 
@@ -215,7 +215,7 @@ module Interpol
       end
 
       on_unavailable_sinatra_request_version do |requested, available|
-        message = "The requested API version is invalid. " +
+        message = "The requested request version is invalid. " +
                   "Requested: #{requested}. " +
                   "Available: #{available}"
 
