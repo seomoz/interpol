@@ -231,6 +231,21 @@ Interpol.default_configuration do |config|
     example.data["current_url"] = Rack::Request.new(request_env).url
   end
 
+  # Sets a callback that will be used to determine which example
+  # to return from the stub app. If you provide an endpoint name,
+  # the block will apply only to requests to that endpoint.
+  # If no name is provided, the block will set the default selector
+  # logic. By default, if this config is not set, interpol will use
+  # the first example.
+  #
+  # Used by Interpol::StubApp.
+  config.select_example_response('some-endpoint') do |endpoint_def, request_env|
+    endpoint_def.examples[3]
+  end
+  config.select_example_response do |endpoint_def, request_env|
+    endpoint_def.examples.first
+  end
+
   # Determines what to do when Interpol::Sinatra::RequestParamsParser
   # detects invalid path or query parameters based on their schema
   # definitions. This block will be eval'd in the context of your

@@ -141,6 +141,19 @@ module Interpol
       filter_example_data_blocks << block
     end
 
+    def select_example_response(endpoint_name = nil, &block)
+      if endpoint_name
+        named_example_selectors[endpoint_name] = block
+      else
+        named_example_selectors.default = block
+      end
+    end
+
+    def example_response_for(endpoint_def, env)
+      selector = named_example_selectors[endpoint_def.endpoint_name]
+      selector.call(endpoint_def, env)
+    end
+
     def self.default
       @default ||= Configuration.new
     end
@@ -187,6 +200,10 @@ module Interpol
                  'Content-Length' => json.bytesize }, [json]]
     end
 
+    def named_example_selectors
+      @named_example_selectors ||= {}
+    end
+
     def register_default_callbacks
       request_version do
         raise ConfigurationError, "request_version has not been configured"
@@ -228,6 +245,10 @@ module Interpol
 
       on_invalid_sinatra_request_params do |error|
         halt 400, JSON.dump(:error => error.message)
+      end
+
+      select_example_response do |endpoint_def, _|
+        endpoint_def.examples.first
       end
     end
   end

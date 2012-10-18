@@ -68,14 +68,6 @@ module Interpol
       @definitions_hash.fetch([message_type, version], &block)
     end
 
-    def find_example_for!(version, message_type)
-      find_definition!(version, message_type).examples.first
-    end
-
-    def find_example_status_code_for!(version)
-      find_definition!(version, 'response').example_status_code
-    end
-
     def available_request_versions
       available_versions_matching &:request?
     end

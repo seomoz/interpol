@@ -36,10 +36,35 @@ module Interpol
       EOF
     end
 
+    let_without_indentation(:another_definition_yml) do <<-EOF
+      ---
+      name: another_endpoint
+      route: /another-endpoint
+      method: GET
+      definitions:
+        - versions: ["1.0"]
+          status_codes: ['200']
+          message_type: response
+          schema:
+            type: object
+            properties:
+              example_num: { type: integer }
+          examples:
+            - example_num: 0
+            - example_num: 1
+        - versions: ["1.0"]
+          message_type: request
+          schema: {}
+          examples: []
+      EOF
+    end
+
     let(:endpoint) { Endpoint.new(YAML.load endpoint_definition_yml) }
+    let(:another_endpoint) { Endpoint.new(YAML.load another_definition_yml) }
+
     let(:default_config) do
       lambda do |config|
-        config.endpoints = [endpoint]
+        config.endpoints = [endpoint, another_endpoint]
 
         unless response_version_configured?(config) # allow default config to take precedence
           config.response_version { |env, _| env.fetch('HTTP_RESPONSE_VERSION') }
@@ -95,6 +120,56 @@ module Interpol
       last_response.should be_ok
     end
 
+    it 'uses the select_example_response callback to select which example gets returned' do
+      Interpol.default_configuration do |c|
+        c.select_example_response do |endpoint_def, request|
+          endpoint_def.examples.last
+        end
+      end
+
+      header 'Response-Version', '1.0'
+      get '/users/3/projects'
+      parsed_body.should include('name' => 'some other project')
+    end
+
+    it 'can select an example based on the request' do
+      Interpol.default_configuration do |c|
+        c.select_example_response do |endpoint_def, env|
+          index = Integer(env.fetch('HTTP_INDEX'))
+          endpoint_def.examples[index]
+        end
+      end
+
+      header 'Response-Version', '1.0'
+
+      header 'Index', '0'
+      get '/another-endpoint'
+      parsed_body.should include('example_num' => 0)
+
+      header 'Index', '1'
+      get '/another-endpoint'
+      parsed_body.should include('example_num' => 1)
+    end
+
+    it 'can have different example selection logic for a particular endpoint' do
+      Interpol.default_configuration do |c|
+        c.select_example_response do |endpoint_def, request|
+          endpoint_def.examples.last
+        end
+
+        c.select_example_response 'another_endpoint' do |endpoint_def, request|
+          endpoint_def.examples.first
+        end
+      end
+
+      header 'Response-Version', '1.0'
+      get '/users/3/projects'
+      parsed_body.should include('name' => 'some other project')
+
+      get '/another-endpoint'
+      parsed_body.should include('example_num' => 0)
+    end
+
     it 'uses any provided filters to modify the example data' do
       app.settings.stub_app_builder.config.filter_example_data do |example, request_env|
         example.data["name"] += " for #{request_env["REQUEST_METHOD"]}"
@@ -144,7 +219,7 @@ module Interpol
     end
 
     let(:endpoint_example) do
-      endpoint.find_example_for!('1.0', 'response')
+      endpoint.find_definition!('1.0', 'response').examples.first
     end
 
     it 'performs validations by default' do

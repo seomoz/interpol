@@ -44,24 +44,25 @@ module Interpol
 
       def endpoint_definition(endpoint)
         lambda do
-          example, version = settings.
-                             stub_app_builder.
-                             example_and_version_for(endpoint, self)
+          endpoint_def = settings.stub_app_builder.endpoint_def_for(endpoint, self)
+          example = settings.stub_app_builder.example_for(endpoint_def, self)
           example.validate! if settings.perform_validations?
-          status endpoint.find_example_status_code_for!(version)
+          status endpoint_def.example_status_code
           JSON.dump(example.data)
         end
       end
 
-      def example_and_version_for(endpoint, app)
+      def endpoint_def_for(endpoint, app)
         version = config.response_version_for(app.request.env, endpoint)
-        example = endpoint.find_example_for!(version, 'response')
+        endpoint_def = endpoint.find_definition!(version, 'response')
       rescue NoEndpointDefinitionFoundError
-        config.sinatra_request_version_unavailable(app, version,
-                                                   endpoint.available_response_versions)
-      else
-        example = example.apply_filters(config.filter_example_data_blocks, app.request.env)
-        return example, version
+        config.sinatra_request_version_unavailable \
+          app, version, endpoint.available_response_versions
+      end
+
+      def example_for(endpoint_def, app)
+        example = config.example_response_for(endpoint_def, app.request.env)
+        example.apply_filters(config.filter_example_data_blocks, app.request.env)
       end
     end
   end

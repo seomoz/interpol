@@ -120,21 +120,6 @@ module Interpol
       end
     end
 
-    describe "#find_example_for!" do
-      let(:hash) { build_hash('definitions' => definitions_array) }
-      let(:endpoint) { Endpoint.new(hash) }
-
-      it 'returns an example for the requested version' do
-        endpoint.find_example_for!('1.2', 'response').data.should eq('e1')
-      end
-
-      it 'raises an error when given a version it does not have' do
-        expect {
-          endpoint.find_example_for!('2.1', 'response')
-        }.to raise_error(NoEndpointDefinitionFoundError)
-      end
-    end
-
     describe '#route_matches?' do
       def endpoint(route)
         hash = build_hash('route' => route)
