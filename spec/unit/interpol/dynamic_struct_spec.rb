@@ -33,16 +33,6 @@ module Interpol
       ds.a.should eq([1, 2, 3])
       ds.b.map(&:c).should eq([5, 4])
     end
-
-    it 'exposes the attribute names as a list of symbols' do
-      ds = DynamicStruct.new("a" => 3, "c" => 2)
-      ds.attribute_names.should match_array([:a, :c])
-    end
-
-    it 'provides a means to be converted to a hash' do
-      ds = DynamicStruct.new("a" => 2, "b" => 1)
-      ds.to_hash.should eq("a" => 2, "b" => 1)
-    end
   end
 end
 

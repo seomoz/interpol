@@ -1,37 +1,34 @@
-require 'interpol/define_singleton_method' unless Object.method_defined?(:define_singleton_method)
+require 'hashie/mash'
 
 module Interpol
-  # Transforms an arbitrarily deeply nested hash into a dot-syntax
-  # object. Useful as an alternative to a hash since it is "strongly typed"
-  # in the sense that fat-fingered property names result in a NoMethodError,
-  # rather than getting a nil as you would with a hash.
-  class DynamicStruct
-    attr_reader :attribute_names, :to_hash
-
-    def initialize(hash)
-      @to_hash = hash
-      @attribute_names = hash.keys.map(&:to_sym)
-
-      hash.each do |key, value|
-        value = method_value_for(value)
-        define_singleton_method(key) { value }
-        define_singleton_method("#{key}?") { !!value }
-      end
+  # Hashie::Mash is awesome: it gives us dot/method-call syntax for a hash.
+  # This is perfect for dealing with structured JSON data.
+  # The downside is that Hashie::Mash responds to anything--it simply
+  # creates a new entry in the backing hash.
+  #
+  # DynamicStruct freezes a Hashie::Mash so that it no longer responds to
+  # everything.  This is handy so that consumers of this gem can distinguish
+  # between a fat-fingered field, and a field that is set to nil.
+  module DynamicStruct
+    DEFAULT_PROC = lambda do |hash, key|
+      raise NoMethodError, "undefined method `#{key}' for #{hash.inspect}"
     end
 
-  private
-
-    def method_value_for(hash_value)
-      return self.class.new(hash_value) if hash_value.is_a?(Hash)
-
-      if hash_value.is_a?(Array) && hash_value.all? { |v| v.is_a?(Hash) }
-        return hash_value.map { |v| self.class.new(v) }
-      end
-
-      hash_value
+    def self.new(source)
+      hash = Hashie::Mash.new(source)
+      recursively_freeze(hash)
+      hash
     end
 
-    include DefineSingletonMethod unless method_defined?(:define_singleton_method)
+    def self.recursively_freeze(object)
+      case object
+        when Array
+          object.each { |obj| recursively_freeze(obj) }
+        when Hash
+          object.default_proc = DEFAULT_PROC
+          recursively_freeze(object.values)
+      end
+    end
   end
 end
 

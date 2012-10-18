@@ -89,11 +89,13 @@ module Interpol
       end
 
       it 'makes the parsed params object available as `params`' do
-        on_get { params.methods.join(',') }
+        on_get do
+          [params.user_id, params.project_language, params.integer].join(',')
+        end
 
         get '/users/12.23/projects/ruby?integer=3'
         last_response.status.should eq(200)
-        last_response.body.split(',').should include(*%w[ user_id project_language integer ])
+        last_response.body.split(',').should eq(%w[ 12.23 ruby 3 ])
       end
 
       it 'allows the host app to define what action should be taken when validation fails' do
