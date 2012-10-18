@@ -52,23 +52,28 @@ module Interpol
     end
 
     def find_definition!(version, message_type)
-      find_definition(version, message_type) do
+      defs = find_definitions(version, message_type) do
         message = "No definition found for #{name} endpoint for version #{version}"
         message << " and message_type #{message_type}"
         raise NoEndpointDefinitionFoundError.new(message)
       end
+
+      return defs.first if defs.size == 1
+
+      raise MultipleEndpointDefinitionsFoundError, "#{defs.size} endpoint definitions " +
+        "were found for #{name} / #{version} / #{message_type}"
     end
 
-    def find_definition(version, message_type, &block)
+    def find_definitions(version, message_type, &block)
       @definitions_hash.fetch([message_type, version], &block)
     end
 
     def find_example_for!(version, message_type)
-      find_definition!(version, message_type).first.examples.first
+      find_definition!(version, message_type).examples.first
     end
 
     def find_example_status_code_for!(version)
-      find_definition!(version, 'response').first.example_status_code
+      find_definition!(version, 'response').example_status_code
     end
 
     def available_request_versions

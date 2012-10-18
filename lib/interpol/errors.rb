@@ -32,6 +32,10 @@ module Interpol
   # endpoint definition for the request.
   class NoEndpointDefinitionFoundError < Error; end
 
+  # Error raised when multiple endpoint definitions are found
+  # for a given criteria.
+  class MultipleEndpointDefinitionsFoundError < Error; end
+
   # Raised when an invalid status code is found during validate_codes!
   class StatusCodeMatcherArgumentError < ArgumentError; end
 end

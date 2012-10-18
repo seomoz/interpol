@@ -101,15 +101,22 @@ module Interpol
       let(:endpoint) { Endpoint.new(hash) }
 
       it 'finds the definition matching the given version and message_type' do
-        definitions = endpoint.find_definition!('1.2', 'response')
-        definitions.first.version.should eq('1.2')
-        definitions.first.message_type.should eq('response')
+        definition = endpoint.find_definition!('1.2', 'response')
+        definition.version.should eq('1.2')
+        definition.message_type.should eq('response')
       end
 
       it 'raises an error when given a version that matches no definition' do
         expect {
           endpoint.find_definition!('2.1', 'response')
         }.to raise_error(NoEndpointDefinitionFoundError)
+      end
+
+      it 'raises an error if multiple definitions match its parameters' do
+        hash['definitions'] += definitions_array
+        expect {
+          endpoint.find_definition!('1.2', 'response')
+        }.to raise_error(MultipleEndpointDefinitionsFoundError)
       end
     end
 

@@ -20,7 +20,7 @@ module Interpol
   private
 
     def find_definitions_for(endpoint, version, message_type)
-      endpoint.find_definition(version, message_type) { [] }
+      endpoint.find_definitions(version, message_type) { [] }
     end
 
     def with_endpoint_matching(method, path)
