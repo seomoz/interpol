@@ -14,6 +14,7 @@ module Interpol
       method: GET
       definitions:
         - versions: ["1.0"]
+          status_codes: ['200']
           message_type: response
           schema:
             type: object
@@ -170,6 +171,14 @@ module Interpol
     it 'responds to a ping' do
       get '/__ping'
       parsed_body.should eq("message" => "Interpol stub app running.")
+    end
+
+    it 'assigns the status code based on the endpoint definition' do
+      endpoint_definition_yml.gsub!("status_codes: ['200']", "status_codes: ['214']")
+
+      header 'Response-Version', '1.0'
+      get '/users/3/projects'
+      last_response.status.should eq(214)
     end
 
     it 'can be used together with the RequestParamsParser' do
