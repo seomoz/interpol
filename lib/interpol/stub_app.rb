@@ -28,6 +28,7 @@ module Interpol
           before            { content_type "application/json;charset=utf-8" }
           before('/__ping') { skip_param_parsing! if respond_to?(:skip_param_parsing!) }
           get('/__ping')    { JSON.dump(:message => "Interpol stub app running.") }
+          enable            :perform_validations
 
           def self.name
             "Interpol::StubApp (anonymous)"
@@ -46,7 +47,7 @@ module Interpol
           example, version = settings.
                              stub_app_builder.
                              example_and_version_for(endpoint, self)
-          example.validate!
+          example.validate! if settings.perform_validations?
           status endpoint.find_example_status_code_for!(version)
           JSON.dump(example.data)
         end

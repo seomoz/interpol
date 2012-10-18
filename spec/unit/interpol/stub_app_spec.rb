@@ -155,6 +155,18 @@ module Interpol
       last_response.should be_ok
     end
 
+    it 'does not perform validates if validations are disabled' do
+      app.disable :perform_validations
+
+      endpoint_example.stub(:apply_filters) { endpoint_example }
+      endpoint_example.should respond_to(:validate!).with(0).arguments
+      endpoint_example.should_not_receive(:validate!)
+
+      header 'Response-Version', '1.0'
+      get '/users/3/projects'
+      last_response.should be_ok
+    end
+
     it 'responds to a ping' do
       get '/__ping'
       parsed_body.should eq("message" => "Interpol stub app running.")
