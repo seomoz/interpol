@@ -1,6 +1,5 @@
 require 'interpol'
 require 'interpol/dynamic_struct'
-require 'uri'
 require 'interpol/each_with_object' unless Enumerable.method_defined?(:each_with_object)
 
 module Interpol
@@ -20,10 +19,10 @@ module Interpol
   # The parsed params object supports dot-syntax for accessing parameters
   # and will convert values where feasible (e.g. '3' = 3, 'true' => true, etc).
   class RequestParamsParser
-    def initialize(endpoint_definition)
-      @validator = ParamValidator.new(endpoint_definition)
+    def initialize(endpoint_definition, configuration)
+      @validator = ParamValidator.new(endpoint_definition, configuration)
       @validator.validate_path_params_valid_for_route!
-      @converter = ParamConverter.new(@validator.param_definitions)
+      @converter = ParamConverter.new(@validator.param_definitions, configuration)
     end
 
     def parse(params)
@@ -37,8 +36,9 @@ module Interpol
 
     # Private: This takes care of the validation.
     class ParamValidator
-      def initialize(endpoint_definition)
+      def initialize(endpoint_definition, configuration)
         @endpoint_definition = endpoint_definition
+        @configuration = configuration
         @params_schema = build_params_schema
       end
 
@@ -107,26 +107,19 @@ module Interpol
         ].none? { |params| params['additionalProperties'] }
       end
 
-      STRING_EQUIVALENTS = {
-        'string'  => nil,
-        'integer' => { 'type' => 'string', 'pattern' => '^\-?\d+$' },
-        'number'  => { 'type' => 'string', 'pattern' => '^\-?\d+(\.\d+)?$' },
-        'boolean' => { 'type' => 'string', 'enum'    => %w[ true false ] },
-        'null'    => { 'type' => 'string', 'enum'    => [''] }
-      }
-
       def adjusted_schema(schema)
-        types = Array(schema['type'])
-
-        string_equivalents = types.map do |type|
-          STRING_EQUIVALENTS.fetch(type) do
-            unless type.is_a?(Hash) # a nested union type
-              raise UnsupportedTypeError.new(type)
-            end
+        adjusted_types = Array(schema['type']).inject([]) do |type_list, type|
+          type_string, options = if type.is_a?(Hash)
+            [type.fetch('type'), type]
+          else
+            [type, schema]
           end
-        end.compact
 
-        schema.merge('type' => (types + string_equivalents)).tap do |adjusted|
+          @configuration.param_parser_for(type_string, options).
+                         type_validation_options_for([type] + type_list, options)
+        end
+
+        schema.merge('type' => adjusted_types).tap do |adjusted|
           adjusted['required'] = true unless adjusted['optional']
         end
       end
@@ -136,8 +129,9 @@ module Interpol
     class ParamConverter
       attr_reader :param_definitions
 
-      def initialize(param_definitions)
+      def initialize(param_definitions, configuration)
         @param_definitions = param_definitions
+        @configuration = configuration
       end
 
       def convert(params)
@@ -156,10 +150,10 @@ module Interpol
         definition = param_definitions.fetch(name)
 
         Array(definition['type']).each do |type|
-          converter = converter_for(type, definition)
+          parser = parser_for(type, definition)
 
           begin
-            return converter.call(value)
+            return parser.parse_value(value)
           rescue ArgumentError => e
             # Try the next unioned type...
           end
@@ -168,96 +162,14 @@ module Interpol
         raise CannotBeParsedError, "The #{name} #{value.inspect} cannot be parsed"
       end
 
-      BOOLEANS = { 'true'  => true,  true  => true,
-                   'false' => false, false => false }
-      def self.convert_boolean(value)
-        BOOLEANS.fetch(value) do
-          raise ArgumentError, "#{value} is not convertable to a boolean"
-        end
-      end
-
-      NULLS = { '' => nil, nil => nil }
-      def self.convert_null(value)
-        NULLS.fetch(value) do
-          raise ArgumentError, "#{value} is not convertable to null"
-        end
-      end
-
-      def self.convert_date(value)
-        unless value =~ /\A\d{4}\-\d{2}\-\d{2}\z/
-          raise ArgumentError, "Not in iso8601 format"
+      def parser_for(type, options)
+        if type.is_a?(Hash)
+          return parser_for(type.fetch('type'), type)
         end
 
-        Date.new(*value.split('-').map(&:to_i))
-      end
-
-      def self.convert_uri(value)
-        URI(value).tap do |uri|
-          unless uri.scheme && uri.host
-            raise ArgumentError, "Not a valid full URI"
-          end
-        end
-      rescue URI::InvalidURIError => e
-        raise ArgumentError, e.message, e.backtrace
-      end
-
-      CONVERTERS = {
-        'integer' => method(:Integer),
-        'number'  => method(:Float),
-        'boolean' => method(:convert_boolean),
-        'null'    => method(:convert_null)
-      }
-
-      IDENTITY_CONVERTER = lambda { |v| v }
-
-      def converter_for(type, definition)
-        CONVERTERS.fetch(type) do
-          if Hash === type && type['type']
-            converter_for(type['type'], type)
-          elsif type == 'string'
-            string_converter_for(definition)
-          else
-            raise CannotBeParsedError, "#{type} cannot be parsed"
-          end
-        end
-      end
-
-      STRING_CONVERTERS = {
-        'date'      => method(:convert_date),
-        'date-time' => Time.method(:iso8601),
-        'uri'       => method(:convert_uri)
-      }
-
-      def string_converter_for(definition)
-        STRING_CONVERTERS.fetch(definition['format'], IDENTITY_CONVERTER)
+        @configuration.param_parser_for(type, options)
       end
     end
-
-    # Raised when an unsupported parameter type is defined.
-    class UnsupportedTypeError < ArgumentError
-      attr_reader :type
-
-      def initialize(type)
-        @type = type
-        super("#{type} params are not supported")
-      end
-    end
-
-    # Raised when the path_params are not part of the endpoint route.
-    class InvalidPathParamsError < ArgumentError
-      attr_reader :invalid_params
-
-      def initialize(*invalid_params)
-        @invalid_params = invalid_params
-        super("The path params #{invalid_params.join(', ')} are not in the route")
-      end
-    end
-
-    # Raised when a parameter value cannot be parsed.
-    CannotBeParsedError = Class.new(ArgumentError)
-
-    # Raised when a params definition is invalid.
-    InvalidParamsDefinitionError = Class.new(ArgumentError)
   end
 end
 

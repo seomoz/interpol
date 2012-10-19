@@ -2,6 +2,7 @@ require 'interpol/endpoint'
 require 'interpol/errors'
 require 'yaml'
 require 'interpol/configuration_ruby_18_extensions'  if RUBY_VERSION.to_f < 1.9
+require 'uri'
 
 module Interpol
   module DefinitionFinder
@@ -163,6 +164,23 @@ module Interpol
       dup.tap(&block)
     end
 
+    def define_request_param_parser(type, options = {}, &block)
+      ParamParser.new(type, options, &block).tap do |parser|
+        # Use unshift so that new parsers take precedence over older ones.
+        param_parsers[type].unshift parser
+      end
+    end
+
+    def param_parser_for(type, options)
+      match = param_parsers[type].find do |parser|
+        parser.matches_options?(options)
+      end
+
+      return match if match
+
+      raise UnsupportedTypeError.new(type, options)
+    end
+
   private
 
     # 1.9 version
@@ -202,6 +220,10 @@ module Interpol
 
     def named_example_selectors
       @named_example_selectors ||= {}
+    end
+
+    def param_parsers
+      @param_parsers ||= Hash.new { |h, k| h[k] = [] }
     end
 
     def register_default_callbacks
@@ -249,6 +271,140 @@ module Interpol
 
       select_example_response do |endpoint_def, _|
         endpoint_def.examples.first
+      end
+
+      register_built_in_param_parsers
+    end
+
+    def register_built_in_param_parsers
+      define_request_param_parser('integer') do |param|
+        param.string_validation_options 'pattern' => '^\-?\d+$'
+
+        param.parse do |value|
+          begin
+            Integer(value)
+          rescue TypeError
+            raise ArgumentError, "Could not convert #{value.inspect} to an integer"
+          end
+        end
+      end
+
+      define_request_param_parser('number') do |param|
+        param.string_validation_options 'pattern' => '^\-?\d+(\.\d+)?$'
+
+        param.parse do |value|
+          begin
+            Float(value)
+          rescue TypeError
+            raise ArgumentError, "Could not convert #{value.inspect} to a float"
+          end
+        end
+      end
+
+      define_request_param_parser('boolean') do |param|
+        param.string_validation_options 'enum' => %w[ true false ]
+
+        booleans = { 'true'  => true,  true  => true,
+                     'false' => false, false => false }
+        param.parse do |value|
+          booleans.fetch(value) do
+            raise ArgumentError, "Could not convert #{value.inspect} to a boolean"
+          end
+        end
+      end
+
+      define_request_param_parser('null') do |param|
+        param.string_validation_options 'enum' => ['']
+
+        nulls = { '' => nil, nil => nil }
+        param.parse do |value|
+          nulls.fetch(value) do
+            raise ArgumentError, "Could not convert #{value.inspect} to a null"
+          end
+        end
+      end
+
+      define_request_param_parser('string') do |param|
+        param.parse do |value|
+          unless value.is_a?(String)
+            raise ArgumentError, "#{value.inspect} is not a string"
+          end
+
+          value
+        end
+      end
+
+      define_request_param_parser('string', 'format' => 'date') do |param|
+        param.parse do |value|
+          unless value =~ /\A\d{4}\-\d{2}\-\d{2}\z/
+            raise ArgumentError, "#{value.inspect} is not in iso8601 format"
+          end
+
+          Date.new(*value.split('-').map(&:to_i))
+        end
+      end
+
+      define_request_param_parser('string', 'format' => 'date-time') do |param|
+        param.parse &Time.method(:iso8601)
+      end
+
+      define_request_param_parser('string', 'format' => 'uri') do |param|
+        param.parse do |value|
+          begin
+            URI(value).tap do |uri|
+              unless uri.scheme && uri.host
+                raise ArgumentError, "#{uri.inspect} is not a valid full URI"
+              end
+            end
+          rescue URI::InvalidURIError => e
+            raise ArgumentError, e.message, e.backtrace
+          end
+        end
+      end
+    end
+  end
+
+  # Holds the validation/parsing logic for a particular parameter
+  # type (w/ additional options).
+  class ParamParser
+    def initialize(type, options = {})
+      @type = type
+      @options = options
+      yield self
+    end
+
+    def string_validation_options(options)
+      @string_validation_options = options
+    end
+
+    def parse(&block)
+      @parse_block = block
+    end
+
+    def matches_options?(options)
+      @options.all? do |key, value|
+        options.has_key?(key) && options[key] == value
+      end
+    end
+
+    def type_validation_options_for(type, options)
+      return type unless @string_validation_options
+      [*type, @string_validation_options.merge('type' => 'string')]
+    end
+
+    def parse_value(value)
+      unless @parse_block
+        raise "No parse callback has been set for param type definition: #{description}"
+      end
+
+      @parse_block.call(value)
+    end
+
+    def description
+      @description ||= @type.inspect.tap do |desc|
+        if @options.any?
+          desc << " (with options: #{@options.inspect})"
+        end
       end
     end
   end

@@ -27,7 +27,13 @@ module Interpol
       # receive the app instance as an argument here.
       def validate_and_parse_params(app)
         return unless app.settings.parse_params?
-        SingleRequestParamsParser.parse_params(config, app)
+        SingleRequestParamsParser.parse_params(config, app, endpoint_parsers)
+      end
+
+      def endpoint_parsers
+        @endpoint_parsers ||= Hash.new do |hash, endpoint|
+          hash[endpoint] = Interpol::RequestParamsParser.new(endpoint, @config)
+        end
       end
 
     private
@@ -57,17 +63,18 @@ module Interpol
 
       # Handles finding parsing request params for a single request.
       class SingleRequestParamsParser
-        def self.parse_params(config, app)
-          new(config, app).parse_params
+        def self.parse_params(config, app, endpoint_parsers)
+          new(config, app, endpoint_parsers).parse_params
         end
 
-        def initialize(config, app)
+        def initialize(config, app, endpoint_parsers)
           @config = config
           @app = app
+          @endpoint_parsers = endpoint_parsers
         end
 
         def parse_params
-          endpoint_definition.parse_request_params(params_to_parse)
+          @endpoint_parsers[endpoint_definition].parse(params_to_parse)
         rescue Interpol::ValidationError => error
           request_params_invalid(error)
         end
