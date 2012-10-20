@@ -25,10 +25,16 @@ module Interpol
         when Array
           object.each { |obj| recursively_freeze(obj) }
         when Hash
-          object.default_proc = DEFAULT_PROC
+          set_default_proc_on(object)
           recursively_freeze(object.values)
       end
     end
+
+    def self.set_default_proc_on(hash)
+      hash.default_proc = DEFAULT_PROC
+    end
   end
 end
+
+require 'interpol/hash_set_default_proc_18' unless {}.respond_to?(:default_proc=)
 
