@@ -14,7 +14,6 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
   desc "Run cane to check quality metrics"
   Cane::RakeTask.new(:quality) do |cane|
     cane.abc_max = 13
-    cane.add_threshold 'coverage/coverage_percent.txt', :==, 100
     cane.style_measure = 100
 
     cane.abc_exclude = %w[
@@ -30,7 +29,19 @@ else
   task(:quality) { } # no-op
 end
 
-task :default => [:spec, :quality]
+desc "Checks the spec coverage and fails if it is less than 100%"
+task :check_coverage do
+  puts "Checking code coverage..."
+  percent = File.read("coverage/coverage_percent.txt").to_f
+
+  if percent < 100
+    raise "Failed to achieve 100% code coverage: #{percent}"
+  else
+    puts "Nice work! Code coverage is still 100%"
+  end
+end
+
+task :default => [:spec, :quality, :check_coverage]
 
 desc "Watch Documentation App Compass Files"
 task :compass_watch do
