@@ -25,20 +25,21 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
       spec/unit/interpol/sinatra/request_params_parser_spec.rb
     ]
   end
+
+  desc "Checks the spec coverage and fails if it is less than 100%"
+  task :check_coverage do
+    puts "Checking code coverage..."
+    percent = File.read("coverage/coverage_percent.txt").to_f
+
+    if percent < 100
+      raise "Failed to achieve 100% code coverage: #{percent}"
+    else
+      puts "Nice work! Code coverage is still 100%"
+    end
+  end
 else
   task(:quality) { } # no-op
-end
-
-desc "Checks the spec coverage and fails if it is less than 100%"
-task :check_coverage do
-  puts "Checking code coverage..."
-  percent = File.read("coverage/coverage_percent.txt").to_f
-
-  if percent < 100
-    raise "Failed to achieve 100% code coverage: #{percent}"
-  else
-    puts "Nice work! Code coverage is still 100%"
-  end
+  task(:check_coverage) { } # no-op
 end
 
 task :default => [:spec, :quality, :check_coverage]
