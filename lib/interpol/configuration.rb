@@ -389,7 +389,7 @@ module Interpol
 
     def type_validation_options_for(type, options)
       return type unless @string_validation_options
-      [*type, @string_validation_options.merge('type' => 'string')]
+      Array(type) + [@string_validation_options.merge('type' => 'string')]
     end
 
     def parse_value(value)
