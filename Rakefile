@@ -17,9 +17,7 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' # MRI only
     cane.style_measure = 100
 
     cane.abc_exclude = %w[
-      Interpol::Configuration#register_default_callbacks
       Interpol::StubApp::Builder#initialize
-      Interpol::Configuration#register_built_in_param_parsers
     ]
 
     cane.style_exclude = %w[

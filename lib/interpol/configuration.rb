@@ -41,6 +41,7 @@ module Interpol
       self.endpoint_definition_merge_key_files = []
       self.documentation_title = "API Documentation Provided by Interpol"
       register_default_callbacks
+      register_built_in_param_parsers
       @filter_example_data_blocks = []
 
       yield self if block_given?
@@ -226,142 +227,21 @@ module Interpol
       @param_parsers ||= Hash.new { |h, k| h[k] = [] }
     end
 
-    def register_default_callbacks
-      request_version do
-        raise ConfigurationError, "request_version has not been configured"
-      end
-
-      response_version do
-        raise ConfigurationError, "response_version has not been configured"
-      end
-
-      validate_response_if do |env, status, headers, body|
-        headers['Content-Type'].to_s.include?('json') &&
-        status >= 200 && status <= 299 && status != 204 # No Content
-      end
-
-      validate_request_if do |env|
-        env['CONTENT_TYPE'].to_s.include?('json') &&
-        %w[ POST PUT PATCH ].include?(env.fetch('REQUEST_METHOD'))
-      end
-
-      on_unavailable_request_version do |env, requested, available|
-        message = "The requested request version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-
-        rack_json_response(406, :error => message)
-      end
-
-      on_unavailable_sinatra_request_version do |requested, available|
-        message = "The requested request version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-
-        halt 406, JSON.dump(:error => message)
-      end
-
-      on_invalid_request_body do |env, error|
-        rack_json_response(400, :error => error.message)
-      end
-
-      on_invalid_sinatra_request_params do |error|
-        halt 400, JSON.dump(:error => error.message)
-      end
-
-      select_example_response do |endpoint_def, _|
-        endpoint_def.examples.first
-      end
-
-      register_built_in_param_parsers
+    def self.instance_eval_args_for(file)
+      filename = File.expand_path("../configuration/#{file}.rb", __FILE__)
+      contents = File.read(filename)
+      [contents, filename, 1]
     end
 
+    BUILT_IN_PARSER_EVAL_ARGS = instance_eval_args_for("built_in_param_parsers")
+
     def register_built_in_param_parsers
-      define_request_param_parser('integer') do |param|
-        param.string_validation_options 'pattern' => '^\-?\d+$'
+      instance_eval(*BUILT_IN_PARSER_EVAL_ARGS)
+    end
 
-        param.parse do |value|
-          begin
-            raise TypeError unless value # On 1.8.7 Integer(nil) does not raise an error
-            Integer(value)
-          rescue TypeError
-            raise ArgumentError, "Could not convert #{value.inspect} to an integer"
-          end
-        end
-      end
-
-      define_request_param_parser('number') do |param|
-        param.string_validation_options 'pattern' => '^\-?\d+(\.\d+)?$'
-
-        param.parse do |value|
-          begin
-            Float(value)
-          rescue TypeError
-            raise ArgumentError, "Could not convert #{value.inspect} to a float"
-          end
-        end
-      end
-
-      define_request_param_parser('boolean') do |param|
-        param.string_validation_options 'enum' => %w[ true false ]
-
-        booleans = { 'true'  => true,  true  => true,
-                     'false' => false, false => false }
-        param.parse do |value|
-          booleans.fetch(value) do
-            raise ArgumentError, "Could not convert #{value.inspect} to a boolean"
-          end
-        end
-      end
-
-      define_request_param_parser('null') do |param|
-        param.string_validation_options 'enum' => ['']
-
-        nulls = { '' => nil, nil => nil }
-        param.parse do |value|
-          nulls.fetch(value) do
-            raise ArgumentError, "Could not convert #{value.inspect} to a null"
-          end
-        end
-      end
-
-      define_request_param_parser('string') do |param|
-        param.parse do |value|
-          unless value.is_a?(String)
-            raise ArgumentError, "#{value.inspect} is not a string"
-          end
-
-          value
-        end
-      end
-
-      define_request_param_parser('string', 'format' => 'date') do |param|
-        param.parse do |value|
-          unless value =~ /\A\d{4}\-\d{2}\-\d{2}\z/
-            raise ArgumentError, "#{value.inspect} is not in iso8601 format"
-          end
-
-          Date.new(*value.split('-').map(&:to_i))
-        end
-      end
-
-      define_request_param_parser('string', 'format' => 'date-time') do |param|
-        param.parse &Time.method(:iso8601)
-      end
-
-      define_request_param_parser('string', 'format' => 'uri') do |param|
-        param.parse do |value|
-          begin
-            URI(value).tap do |uri|
-              unless uri.scheme && uri.host
-                raise ArgumentError, "#{uri.inspect} is not a valid full URI"
-              end
-            end
-          rescue URI::InvalidURIError => e
-            raise ArgumentError, e.message, e.backtrace
-          end
-        end
-      end
+    DEFAULT_CALLBACK_EVAL_ARGS = instance_eval_args_for("default_callbacks")
+    def register_default_callbacks
+      instance_eval(*DEFAULT_CALLBACK_EVAL_ARGS)
     end
   end
 
