@@ -282,6 +282,7 @@ module Interpol
 
         param.parse do |value|
           begin
+            raise TypeError unless value # On 1.8.7 Integer(nil) does not raise an error
             Integer(value)
           rescue TypeError
             raise ArgumentError, "Could not convert #{value.inspect} to an integer"
