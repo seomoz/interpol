@@ -400,6 +400,17 @@ module Interpol
       end
     end
 
+    it 'allows a block to be passed for string_validation_options' do
+      parser = ParamParser.new("foo", "bar" => 3) do |p|
+        p.string_validation_options do |opts|
+          opts.merge("a" => 2)
+        end
+      end
+
+      options = parser.type_validation_options_for('foo', 'b' => 3)
+      options.last.should eq("type" => "string", "b" => 3, "a" => 2)
+    end
+
     RSpec::Matchers.define :have_errors_for do |value|
       match do |schema|
         validate(schema)

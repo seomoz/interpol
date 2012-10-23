@@ -374,8 +374,8 @@ module Interpol
       yield self
     end
 
-    def string_validation_options(options)
-      @string_validation_options = options
+    def string_validation_options(options = nil, &block)
+      @string_validation_options_block = block || Proc.new { options }
     end
 
     def parse(&block)
@@ -389,8 +389,9 @@ module Interpol
     end
 
     def type_validation_options_for(type, options)
-      return type unless @string_validation_options
-      Array(type) + [@string_validation_options.merge('type' => 'string')]
+      return type unless @string_validation_options_block
+      string_options = @string_validation_options_block.call(options)
+      Array(type) + [string_options.merge('type' => 'string')]
     end
 
     def parse_value(value)
