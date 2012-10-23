@@ -335,6 +335,368 @@ module Interpol
         cd.validation_mode.should be(:error)
       end
     end
+
+    describe "#param_parser_for" do
+      let!(:simple1) { config.define_request_param_parser('simple1') { } }
+      let!(:simple2) { config.define_request_param_parser('simple2') { } }
+
+      let!(:complex1_2) { config.define_request_param_parser('complex1', 'foo' => 2) { } }
+      let!(:complex1_3) { config.define_request_param_parser('complex1', 'foo' => 3) { } }
+      let!(:complex1_nil) { config.define_request_param_parser('complex1', 'foo' => nil) { } }
+
+      let!(:complex2_4) { config.define_request_param_parser('complex2', 'foo' => 4) { } }
+      let!(:complex2_5) { config.define_request_param_parser('complex2', 'foo' => 5,
+                                                             'bar' => 'a') { } }
+
+      it 'raises an error if no matching definition can be found' do
+        expect {
+          config.param_parser_for('blah', {})
+        }.to raise_error(UnsupportedTypeError)
+      end
+
+      it 'returns the last matching definition (to allow user overrides)' do
+        new_def = config.define_request_param_parser('simple1') { }
+        config.param_parser_for('simple1', {}).should be(new_def)
+      end
+
+      context 'when only a type is given' do
+        it 'returns the matching definition' do
+          config.param_parser_for('simple1', {}).should be(simple1)
+          config.param_parser_for('simple2', {}).should be(simple2)
+        end
+      end
+
+      context 'when options are given' do
+        it 'returns the matching definition' do
+          config.param_parser_for('complex1', 'foo' => 2).should eq(complex1_2)
+          config.param_parser_for('complex1', 'foo' => 3).should eq(complex1_3)
+        end
+
+        it 'ignores extra options that do not apply' do
+          config.param_parser_for('complex1', 'foo' => 2, 'a' => 1).should eq(complex1_2)
+          config.param_parser_for('complex1', 'foo' => 3, 'b' => 2).should eq(complex1_3)
+          config.param_parser_for('simple1', 'a' => 2).should be(simple1)
+        end
+
+        it 'only matches nil values if the matching key is included in the provided hash' do
+          config.param_parser_for('complex1', 'foo' => nil).should eq(complex1_nil)
+          expect {
+            config.param_parser_for('complex1', 'bar' => 4)
+          }.to raise_error(UnsupportedTypeError)
+        end
+      end
+    end
+  end
+
+  describe ParamParser do
+    let(:config) { Configuration.new }
+
+    describe "#parse_value" do
+      it 'raises a useful error if no parse callback has been set' do
+        definition = ParamParser.new("foo", "bar" => 3) { }
+        expect {
+          definition.parse_value("blah")
+        }.to raise_error(/parse/)
+      end
+    end
+
+    it 'allows a block to be passed for string_validation_options' do
+      parser = ParamParser.new("foo", "bar" => 3) do |p|
+        p.string_validation_options do |opts|
+          opts.merge("a" => 2)
+        end
+      end
+
+      options = parser.type_validation_options_for('foo', 'b' => 3)
+      options.last.should eq("type" => "string", "b" => 3, "a" => 2)
+    end
+
+    RSpec::Matchers.define :have_errors_for do |value|
+      match do |schema|
+        validate(schema)
+      end
+
+      failure_message_for_should_not do |schema|
+        ValidationError.new(@errors, params).message
+      end
+
+      def validate(schema)
+        @errors = ::JSON::Validator.fully_validate(schema, params)
+        @errors.any?
+      end
+
+      define_method :params do
+        { 'some_param' => value }
+      end
+    end
+
+    RSpec::Matchers.define :convert do |old_value|
+      chain :to do |new_value|
+        @new_value = new_value
+      end
+
+      match_for_should do |converter|
+        raise "Must specify the expected value with .to" unless defined?(@new_value)
+        @converter = converter
+        @old_value = old_value
+        converted_value == @new_value
+      end
+
+      match_for_should_not do |converter|
+        @converter = converter
+        @old_value = old_value
+        raised_argument_error = false
+
+        begin
+          converted_value
+        rescue ArgumentError
+          raised_argument_error = true
+        end
+
+        raised_argument_error
+      end
+
+      failure_message_for_should do |converter|
+        "expected #{old_value.inspect} to convert to #{@new_value.inspect}, " +
+        "but converted to #{converted_value.inspect}"
+      end
+
+      failure_message_for_should_not do |converter|
+        "expected #{old_value.inspect} to trigger an ArgumentError when " +
+        "conversion was attempted, but did not"
+      end
+
+      def converted_value
+        @converted_value ||= @converter.call(@old_value)
+      end
+    end
+
+    def self.for_type(type, options = {}, &block)
+      description = type.inspect
+      description << " (with options: #{options.inspect})" if options.any?
+
+      context "for type: #{description}" do
+        let(:parser) { config.param_parser_for(type, options) }
+        let(:type) { type }
+
+        let(:schema) do {
+          'type'       => 'object',
+          'properties' => {
+            'some_param' => options.merge(
+              'type' => parser.type_validation_options_for(type, options)
+            )
+          }
+        } end
+
+        let(:converter) { parser.method(:parse_value) }
+
+        module_exec(type, &block)
+      end
+    end
+
+    for_type 'integer' do
+      it 'allows a string integer to pass validation' do
+        schema.should_not have_errors_for("23")
+        schema.should_not have_errors_for("-2")
+      end
+
+      it 'allows an integer to pass validation' do
+        schema.should_not have_errors_for(-12)
+      end
+
+      it 'fails a string that is not formatted like an integer' do
+        schema.should have_errors_for("not an int")
+      end
+
+      it 'fails a string that is formatted like a float' do
+        schema.should have_errors_for("0.5")
+        schema.should have_errors_for(0.5)
+      end
+
+      it 'converts string ints to fixnums' do
+        converter.should convert("23").to(23)
+        converter.should convert(17).to(17)
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert("0.5")
+        converter.should_not convert("not a fixnum")
+        converter.should_not convert(nil)
+      end
+    end
+
+    for_type 'number' do
+      it 'allows a string int or float to pass validation' do
+        schema.should_not have_errors_for("23")
+        schema.should_not have_errors_for("-2.5")
+      end
+
+      it 'allows an integer or float to pass validation' do
+        schema.should_not have_errors_for(-12)
+        schema.should_not have_errors_for(2.17)
+      end
+
+      it 'fails a string that is not formatted like an integer or float' do
+        schema.should have_errors_for("not a num")
+      end
+
+      it 'converts string numbers to floats' do
+        converter.should convert("23.3").to(23.3)
+        converter.should convert(-5).to(-5.0)
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert("not a num")
+        converter.should_not convert(nil)
+      end
+    end
+
+    for_type "boolean" do
+      it 'allows "true" or "false" to pass validation' do
+        schema.should_not have_errors_for("true")
+        schema.should_not have_errors_for("false")
+      end
+
+      it 'allows actual boolean values to pass validation' do
+        schema.should_not have_errors_for(true)
+        schema.should_not have_errors_for(false)
+      end
+
+      it 'fails other values' do
+        schema.should have_errors_for("tru")
+        schema.should have_errors_for("flse")
+        schema.should have_errors_for("23")
+      end
+
+      it 'converts boolean strings to boolean values' do
+        converter.should convert("false").to(false)
+        converter.should convert(false).to(false)
+        converter.should convert("true").to(true)
+        converter.should convert(true).to(true)
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert("tru")
+        converter.should_not convert(nil)
+      end
+    end
+
+    for_type "null" do
+      it 'allows nil or "" to pass validation' do
+        schema.should_not have_errors_for(nil)
+        schema.should_not have_errors_for("")
+      end
+
+      it 'fails other values' do
+        schema.should have_errors_for(" ")
+        schema.should have_errors_for(3)
+      end
+
+      it 'converts "" to nil' do
+        converter.should convert("").to(nil)
+        converter.should convert(nil).to(nil)
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert(" ")
+        converter.should_not convert(3)
+      end
+    end
+
+    for_type "string" do
+      it 'allows strings to pass validation' do
+        schema.should_not have_errors_for("a string")
+        schema.should_not have_errors_for("")
+      end
+
+      it 'fails non-string values' do
+        schema.should have_errors_for(nil)
+        schema.should have_errors_for(3)
+      end
+
+      it 'does not change a given string during conversion' do
+        converter.should convert("a").to("a")
+      end
+
+      it "does not convert invalid values" do
+        converter.should_not convert(nil)
+        converter.should_not convert(3)
+      end
+    end
+
+    for_type "string", 'format' => "date" do
+      it 'allows date formatted strings' do
+        schema.should_not have_errors_for("2012-04-28")
+      end
+
+      it 'fails mis-formatted dates' do
+        schema.should have_errors_for("04-28-2012")
+      end
+
+      it 'fails other strings' do
+        schema.should have_errors_for("not a date")
+      end
+
+      it 'converts date strings to date values' do
+        converter.should convert("2012-08-12").to(Date.new(2012, 8, 12))
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert("04-28-2012")
+        converter.should_not convert("not a date")
+        converter.should_not convert(nil)
+      end
+    end
+
+    for_type 'string', 'format' => 'date-time' do
+      let(:time) { Time.utc(2012, 8, 15, 12, 30) }
+
+      it 'allows date-time formatted strings' do
+        schema.should_not have_errors_for(time.iso8601)
+      end
+
+      it 'fails mis-formatted date-times' do
+        schema.should have_errors_for(time.iso8601.gsub('-', '~'))
+      end
+
+      it 'fails other strings' do
+        schema.should have_errors_for("foo")
+      end
+
+      it 'converts date-time strings to time values' do
+        converter.should convert(time.iso8601).to(time)
+      end
+
+      it 'does not convert invalid values' do
+        converter.should_not convert(time.iso8601.gsub('-', '~'))
+        converter.should_not convert(nil)
+      end
+    end
+
+    for_type 'string', 'format' => 'uri' do
+      let(:uri) { URI('http://foo.com/bar') }
+
+      it 'allows URI strings' do
+        schema.should_not have_errors_for(uri.to_s)
+      end
+
+      it 'fails invalid URI strings' do
+        pending "json-schema doesn't validate URIs yet, unfortunately" do
+          schema.should have_errors_for('not a URI')
+        end
+      end
+
+      it 'converts URI strings to a URI object' do
+        converter.should convert(uri.to_s).to (uri)
+      end
+
+      it 'does not convert invalid URIs' do
+        converter.should_not convert('2012-08-12')
+        converter.should_not convert(' ')
+        converter.should_not convert(nil)
+        converter.should_not convert("@*&^^^@")
+      end
+    end
   end
 end
 

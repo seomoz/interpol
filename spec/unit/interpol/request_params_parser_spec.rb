@@ -10,7 +10,9 @@ module Interpol
       Endpoint.new(raw_endpoint_definition).definitions.first
     end
 
-    let(:parser) { RequestParamsParser.new(endpoint_definition) }
+    let(:config) { Configuration.new }
+    let(:parser) { RequestParamsParser.new(endpoint_definition, config) }
+
     let(:valid_params) do
       { 'user_id' => '11.22', 'project_language' => 'ruby' }
     end
@@ -25,7 +27,7 @@ module Interpol
       %w[ array object ].each do |type|
         it "raises an error for a #{type} param definition since it does not yet support it" do
           endpoint_definition_yml.gsub!('boolean', type)
-          expect { parser }.to raise_error(/#{type} params are not supported/)
+          expect { parser }.to raise_error(/no param parser/i)
         end
       end
 
@@ -50,6 +52,12 @@ module Interpol
       end
     end
 
+    # Note: these specs were originally written when RequestParamsParser had explicit
+    #       logic to handle each type of a parameter. They are pretty exhaustive.
+    #       Now that we have the ParamParser abstraction (and corresponding specs),
+    #       we could get by with fewer, simpler specs here, but they helped me prevent
+    #       regressions when doing my refactoring. I'm leaving them for now, but feel
+    #       free to delete some of these and/or simplify in the future.
     describe '#validate!' do
       it 'passes when all params are valid' do
         parser.validate!(valid_params) # should not raise an error
@@ -153,7 +161,7 @@ module Interpol
                             fetch('properties').
                             fetch('user_id')['optional'] = true
 
-        new_parser = RequestParamsParser.new(endpoint_definition)
+        new_parser = RequestParamsParser.new(endpoint_definition, config)
         new_parser.validate!(without_user_id)
       end
 
@@ -258,7 +266,7 @@ module Interpol
         parse_with('project_language' => 'ruby').project_language.should eq('ruby')
       end
 
-      it 'supports unioned types' do
+      it 'supports unioned types'  do
         parse_with('union' => '3').union.should eq(3)
         parse_with('union' => '2.3').union.should eq(2.3)
         parse_with('union' => '').union.should eq(nil)
@@ -307,7 +315,7 @@ module Interpol
 
         expect {
           parse
-        }.to raise_error(/cannot be parsed/)
+        }.to raise_error(/no param parser/i)
       end
 
       it 'ensures all defined params are methods on the returned object, ' +

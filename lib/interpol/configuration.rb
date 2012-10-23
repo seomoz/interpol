@@ -2,6 +2,7 @@ require 'interpol/endpoint'
 require 'interpol/errors'
 require 'yaml'
 require 'interpol/configuration_ruby_18_extensions'  if RUBY_VERSION.to_f < 1.9
+require 'uri'
 
 module Interpol
   module DefinitionFinder
@@ -40,6 +41,7 @@ module Interpol
       self.endpoint_definition_merge_key_files = []
       self.documentation_title = "API Documentation Provided by Interpol"
       register_default_callbacks
+      register_built_in_param_parsers
       @filter_example_data_blocks = []
 
       yield self if block_given?
@@ -163,6 +165,23 @@ module Interpol
       dup.tap(&block)
     end
 
+    def define_request_param_parser(type, options = {}, &block)
+      ParamParser.new(type, options, &block).tap do |parser|
+        # Use unshift so that new parsers take precedence over older ones.
+        param_parsers[type].unshift parser
+      end
+    end
+
+    def param_parser_for(type, options)
+      match = param_parsers[type].find do |parser|
+        parser.matches_options?(options)
+      end
+
+      return match if match
+
+      raise UnsupportedTypeError.new(type, options)
+    end
+
   private
 
     # 1.9 version
@@ -204,51 +223,70 @@ module Interpol
       @named_example_selectors ||= {}
     end
 
+    def param_parsers
+      @param_parsers ||= Hash.new { |h, k| h[k] = [] }
+    end
+
+    def self.instance_eval_args_for(file)
+      filename = File.expand_path("../configuration/#{file}.rb", __FILE__)
+      contents = File.read(filename)
+      [contents, filename, 1]
+    end
+
+    BUILT_IN_PARSER_EVAL_ARGS = instance_eval_args_for("built_in_param_parsers")
+
+    def register_built_in_param_parsers
+      instance_eval(*BUILT_IN_PARSER_EVAL_ARGS)
+    end
+
+    DEFAULT_CALLBACK_EVAL_ARGS = instance_eval_args_for("default_callbacks")
     def register_default_callbacks
-      request_version do
-        raise ConfigurationError, "request_version has not been configured"
+      instance_eval(*DEFAULT_CALLBACK_EVAL_ARGS)
+    end
+  end
+
+  # Holds the validation/parsing logic for a particular parameter
+  # type (w/ additional options).
+  class ParamParser
+    def initialize(type, options = {})
+      @type = type
+      @options = options
+      yield self
+    end
+
+    def string_validation_options(options = nil, &block)
+      @string_validation_options_block = block || Proc.new { options }
+    end
+
+    def parse(&block)
+      @parse_block = block
+    end
+
+    def matches_options?(options)
+      @options.all? do |key, value|
+        options.has_key?(key) && options[key] == value
+      end
+    end
+
+    def type_validation_options_for(type, options)
+      return type unless @string_validation_options_block
+      string_options = @string_validation_options_block.call(options)
+      Array(type) + [string_options.merge('type' => 'string')]
+    end
+
+    def parse_value(value)
+      unless @parse_block
+        raise "No parse callback has been set for param type definition: #{description}"
       end
 
-      response_version do
-        raise ConfigurationError, "response_version has not been configured"
-      end
+      @parse_block.call(value)
+    end
 
-      validate_response_if do |env, status, headers, body|
-        headers['Content-Type'].to_s.include?('json') &&
-        status >= 200 && status <= 299 && status != 204 # No Content
-      end
-
-      validate_request_if do |env|
-        env['CONTENT_TYPE'].to_s.include?('json') &&
-        %w[ POST PUT PATCH ].include?(env.fetch('REQUEST_METHOD'))
-      end
-
-      on_unavailable_request_version do |env, requested, available|
-        message = "The requested request version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-
-        rack_json_response(406, :error => message)
-      end
-
-      on_unavailable_sinatra_request_version do |requested, available|
-        message = "The requested request version is invalid. " +
-                  "Requested: #{requested}. " +
-                  "Available: #{available}"
-
-        halt 406, JSON.dump(:error => message)
-      end
-
-      on_invalid_request_body do |env, error|
-        rack_json_response(400, :error => error.message)
-      end
-
-      on_invalid_sinatra_request_params do |error|
-        halt 400, JSON.dump(:error => error.message)
-      end
-
-      select_example_response do |endpoint_def, _|
-        endpoint_def.examples.first
+    def description
+      @description ||= @type.inspect.tap do |desc|
+        if @options.any?
+          desc << " (with options: #{@options.inspect})"
+        end
       end
     end
   end

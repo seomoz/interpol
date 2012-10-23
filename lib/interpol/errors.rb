@@ -38,5 +38,35 @@ module Interpol
 
   # Raised when an invalid status code is found during validate_codes!
   class StatusCodeMatcherArgumentError < ArgumentError; end
+
+  # Raised when an unsupported parameter type is defined.
+  class UnsupportedTypeError < ArgumentError
+    attr_reader :type, :options
+
+    def initialize(type, options = {})
+      @type = type
+      @options = options
+
+      description = type.inspect
+      description << " (#{options.inspect})" if options.any?
+      super("No param parser can be found for #{description}")
+    end
+  end
+
+  # Raised when the path_params are not part of the endpoint route.
+  class InvalidPathParamsError < ArgumentError
+    attr_reader :invalid_params
+
+    def initialize(*invalid_params)
+      @invalid_params = invalid_params
+      super("The path params #{invalid_params.join(', ')} are not in the route")
+    end
+  end
+
+  # Raised when a parameter value cannot be parsed.
+  CannotBeParsedError = Class.new(ArgumentError)
+
+  # Raised when a params definition is invalid.
+  InvalidParamsDefinitionError = Class.new(ArgumentError)
 end
 
