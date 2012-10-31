@@ -18,6 +18,18 @@ module Interpol
       end
     end
 
+    it "initializes custom_metadata from the meta field" do
+      endpoint = Endpoint.new(build_hash 'meta' => {'key' => 'value'})
+      endpoint.custom_metadata.should eq('key' => 'value')
+    end
+
+    context "when no meta key is provided" do
+      it "initializes custom_metadata to an empty hash" do
+        Endpoint.new(build_hash).custom_metadata.should eq({})
+      end
+    end
+
+
     it 'initializes the HTTP method' do
       Endpoint.new(build_hash 'method' => 'PUT').method.should be(:put)
     end
