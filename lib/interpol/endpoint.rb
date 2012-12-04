@@ -94,6 +94,11 @@ module Interpol
       path =~ route_regex
     end
 
+    def inspect
+      "#<#{self.class.name} #{method} #{route} (#{name})>"
+    end
+    alias to_s inspect
+
   private
 
     def available_versions_matching

@@ -29,9 +29,15 @@ module Interpol
       end
     end
 
-
     it 'initializes the HTTP method' do
       Endpoint.new(build_hash 'method' => 'PUT').method.should be(:put)
+    end
+
+    [:to_s, :inspect].each do |meth|
+      it "provides a human-readable ##{meth} output" do
+        endpoint = Endpoint.new(build_hash 'route' => '/foo')
+        endpoint.send(meth).should eq("#<Interpol::Endpoint get /foo (the-name)>")
+      end
     end
 
     %w[ name route definitions method ].each do |attr|
