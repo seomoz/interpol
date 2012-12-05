@@ -36,6 +36,10 @@ module Interpol
         end
       end
 
+      def inspect
+        "#<#{self.class.name}>"
+      end
+
     private
 
       attr_reader :config, :original_app_instance

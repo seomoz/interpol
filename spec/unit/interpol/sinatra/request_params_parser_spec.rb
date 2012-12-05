@@ -64,6 +64,30 @@ module Interpol
         end
       end
 
+      def find_sinatra_base_subclass_wrapped_in(app)
+        return app if app.class.ancestors.include?(::Sinatra::Base)
+
+        wrapped_app = if app.respond_to?(:app)
+          app.app
+        elsif app.instance_variables.include?(:@app)
+          app.instance_variable_get(:@app)
+        else
+          raise "Unable to find a wrapped app within #{app}"
+        end
+
+        find_sinatra_base_subclass_wrapped_in(wrapped_app)
+      end
+
+      [:to_s, :inspect].each do |meth|
+        it "provides reasonable ##{meth} output" do
+          # We have to unwrap the app instance to get the core sinatra instance,
+          # as required by RequestParamsParser.
+          app = find_sinatra_base_subclass_wrapped_in Class.new(::Sinatra::Base).new
+          instance = RequestParamsParser.new(app)
+          instance.inspect.should eq("#<Interpol::Sinatra::RequestParamsParser>")
+        end
+      end
+
       it 'makes the original unparsed params available as `unparsed_params`' do
         on_get { JSON.dump(unparsed_params) }
 
