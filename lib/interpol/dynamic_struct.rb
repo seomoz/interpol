@@ -14,8 +14,12 @@ module Interpol
       raise NoMethodError, "undefined method `#{key}' for #{hash.inspect}"
     end
 
+    Mash = Class.new(::Hashie::Mash) do
+      undef sort
+    end
+
     def self.new(source)
-      hash = Hashie::Mash.new(source)
+      hash = Mash.new(source)
       recursively_freeze(hash)
       hash
     end

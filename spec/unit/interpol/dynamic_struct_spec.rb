@@ -33,6 +33,18 @@ module Interpol
       ds.a.should eq([1, 2, 3])
       ds.b.map(&:c).should eq([5, 4])
     end
+
+    hash_methods_allowed_as_params = [:sort]
+
+    hash_methods_allowed_as_params.each do |meth|
+      it 'allows params that correspond to hash method names' do
+        {}.should respond_to(meth)
+        ds = DynamicStruct.new(meth.to_s => "v1", "inner" => {
+          meth.to_s => "v2" })
+        ds.send(meth).should eq("v1")
+        ds.inner.send(meth).should eq("v2")
+      end
+    end
   end
 end
 
