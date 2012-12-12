@@ -37,7 +37,7 @@ module Interpol
     hash_methods_allowed_as_params = [:sort]
 
     hash_methods_allowed_as_params.each do |meth|
-      it 'allows params that correspond to hash method names' do
+      it "delegates ##{meth} to the hash entry even though it is a hash method" do
         {}.should respond_to(meth)
         ds = DynamicStruct.new(meth.to_s => "v1", "inner" => {
           meth.to_s => "v2" })
