@@ -34,6 +34,11 @@ module Interpol
       ds.b.map(&:c).should eq([5, 4])
     end
 
+    it 'returns nil when #[] is passed an undefined key' do
+      ds = DynamicStruct.new("a" => { "b" => { "c" => 3 } })
+      ds["b"].should eq(nil)
+    end
+
     hash_methods_allowed_as_params = [:sort]
 
     hash_methods_allowed_as_params.each do |meth|

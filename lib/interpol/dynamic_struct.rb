@@ -10,35 +10,47 @@ module Interpol
   # everything.  This is handy so that consumers of this gem can distinguish
   # between a fat-fingered field, and a field that is set to nil.
   module DynamicStruct
-    DEFAULT_PROC = lambda do |hash, key|
-      raise NoMethodError, "undefined method `#{key}' for #{hash.inspect}"
-    end
+    SAFE_METHOD_MISSING = ::Hashie::Mash.superclass.instance_method(:method_missing)
 
     Mash = Class.new(::Hashie::Mash) do
       undef sort
     end
 
-    def self.new(source)
-      hash = Mash.new(source)
-      recursively_freeze(hash)
-      hash
-    end
-
-    def self.recursively_freeze(object)
-      case object
-        when Array
-          object.each { |obj| recursively_freeze(obj) }
-        when Hash
-          set_default_proc_on(object)
-          recursively_freeze(object.values)
+    def self.new(*args)
+      Mash.new(*args).tap do |mash|
+        mash.extend(self)
       end
     end
 
-    def self.set_default_proc_on(hash)
-      hash.default_proc = DEFAULT_PROC
+    def self.extended(mash)
+      recursively_extend(mash)
+    end
+
+    def self.recursively_extend(object)
+      case object
+        when Array
+          object.each { |v| recursively_extend(v) }
+        when Mash
+          object.extend(self) unless object.is_a?(self)
+          object.each { |_, v| recursively_extend(v) }
+      end
+    end
+
+    def method_missing(method_name, *args, &blk)
+      if key = method_name.to_s[/\A([^?=]*)[?=]?\z/, 1]
+        unless has_key?(key)
+          return safe_method_missing(method_name, *args, &blk)
+        end
+      end
+
+      super
+    end
+
+  private
+
+    def safe_method_missing(*args)
+      SAFE_METHOD_MISSING.bind(self).call(*args)
     end
   end
 end
-
-require 'interpol/hash_set_default_proc_18' unless {}.respond_to?(:default_proc=)
 
