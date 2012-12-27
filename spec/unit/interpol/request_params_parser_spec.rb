@@ -35,18 +35,18 @@ module Interpol
         it "raises an error if #{param_type} does not have 'type: object'" do
           endpoint_definition.send(param_type)['type'] = 'array'
           expect { parser }.to raise_error { |error|
-            error.message.should include(param_type)
-            error.message.should include(endpoint_definition.endpoint_name)
-            error.message.should include("object")
+            expect(error.message).to include(param_type)
+            expect(error.message).to include(endpoint_definition.endpoint_name)
+            expect(error.message).to include("object")
           }
         end
 
         it "raises an error if #{param_type} lacks property definitions" do
           endpoint_definition.send(param_type).delete('properties')
           expect { parser }.to raise_error { |error|
-            error.message.should include(param_type)
-            error.message.should include(endpoint_definition.endpoint_name)
-            error.message.should include("properties")
+            expect(error.message).to include(param_type)
+            expect(error.message).to include(endpoint_definition.endpoint_name)
+            expect(error.message).to include("properties")
           }
         end
       end
@@ -146,8 +146,8 @@ module Interpol
 
         parser.validate!(valid_params)
 
-        get_entry('query_params').should eq(query_params)
-        get_entry('path_params').should eq(path_params)
+        expect(get_entry('query_params')).to eq(query_params)
+        expect(get_entry('path_params')).to eq(path_params)
       end
 
       it 'requires all params except those with `optional: true`' do
@@ -208,25 +208,25 @@ module Interpol
 
       it 'returns a "strongly typed" object that allows dot-syntax to be used' do
         params = parse
-        params.should respond_to(:user_id, :project_language)
-        params.should_not respond_to(:some_undefined_param)
+        expect(params).to respond_to(:user_id, :project_language)
+        expect(params).not_to respond_to(:some_undefined_param)
       end
 
       it 'converts string integers to fixnums' do
-        parse_with('integer' => '3').integer.should eq(3)
-        parse_with('integer' => 4).integer.should eq(4)
+        expect(parse_with('integer' => '3').integer).to eq(3)
+        expect(parse_with('integer' => 4).integer).to eq(4)
       end
 
       it 'converts string numbers to floats' do
-        parse_with('number' => '2.3').number.should eq(2.3)
-        parse_with('number' => Math::PI).number.should eq(Math::PI)
+        expect(parse_with('number' => '2.3').number).to eq(2.3)
+        expect(parse_with('number' => Math::PI).number).to eq(Math::PI)
       end
 
       it 'converts "true" and "false" strings to their boolean equivalents' do
-        parse_with('boolean' => 'true').boolean.should eq(true)
-        parse_with('boolean' => true).boolean.should eq(true)
-        parse_with('boolean' => 'false').boolean.should eq(false)
-        parse_with('boolean' => false).boolean.should eq(false)
+        expect(parse_with('boolean' => 'true').boolean).to eq(true)
+        expect(parse_with('boolean' => true).boolean).to eq(true)
+        expect(parse_with('boolean' => 'false').boolean).to eq(false)
+        expect(parse_with('boolean' => false).boolean).to eq(false)
       end
 
       if Date.method_defined?(:iso8601)
@@ -242,38 +242,38 @@ module Interpol
       let(:date) { Date.new(2012, 8, 3) }
 
       it 'converts date strings to a date object' do
-        parse_with('date' => iso8601(date)).date.should eq(date)
+        expect(parse_with('date' => iso8601(date)).date).to eq(date)
       end
 
       let(:time) { Time.utc(2012, 8, 3, 5, 23, 15) }
 
       it 'converts date-time strings to a time object' do
-        parse_with('date_time' => time.iso8601).date_time.should eq(time)
+        expect(parse_with('date_time' => time.iso8601).date_time).to eq(time)
       end
 
       let(:uri) { URI('http://foo.com/bar') }
 
       it 'converts URI strings to a URI object' do
-        parse_with('uri' => uri.to_s).uri.should eq(uri)
+        expect(parse_with('uri' => uri.to_s).uri).to eq(uri)
       end
 
       it "converts '' to nil" do
-        parse_with('null_param' => '').null_param.should be(nil)
-        parse_with('null_param' => nil).null_param.should be(nil)
+        expect(parse_with('null_param' => '').null_param).to be(nil)
+        expect(parse_with('null_param' => nil).null_param).to be(nil)
       end
 
       it 'preserves raw string params' do
-        parse_with('project_language' => 'ruby').project_language.should eq('ruby')
+        expect(parse_with('project_language' => 'ruby').project_language).to eq('ruby')
       end
 
       it 'supports unioned types'  do
-        parse_with('union' => '3').union.should eq(3)
-        parse_with('union' => '2.3').union.should eq(2.3)
-        parse_with('union' => '').union.should eq(nil)
-        parse_with('union' => 'false').union.should eq(false)
-        parse_with('union' => iso8601(date)).union.should eq(date)
-        parse_with('union' => time.iso8601).union.should eq(time)
-        parse_with('union' => uri.to_s).union.should eq(uri)
+        expect(parse_with('union' => '3').union).to eq(3)
+        expect(parse_with('union' => '2.3').union).to eq(2.3)
+        expect(parse_with('union' => '').union).to eq(nil)
+        expect(parse_with('union' => 'false').union).to eq(false)
+        expect(parse_with('union' => iso8601(date)).union).to eq(date)
+        expect(parse_with('union' => time.iso8601).union).to eq(time)
+        expect(parse_with('union' => uri.to_s).union).to eq(uri)
       end
 
       def ordered_formats_for(name)
@@ -283,9 +283,9 @@ module Interpol
 
       it 'does not convert date strings to URIs even when the URI type comes first in a union' do
         # The logic this test exercises is only needed when URI comes before date in the union
-        ordered_formats_for('uri_or_date').should eq(['uri', 'date'])
-        parse_with('uri_or_date' => iso8601(date)).uri_or_date.should eq(date)
-        parse_with('uri_or_date' => uri.to_s).uri_or_date.should eq(uri)
+        expect(ordered_formats_for('uri_or_date')).to eq(['uri', 'date'])
+        expect(parse_with('uri_or_date' => iso8601(date)).uri_or_date).to eq(date)
+        expect(parse_with('uri_or_date' => uri.to_s).uri_or_date).to eq(uri)
       end
 
       def prevent_validation_failure
@@ -320,10 +320,10 @@ module Interpol
 
       it 'ensures all defined params are methods on the returned object, ' +
          'even if not present in the params hash' do
-        valid_params.keys.should_not include('date', 'date_time')
+        expect(valid_params.keys).not_to include('date', 'date_time')
         parsed = self.parse
-        parsed.date.should be_nil
-        parsed.date_time.should be_nil
+        expect(parsed.date).to be_nil
+        expect(parsed.date_time).to be_nil
       end
     end
   end

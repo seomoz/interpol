@@ -44,14 +44,14 @@ module Interpol
       it 'finds a matching endpoint definition' do
         found = find(:method => 'POST', :path => '/foo/bar',
           :version => '2.3', :message_type => 'request')
-        found.endpoint_name.should eq(endpoint_2.name)
-        found.version.should eq('2.3')
+        expect(found.endpoint_name).to eq(endpoint_2.name)
+        expect(found.version).to eq('2.3')
       end
 
       it 'finds the correct versioned definition of the endpoint' do
         found = find(:method => 'POST', :path => '/foo/bar',
           :version => '2.7', :message_type => 'request')
-        found.version.should eq('2.7')
+        expect(found.version).to eq('2.7')
       end
 
       it 'calls the version block with the endpoint' do
@@ -60,33 +60,33 @@ module Interpol
           endpoint = e
         end
 
-        endpoint.should be(endpoint_2)
+        expect(endpoint).to be(endpoint_2)
       end
 
       it 'returns NoDefinitionFound if it cannot find a matching route' do
         result = find(:method => 'POST', :path => '/goo/bar',
           :version => '2.7', :message_type => 'request')
-        result.should be(DefinitionFinder::NoDefinitionFound)
+        expect(result).to be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'returns nil if the endpoint does not have a matching version' do
         result = find(:method => 'POST', :path => '/foo/bar',
           :version => '13.7', :message_type => 'request')
-        result.should be(DefinitionFinder::NoDefinitionFound)
+        expect(result).to be(DefinitionFinder::NoDefinitionFound)
       end
 
       it 'handles route params properly' do
         found = find_with_status_code('200', :method => 'GET', :path => '/users/17/overview',
           :version => '1.3', :message_type => 'response')
-        found.endpoint_name.should be(endpoint_1.name)
-        found.status_codes.should eq('2xx')
+        expect(found.endpoint_name).to be(endpoint_1.name)
+        expect(found.status_codes).to eq('2xx')
       end
 
       it 'handles status code params properly' do
         found = find_with_status_code('403', :method => 'GET', :path => '/users/17/overview',
           :version => '1.3', :message_type => 'response')
-        found.endpoint_name.should be(endpoint_1.name)
-        found.status_codes.should eq('xxx')
+        expect(found.endpoint_name).to be(endpoint_1.name)
+        expect(found.status_codes).to eq('xxx')
       end
     end
   end
@@ -97,14 +97,14 @@ module Interpol
     it 'yields itself on initialization if a block is provided' do
       yielded_object = nil
       config = Configuration.new { |c| yielded_object = c }
-      yielded_object.should be(config)
+      expect(yielded_object).to be(config)
     end
 
     describe "#endpoint_definition_files" do
       it 'allows files to be set as a glob' do
         config.endpoint_definition_files = Dir["spec/fixtures/dir_with_two_yaml_files/*.yml"]
         files = config.endpoint_definition_files
-        files.map { |f| f.split('/').last }.should =~ %w[ one.yml two.yml ]
+        expect(files.map { |f| f.split('/').last }).to match_array %w[ one.yml two.yml ]
       end
     end
 
@@ -131,8 +131,8 @@ module Interpol
         write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project", "task")
 
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
-        config.should have(2).endpoints
-        config.endpoints.map(&:name).should =~ %w[ project_list task_list ]
+        expect(config).to have(2).endpoints
+        expect(config.endpoints.map(&:name)).to match_array %w[ project_list task_list ]
       end
 
       context "when YAML merge keys are used" do
@@ -166,12 +166,12 @@ module Interpol
         end
 
         def assert_expected_endpoint
-          config.endpoints.size.should eq(1)
+          expect(config.endpoints.size).to eq(1)
           endpoint = config.endpoints.first
           defs = endpoint.definitions
-          defs.should have_at_least(1).entry
+          expect(defs).to have_at_least(1).entry
           defs.each do |definitions|
-            definitions.schema.fetch("properties").should have_key("name")
+            expect(definitions.schema.fetch("properties")).to have_key("name")
           end
         end
 
@@ -197,28 +197,28 @@ module Interpol
 
       it 'is memoized' do
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
-        config.endpoints.should equal(config.endpoints)
+        expect(config.endpoints).to equal(config.endpoints)
       end
 
       it 'is cleared when endpoint_definition_files is set' do
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
         endpoints1 = config.endpoints
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
-        endpoints1.should_not equal(config.endpoints)
+        expect(endpoints1).not_to equal(config.endpoints)
       end
 
       it 'returns a blank array if no definition files have been set' do
-        config.endpoints.should eq([])
+        expect(config.endpoints).to eq([])
       end
 
       it 'provides a method to easily find an endpoint definition' do
-        config.endpoints.should respond_to(:find_definition)
+        expect(config.endpoints).to respond_to(:find_definition)
       end
 
       it 'can be assigned directly' do
         endpoints_array = [stub.as_null_object]
         config.endpoints = endpoints_array
-        config.endpoints.should respond_to(:find_definition)
+        expect(config.endpoints).to respond_to(:find_definition)
       end
     end
 
@@ -245,24 +245,26 @@ module Interpol
         context 'when configured with a static version' do
           it 'returns the configured static api version number' do
             config.send(set_method, '1.2')
-            config.send(get_method, {}, stub.as_null_object).should eq('1.2')
+            expect(config.send(get_method, {}, stub.as_null_object)).to eq('1.2')
           end
 
           it 'always returns a string, even when configured as an integer' do
             config.send(set_method, 3)
-            config.send(get_method, {}, stub.as_null_object).should eq('3')
+            expect(config.send(get_method, {}, stub.as_null_object)).to eq('3')
           end
         end
 
         context 'when configured with a block' do
           it "returns the blocks's return value" do
             config.send(set_method) { |e, _| e[:path][%r|/api/v(\d+)/|, 1] }
-            config.send(get_method, { :path => "/api/v2/foo" }, stub.as_null_object).should eq('2')
+            expect(
+              config.send(get_method, { :path => "/api/v2/foo" }, stub.as_null_object)
+            ).to eq('2')
           end
 
           it 'always returns a string, even when configured as an integer' do
             config.send(set_method) { |*a| 3 }
-            config.send(get_method, {}, stub.as_null_object).should eq('3')
+            expect(config.send(get_method, {}, stub.as_null_object)).to eq('3')
           end
         end
 
@@ -279,8 +281,8 @@ module Interpol
 
       it 'configures both request_version and response_version' do
         config.api_version '23.14'
-        config.request_version_for({}, stub.as_null_object).should eq('23.14')
-        config.response_version_for({}, stub.as_null_object).should eq('23.14')
+        expect(config.request_version_for({}, stub.as_null_object)).to eq('23.14')
+        expect(config.response_version_for({}, stub.as_null_object)).to eq('23.14')
       end
 
       it 'prints a warning' do
@@ -294,8 +296,8 @@ module Interpol
 
       it 'configures validate_response_if' do
         config.validate_if { |a| a }
-        config.validate_response?(true).should be_true
-        config.validate_response?(false).should be_false
+        expect(config.validate_response?(true)).to be_true
+        expect(config.validate_response?(false)).to be_false
       end
 
       it 'prints a warning' do
@@ -312,7 +314,7 @@ module Interpol
         config.filter_example_data(&block_1)
         config.filter_example_data(&block_2)
 
-        config.filter_example_data_blocks.should eq([block_1, block_2])
+        expect(config.filter_example_data_blocks).to eq([block_1, block_2])
       end
     end
 
@@ -320,7 +322,7 @@ module Interpol
       it 'yields a configuration instance' do
         cd = nil
         config.customized_duplicate { |c| cd = c }
-        cd.should be_a(Configuration)
+        expect(cd).to be_a(Configuration)
       end
 
       it 'uses a duplicate so as not to affect the original instance' do
@@ -331,8 +333,8 @@ module Interpol
           cd = c
         end
 
-        config.validation_mode.should be(:warn)
-        cd.validation_mode.should be(:error)
+        expect(config.validation_mode).to be(:warn)
+        expect(cd.validation_mode).to be(:error)
       end
     end
 
@@ -356,30 +358,30 @@ module Interpol
 
       it 'returns the last matching definition (to allow user overrides)' do
         new_def = config.define_request_param_parser('simple1') { }
-        config.param_parser_for('simple1', {}).should be(new_def)
+        expect(config.param_parser_for('simple1', {})).to be(new_def)
       end
 
       context 'when only a type is given' do
         it 'returns the matching definition' do
-          config.param_parser_for('simple1', {}).should be(simple1)
-          config.param_parser_for('simple2', {}).should be(simple2)
+          expect(config.param_parser_for('simple1', {})).to be(simple1)
+          expect(config.param_parser_for('simple2', {})).to be(simple2)
         end
       end
 
       context 'when options are given' do
         it 'returns the matching definition' do
-          config.param_parser_for('complex1', 'foo' => 2).should eq(complex1_2)
-          config.param_parser_for('complex1', 'foo' => 3).should eq(complex1_3)
+          expect(config.param_parser_for('complex1', 'foo' => 2)).to eq(complex1_2)
+          expect(config.param_parser_for('complex1', 'foo' => 3)).to eq(complex1_3)
         end
 
         it 'ignores extra options that do not apply' do
-          config.param_parser_for('complex1', 'foo' => 2, 'a' => 1).should eq(complex1_2)
-          config.param_parser_for('complex1', 'foo' => 3, 'b' => 2).should eq(complex1_3)
-          config.param_parser_for('simple1', 'a' => 2).should be(simple1)
+          expect(config.param_parser_for('complex1', 'foo' => 2, 'a' => 1)).to eq(complex1_2)
+          expect(config.param_parser_for('complex1', 'foo' => 3, 'b' => 2)).to eq(complex1_3)
+          expect(config.param_parser_for('simple1', 'a' => 2)).to be(simple1)
         end
 
         it 'only matches nil values if the matching key is included in the provided hash' do
-          config.param_parser_for('complex1', 'foo' => nil).should eq(complex1_nil)
+          expect(config.param_parser_for('complex1', 'foo' => nil)).to eq(complex1_nil)
           expect {
             config.param_parser_for('complex1', 'bar' => 4)
           }.to raise_error(UnsupportedTypeError)
@@ -408,7 +410,7 @@ module Interpol
       end
 
       options = parser.type_validation_options_for('foo', 'b' => 3)
-      options.last.should eq("type" => "string", "b" => 3, "a" => 2)
+      expect(options.last).to eq("type" => "string", "b" => 3, "a" => 2)
     end
 
     RSpec::Matchers.define :have_errors_for do |value|
@@ -496,155 +498,155 @@ module Interpol
 
     for_type 'integer' do
       it 'allows a string integer to pass validation' do
-        schema.should_not have_errors_for("23")
-        schema.should_not have_errors_for("-2")
+        expect(schema).not_to have_errors_for("23")
+        expect(schema).not_to have_errors_for("-2")
       end
 
       it 'allows an integer to pass validation' do
-        schema.should_not have_errors_for(-12)
+        expect(schema).not_to have_errors_for(-12)
       end
 
       it 'fails a string that is not formatted like an integer' do
-        schema.should have_errors_for("not an int")
+        expect(schema).to have_errors_for("not an int")
       end
 
       it 'fails a string that is formatted like a float' do
-        schema.should have_errors_for("0.5")
-        schema.should have_errors_for(0.5)
+        expect(schema).to have_errors_for("0.5")
+        expect(schema).to have_errors_for(0.5)
       end
 
       it 'converts string ints to fixnums' do
-        converter.should convert("23").to(23)
-        converter.should convert(17).to(17)
+        expect(converter).to convert("23").to(23)
+        expect(converter).to convert(17).to(17)
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert("0.5")
-        converter.should_not convert("not a fixnum")
-        converter.should_not convert(nil)
+        expect(converter).not_to convert("0.5")
+        expect(converter).not_to convert("not a fixnum")
+        expect(converter).not_to convert(nil)
       end
     end
 
     for_type 'number' do
       it 'allows a string int or float to pass validation' do
-        schema.should_not have_errors_for("23")
-        schema.should_not have_errors_for("-2.5")
+        expect(schema).not_to have_errors_for("23")
+        expect(schema).not_to have_errors_for("-2.5")
       end
 
       it 'allows an integer or float to pass validation' do
-        schema.should_not have_errors_for(-12)
-        schema.should_not have_errors_for(2.17)
+        expect(schema).not_to have_errors_for(-12)
+        expect(schema).not_to have_errors_for(2.17)
       end
 
       it 'fails a string that is not formatted like an integer or float' do
-        schema.should have_errors_for("not a num")
+        expect(schema).to have_errors_for("not a num")
       end
 
       it 'converts string numbers to floats' do
-        converter.should convert("23.3").to(23.3)
-        converter.should convert(-5).to(-5.0)
+        expect(converter).to convert("23.3").to(23.3)
+        expect(converter).to convert(-5).to(-5.0)
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert("not a num")
-        converter.should_not convert(nil)
+        expect(converter).not_to convert("not a num")
+        expect(converter).not_to convert(nil)
       end
     end
 
     for_type "boolean" do
       it 'allows "true" or "false" to pass validation' do
-        schema.should_not have_errors_for("true")
-        schema.should_not have_errors_for("false")
+        expect(schema).not_to have_errors_for("true")
+        expect(schema).not_to have_errors_for("false")
       end
 
       it 'allows actual boolean values to pass validation' do
-        schema.should_not have_errors_for(true)
-        schema.should_not have_errors_for(false)
+        expect(schema).not_to have_errors_for(true)
+        expect(schema).not_to have_errors_for(false)
       end
 
       it 'fails other values' do
-        schema.should have_errors_for("tru")
-        schema.should have_errors_for("flse")
-        schema.should have_errors_for("23")
+        expect(schema).to have_errors_for("tru")
+        expect(schema).to have_errors_for("flse")
+        expect(schema).to have_errors_for("23")
       end
 
       it 'converts boolean strings to boolean values' do
-        converter.should convert("false").to(false)
-        converter.should convert(false).to(false)
-        converter.should convert("true").to(true)
-        converter.should convert(true).to(true)
+        expect(converter).to convert("false").to(false)
+        expect(converter).to convert(false).to(false)
+        expect(converter).to convert("true").to(true)
+        expect(converter).to convert(true).to(true)
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert("tru")
-        converter.should_not convert(nil)
+        expect(converter).not_to convert("tru")
+        expect(converter).not_to convert(nil)
       end
     end
 
     for_type "null" do
       it 'allows nil or "" to pass validation' do
-        schema.should_not have_errors_for(nil)
-        schema.should_not have_errors_for("")
+        expect(schema).not_to have_errors_for(nil)
+        expect(schema).not_to have_errors_for("")
       end
 
       it 'fails other values' do
-        schema.should have_errors_for(" ")
-        schema.should have_errors_for(3)
+        expect(schema).to have_errors_for(" ")
+        expect(schema).to have_errors_for(3)
       end
 
       it 'converts "" to nil' do
-        converter.should convert("").to(nil)
-        converter.should convert(nil).to(nil)
+        expect(converter).to convert("").to(nil)
+        expect(converter).to convert(nil).to(nil)
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert(" ")
-        converter.should_not convert(3)
+        expect(converter).not_to convert(" ")
+        expect(converter).not_to convert(3)
       end
     end
 
     for_type "string" do
       it 'allows strings to pass validation' do
-        schema.should_not have_errors_for("a string")
-        schema.should_not have_errors_for("")
+        expect(schema).not_to have_errors_for("a string")
+        expect(schema).not_to have_errors_for("")
       end
 
       it 'fails non-string values' do
-        schema.should have_errors_for(nil)
-        schema.should have_errors_for(3)
+        expect(schema).to have_errors_for(nil)
+        expect(schema).to have_errors_for(3)
       end
 
       it 'does not change a given string during conversion' do
-        converter.should convert("a").to("a")
+        expect(converter).to convert("a").to("a")
       end
 
       it "does not convert invalid values" do
-        converter.should_not convert(nil)
-        converter.should_not convert(3)
+        expect(converter).not_to convert(nil)
+        expect(converter).not_to convert(3)
       end
     end
 
     for_type "string", 'format' => "date" do
       it 'allows date formatted strings' do
-        schema.should_not have_errors_for("2012-04-28")
+        expect(schema).not_to have_errors_for("2012-04-28")
       end
 
       it 'fails mis-formatted dates' do
-        schema.should have_errors_for("04-28-2012")
+        expect(schema).to have_errors_for("04-28-2012")
       end
 
       it 'fails other strings' do
-        schema.should have_errors_for("not a date")
+        expect(schema).to have_errors_for("not a date")
       end
 
       it 'converts date strings to date values' do
-        converter.should convert("2012-08-12").to(Date.new(2012, 8, 12))
+        expect(converter).to convert("2012-08-12").to(Date.new(2012, 8, 12))
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert("04-28-2012")
-        converter.should_not convert("not a date")
-        converter.should_not convert(nil)
+        expect(converter).not_to convert("04-28-2012")
+        expect(converter).not_to convert("not a date")
+        expect(converter).not_to convert(nil)
       end
     end
 
@@ -652,24 +654,24 @@ module Interpol
       let(:time) { Time.utc(2012, 8, 15, 12, 30) }
 
       it 'allows date-time formatted strings' do
-        schema.should_not have_errors_for(time.iso8601)
+        expect(schema).not_to have_errors_for(time.iso8601)
       end
 
       it 'fails mis-formatted date-times' do
-        schema.should have_errors_for(time.iso8601.gsub('-', '~'))
+        expect(schema).to have_errors_for(time.iso8601.gsub('-', '~'))
       end
 
       it 'fails other strings' do
-        schema.should have_errors_for("foo")
+        expect(schema).to have_errors_for("foo")
       end
 
       it 'converts date-time strings to time values' do
-        converter.should convert(time.iso8601).to(time)
+        expect(converter).to convert(time.iso8601).to(time)
       end
 
       it 'does not convert invalid values' do
-        converter.should_not convert(time.iso8601.gsub('-', '~'))
-        converter.should_not convert(nil)
+        expect(converter).not_to convert(time.iso8601.gsub('-', '~'))
+        expect(converter).not_to convert(nil)
       end
     end
 
@@ -677,24 +679,24 @@ module Interpol
       let(:uri) { URI('http://foo.com/bar') }
 
       it 'allows URI strings' do
-        schema.should_not have_errors_for(uri.to_s)
+        expect(schema).not_to have_errors_for(uri.to_s)
       end
 
       it 'fails invalid URI strings' do
         pending "json-schema doesn't validate URIs yet, unfortunately" do
-          schema.should have_errors_for('not a URI')
+          expect(schema).to have_errors_for('not a URI')
         end
       end
 
       it 'converts URI strings to a URI object' do
-        converter.should convert(uri.to_s).to (uri)
+        expect(converter).to convert(uri.to_s).to (uri)
       end
 
       it 'does not convert invalid URIs' do
-        converter.should_not convert('2012-08-12')
-        converter.should_not convert(' ')
-        converter.should_not convert(nil)
-        converter.should_not convert("@*&^^^@")
+        expect(converter).not_to convert('2012-08-12')
+        expect(converter).not_to convert(' ')
+        expect(converter).not_to convert(nil)
+        expect(converter).not_to convert("@*&^^^@")
       end
     end
   end

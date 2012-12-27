@@ -39,24 +39,24 @@ module Interpol
     end
 
     it 'has a name since some tools except all classes to have a name' do
-      app.should be_a(Class)
-      app.name.should include("Interpol", "DocumentationApp", "anon")
+      expect(app).to be_a(Class)
+      expect(app.name).to include("Interpol", "DocumentationApp", "anon")
     end
 
     it 'renders documentation' do
       get '/'
-      last_response.body.should include("project_list", "/users/:user_id/projects")
+      expect(last_response.body).to include("project_list", "/users/:user_id/projects")
     end
 
     it 'includes the configured documentation_title in the markup' do
       get '/'
-      last_response.body.should include("My Cool API")
+      expect(last_response.body).to include("My Cool API")
     end
 
     it 'provides a default title when none is configured' do
       self.skip_doc_title_config = true
       get '/'
-      last_response.body.should include("API Documentation Provided by Interpol")
+      expect(last_response.body).to include("API Documentation Provided by Interpol")
     end
 
     describe ".render_static_page" do
@@ -76,13 +76,13 @@ module Interpol
       let(:doc) { Nokogiri::HTML(static_page) }
 
       it "renders the documentation with inlined stylesheets and javascript" do
-        static_page.should include("project_list", "My Cool API")
+        expect(static_page).to include("project_list", "My Cool API")
 
-        doc.css("link[rel=stylesheet]").size.should eq(0)
-        static_page.should include(first_line_of "stylesheets/screen.css")
+        expect(doc.css("link[rel=stylesheet]").size).to eq(0)
+        expect(static_page).to include(first_line_of "stylesheets/screen.css")
 
-        doc.css("script[src]").size.should eq(0)
-        static_page.should include(first_line_of "javascripts/interpol.js")
+        expect(doc.css("script[src]").size).to eq(0)
+        expect(static_page).to include(first_line_of "javascripts/interpol.js")
       end
     end
   end

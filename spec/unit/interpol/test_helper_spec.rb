@@ -38,20 +38,20 @@ module Interpol
       it 'generates a test per data example per definition per endpoint + a test per definition' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('["1.0"]', '["1.0", "2.0"]')
         write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project_list", "project_list_2")
-        num_tests_from(test_group).should eq(9)
+        expect(num_tests_from(test_group)).to eq(9)
       end
 
       it 'generates tests that fail if their example data is invalid' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
-        results_from(test_group).should =~ ['passed', 'failed', 'failed']
+        expect(results_from(test_group)).to match_array ['passed', 'failed', 'failed']
       end
 
       it 'falls back to default config settings' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         Interpol.default_configuration { |c| c.endpoint_definition_files = Dir["#{dir}/*.yml"] }
         group = within_group { define_interpol_example_tests }
-        num_tests_from(group).should eq(3)
+        expect(num_tests_from(group)).to eq(3)
       end
 
       it 'applies any filter_ex_data blocks before validating the examples' do
@@ -64,7 +64,7 @@ module Interpol
 
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
-        results_from(test_group).should =~ ['passed', 'passed', 'passed']
+        expect(results_from(test_group)).to match_array ['passed', 'passed', 'passed']
       end
 
       context 'request path schema validation' do
@@ -88,19 +88,19 @@ module Interpol
         it 'generates a test per endpoint definition' do
           write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('["1.0"]', '["1.0", "2.0"]')
           write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project_list", "project_list_2")
-          num_tests_from(test_group).should eq(3)
+          expect(num_tests_from(test_group)).to eq(3)
         end
 
         it 'generates tests that pass if the params are declared correctly' do
           write_file "#{dir}/e1.yml", endpoint_definition_yml
           run(test_group)
-          results_from(test_group).should == ['passed']
+          expect(results_from(test_group)).to eq ['passed']
         end
 
         it 'generates tests that fail if the params are declared incorrectly' do
           write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('object', 'oject')
           run(test_group)
-          results_from(test_group).should == ['failed']
+          expect(results_from(test_group)).to eq ['failed']
         end
       end
     end

@@ -52,16 +52,16 @@ module Interpol
       let(:parsed_html) { Nokogiri::HTML::DocumentFragment.parse(html) }
 
       it 'includes the schema description if it is present' do
-        parsed_html.css('h3.description').first.content.should eq(schema.fetch('description'))
+        expect(parsed_html.css('h3.description').first.content).to eq(schema.fetch('description'))
       end
 
       it 'does not include a description element if there is no description' do
         schema.delete('description')
-        parsed_html.css('h3.description').first.should be_nil
+        expect(parsed_html.css('h3.description').first).to be_nil
       end
 
       it 'renders properties' do
-        parsed_html.css("#{root_properties_dom} > .name").map(&:content).should =~ [
+        expect(parsed_html.css("#{root_properties_dom} > .name").map(&:content)).to match_array [
           "first_name (string)",
           "last_name (string)",
           "date_of_birth (date)",
@@ -71,7 +71,7 @@ module Interpol
       end
 
       it 'renders nested properties' do
-        parsed_html.css('.properties .properties .name').map(&:content).should =~ [
+        expect(parsed_html.css('.properties .properties .name').map(&:content)).to match_array [
           "street (string)",
           "city (string)",
           "state (string)",

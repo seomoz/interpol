@@ -59,6 +59,10 @@ RSpec.configure do |c|
   c.include TestHelpers
   c.extend TestHelpers::ClassMethods
 
+  c.expect_with :rspec do |expectations|
+    expectations.syntax = :expect
+  end
+
   c.before do
     if defined?(Interpol::Configuration)
       # clear global state between examples

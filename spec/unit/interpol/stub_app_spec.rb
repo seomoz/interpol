@@ -87,8 +87,8 @@ module Interpol
     end
 
     it 'has a name since some tools except all classes to have a name' do
-      app.should be_a(Class)
-      app.name.should include("Interpol", "StubApp", "anon")
+      expect(app).to be_a(Class)
+      expect(app.name).to include("Interpol", "StubApp", "anon")
     end
 
     it 'falls back to the default configuration' do
@@ -96,7 +96,7 @@ module Interpol
 
       header 'Response-Version', '2.0'
       get '/users/3/projects'
-      parsed_body.should include('name' => 'some project')
+      expect(parsed_body).to include('name' => 'some project')
     end
 
     it 'calls the response_version callback with the rack env and the endpoint' do
@@ -110,14 +110,14 @@ module Interpol
 
       get '/users/3/projects'
 
-      yielded_args.map(&:class).should eq([Hash, Interpol::Endpoint])
+      expect(yielded_args.map(&:class)).to eq([Hash, Interpol::Endpoint])
     end
 
     it 'renders the example data' do
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      parsed_body.should include('name' => 'some project')
-      last_response.should be_ok
+      expect(parsed_body).to include('name' => 'some project')
+      expect(last_response).to be_ok
     end
 
     it 'uses the select_example_response callback to select which example gets returned' do
@@ -129,7 +129,7 @@ module Interpol
 
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      parsed_body.should include('name' => 'some other project')
+      expect(parsed_body).to include('name' => 'some other project')
     end
 
     it 'can select an example based on the request' do
@@ -144,11 +144,11 @@ module Interpol
 
       header 'Index', '0'
       get '/another-endpoint'
-      parsed_body.should include('example_num' => 0)
+      expect(parsed_body).to include('example_num' => 0)
 
       header 'Index', '1'
       get '/another-endpoint'
-      parsed_body.should include('example_num' => 1)
+      expect(parsed_body).to include('example_num' => 1)
     end
 
     it 'can have different example selection logic for a particular endpoint' do
@@ -164,10 +164,10 @@ module Interpol
 
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      parsed_body.should include('name' => 'some other project')
+      expect(parsed_body).to include('name' => 'some other project')
 
       get '/another-endpoint'
-      parsed_body.should include('example_num' => 0)
+      expect(parsed_body).to include('example_num' => 0)
     end
 
     it 'uses any provided filters to modify the example data' do
@@ -178,8 +178,8 @@ module Interpol
       header 'Response-Version', '1.0'
       get '/users/3/projects'
 
-      parsed_body.should include('name' => 'some project for GET')
-      last_response.should be_ok
+      expect(parsed_body).to include('name' => 'some project for GET')
+      expect(last_response).to be_ok
     end
 
     it 'allows errors in filters to bubble up' do
@@ -196,25 +196,25 @@ module Interpol
 
       header 'Response-Version', '2.0'
       get '/users/3/projects'
-      last_response.status.should eq(405)
-      parsed_body.should eq("requested" => "2.0", "available" => ["1.0"])
+      expect(last_response.status).to eq(405)
+      expect(parsed_body).to eq("requested" => "2.0", "available" => ["1.0"])
     end
 
     it 'renders a 405 when an invalid version is requested and there is no configured callback' do
       header 'Response-Version', '2.0'
       get '/users/3/projects'
-      last_response.status.should eq(406)
+      expect(last_response.status).to eq(406)
     end
 
     it 'responds with a 404 for an undefined endpoint' do
       header 'Response-Version', '1.0'
       get '/some/undefined/endpoint'
-      last_response.should be_not_found
-      last_response.status.should eq(404)
-      parsed_body.should eq("error" => "The requested resource could not be found")
+      expect(last_response).to be_not_found
+      expect(last_response.status).to eq(404)
+      expect(parsed_body).to eq("error" => "The requested resource could not be found")
 
       pending "sinatra bug: https://github.com/sinatra/sinatra/issues/500" do
-        last_response.headers['Content-Type'].should eq('application/json;charset=utf-8')
+        expect(last_response.headers['Content-Type']).to eq('application/json;charset=utf-8')
       end
     end
 
@@ -224,28 +224,28 @@ module Interpol
 
     it 'performs validations by default' do
       endpoint_example.stub(:apply_filters) { endpoint_example }
-      endpoint_example.should respond_to(:validate!).with(0).arguments
+      expect(endpoint_example).to respond_to(:validate!).with(0).arguments
       endpoint_example.should_receive(:validate!).with(no_args)
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      last_response.should be_ok
+      expect(last_response).to be_ok
     end
 
     it 'does not perform validates if validations are disabled' do
       app.disable :perform_validations
 
       endpoint_example.stub(:apply_filters) { endpoint_example }
-      endpoint_example.should respond_to(:validate!).with(0).arguments
+      expect(endpoint_example).to respond_to(:validate!).with(0).arguments
       endpoint_example.should_not_receive(:validate!)
 
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      last_response.should be_ok
+      expect(last_response).to be_ok
     end
 
     it 'responds to a ping' do
       get '/__ping'
-      parsed_body.should eq("message" => "Interpol stub app running.")
+      expect(parsed_body).to eq("message" => "Interpol stub app running.")
     end
 
     it 'assigns the status code based on the endpoint definition' do
@@ -253,7 +253,7 @@ module Interpol
 
       header 'Response-Version', '1.0'
       get '/users/3/projects'
-      last_response.status.should eq(214)
+      expect(last_response.status).to eq(214)
     end
 
     it 'can be used together with the RequestParamsParser' do
@@ -263,14 +263,14 @@ module Interpol
       header 'Request-Version', '1.0'
 
       get '/users/3/projects'
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
 
       get '/users/not-a-number/projects'
-      last_response.body.should include('user_id')
-      last_response.status.should eq(400)
+      expect(last_response.body).to include('user_id')
+      expect(last_response.status).to eq(400)
 
       get '/__ping'
-      parsed_body.should eq("message" => "Interpol stub app running.")
+      expect(parsed_body).to eq("message" => "Interpol stub app running.")
     end
   end
 end

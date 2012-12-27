@@ -96,7 +96,7 @@ module Interpol
       end
 
       get '/search/200/overview'
-      default_config_called.should be_true
+      expect(default_config_called).to be_true
     end
 
     it 'calls the response_version hook with the rack env, the endpoint and the response triplet' do
@@ -113,14 +113,14 @@ module Interpol
 
       expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
 
-      yielded_args[0].should be_a(Hash) # rack env
-      yielded_args[1].should be_a(Interpol::Endpoint)
+      expect(yielded_args[0]).to be_a(Hash) # rack env
+      expect(yielded_args[1]).to be_a(Interpol::Endpoint)
 
       response = yielded_args[2]
-      response.should be_an(Array)
-      response[0].should eq(200)
-      response[1].should have_key("Content-Type")
-      response[2].should eq([%|{"a":"b"}|])
+      expect(response).to be_an(Array)
+      expect(response[0]).to eq(200)
+      expect(response[1]).to have_key("Content-Type")
+      expect(response[2]).to eq([%|{"a":"b"}|])
     end
 
     it 'yields the env, status, headers and body from the validate_response_if callback' do
@@ -129,10 +129,10 @@ module Interpol
 
       get '/search/200/overview'
 
-      yielded_args[0].should have_key('rack.version') # env hash
-      yielded_args[1].should eq(200) # status
-      yielded_args[2].should have_key('Content-Type') # headers
-      yielded_args[3].should eq([%|{"a":"b"}|]) # body
+      expect(yielded_args[0]).to have_key('rack.version') # env hash
+      expect(yielded_args[1]).to eq(200) # status
+      expect(yielded_args[2]).to have_key('Content-Type') # headers
+      expect(yielded_args[3]).to eq([%|{"a":"b"}|]) # body
     end
 
     it 'does not validate if the validate_response_if config returns false' do
@@ -159,7 +159,7 @@ module Interpol
         validator.should_not_receive(:validate_data!)
         default_definition_finder.should_not_receive(:find_definition)
         get '/not_json'
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
     end
 

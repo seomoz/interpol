@@ -64,8 +64,8 @@ module Interpol
     it 'responds with a 400 by default when it fails validation' do
       header 'Content-Type', 'application/json'
       post '/parsed_body', invalid_json_body
-      last_response.status.should eq(400)
-      last_response.body.should include("validating", "parsed_body")
+      expect(last_response.status).to eq(400)
+      expect(last_response.body).to include("validating", "parsed_body")
     end
 
     it 'uses the configured on_invalid_request_body hook' do
@@ -77,14 +77,14 @@ module Interpol
 
       header 'Content-Type', 'application/json'
       post '/parsed_body', invalid_json_body
-      last_response.status.should eq(412)
-      last_response.body.should eq("abc")
+      expect(last_response.status).to eq(412)
+      expect(last_response.body).to eq("abc")
     end
 
     it 'makes the parsed body object available as `interpol.parsed_body`' do
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.body.should eq("id: 3; name: foo")
+      expect(last_response.body).to eq("id: 3; name: foo")
     end
 
     it 'allows the default config to be overriden' do
@@ -98,37 +98,37 @@ module Interpol
 
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.body.should eq("id: 3; name: foo")
+      expect(last_response.body).to eq("id: 3; name: foo")
     end
 
     it 'rewinds the input stream after reading it' do
       header 'Read-Body', 'true'
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.body.should eq(valid_json_body)
+      expect(last_response.body).to eq(valid_json_body)
     end
 
     it 'does not attempt to validate a GET or DELETE request by default' do
       header 'Read-Body', 'true'
       header  'Content-Type', 'application/json'
       get '/parsed_body', invalid_json_body
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
 
       delete '/parsed_body', invalid_json_body
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
 
     it 'does not blow up if given no content type' do
       header 'Read-Body', 'true'
       get '/parsed_body', invalid_json_body
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
 
     it 'does not attempt to validate non-JSON by default' do
       header 'Read-Body', 'true'
       header  'Content-Type', 'text/plain'
       post '/parsed_body', "some content"
-      last_response.body.should eq("some content")
+      expect(last_response.body).to eq("some content")
     end
 
     it 'allows users to override the validate_request_if config' do
@@ -140,7 +140,7 @@ module Interpol
 
       header  'Content-Type', 'text/plain'
       post '/parsed_body', valid_json_body
-      last_response.body.should eq("id: 3; name: foo")
+      expect(last_response.body).to eq("id: 3; name: foo")
     end
 
     it 'responds with a 406 by default when no matching version can be found' do
@@ -152,7 +152,7 @@ module Interpol
 
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.status.should eq(406)
+      expect(last_response.status).to eq(406)
     end
 
     it 'uses the on_unavailable_request_version hook to respond in ' +
@@ -171,8 +171,8 @@ module Interpol
 
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.status.should eq(315)
-      last_response.body.should eq('Method: POST; Requested: "1.0"; Available: ["2.0"]')
+      expect(last_response.status).to eq(315)
+      expect(last_response.body).to eq('Method: POST; Requested: "1.0"; Available: ["2.0"]')
     end
 
     it 'uses the request_version_for callback to select the version' do
@@ -181,15 +181,15 @@ module Interpol
       override_config do |config|
         config.endpoints = [Endpoint.new(YAML.load wrong_version_yaml)]
         config.request_version do |env, endpoint|
-          env.fetch('REQUEST_METHOD').should eq('POST')
-          endpoint.should be_a(Interpol::Endpoint)
+          expect(env.fetch('REQUEST_METHOD')).to eq('POST')
+          expect(endpoint).to be_a(Interpol::Endpoint)
           '2.0'
         end
       end
 
       header 'Content-Type', 'application/json'
       post '/parsed_body', valid_json_body
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
   end
 end

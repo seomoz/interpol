@@ -17,3 +17,4 @@ gem 'sinatra', '>= 1.3.2', '< 2.0.0'
 
 gem 'cane', '~> 2.0', :platform => 'ruby_19'
 
+gem 'rspec-fire', :git => 'git://github.com/xaviershay/rspec-fire.git', :branch => 'fix_use_of_should'

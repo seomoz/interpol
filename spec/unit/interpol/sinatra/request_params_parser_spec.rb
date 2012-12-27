@@ -86,7 +86,7 @@ module Interpol
           # as required by RequestParamsParser.
           app = find_sinatra_base_subclass_wrapped_in Class.new(::Sinatra::Base).new
           instance = RequestParamsParser.new(app)
-          instance.inspect.should eq("#<Interpol::Sinatra::RequestParamsParser>")
+          expect(instance.inspect).to eq("#<Interpol::Sinatra::RequestParamsParser>")
         end
       end
 
@@ -94,24 +94,24 @@ module Interpol
         on_get { JSON.dump(unparsed_params) }
 
         get '/users/23.12/projects/ruby?integer=3'
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
 
         expected = { 'user_id' => '23.12',
                      'project_language' => 'ruby',
                      'integer' => '3' }
-        JSON.load(last_response.body).should include(expected)
+        expect(JSON.load(last_response.body)).to include(expected)
       end
 
       it 'adds automatic request params validation to every request' do
         on_get { 'OK' } # don't use the params
 
         get '/users/foo/projects/ruby'
-        last_response.status.should eq(400)
-        last_response.body.should include('user_id')
+        expect(last_response.status).to eq(400)
+        expect(last_response.body).to include('user_id')
 
         get '/users/12.23/projects/ruby'
-        last_response.status.should eq(200)
-        last_response.body.should eq("OK")
+        expect(last_response.status).to eq(200)
+        expect(last_response.body).to eq("OK")
       end
 
       it 'makes the parsed params object available as `params`' do
@@ -120,8 +120,8 @@ module Interpol
         end
 
         get '/users/12.23/projects/ruby?integer=3'
-        last_response.status.should eq(200)
-        last_response.body.split(',').should eq(%w[ 12.23 ruby 3 ])
+        expect(last_response.status).to eq(200)
+        expect(last_response.body.split(',')).to eq(%w[ 12.23 ruby 3 ])
       end
 
       it 'allows the host app to define what action should be taken when validation fails' do
@@ -132,12 +132,12 @@ module Interpol
         end
 
         get '/users/foo/projects/ruby'
-        last_response.status.should eq(422)
+        expect(last_response.status).to eq(422)
       end
 
       it 'responds appropriately when no definition is found' do
         get '/no/definition'
-        last_response.status.should eq(406) # the default response
+        expect(last_response.status).to eq(406) # the default response
       end
 
       it 'allows users to configure how to respond when no definition is found' do
@@ -148,7 +148,7 @@ module Interpol
         end
 
         get '/no/definition'
-        last_response.status.should eq(412)
+        expect(last_response.status).to eq(412)
       end
 
       it 'passes the version args to the on_unavailable_sinatra_request_version hook when available' do
@@ -163,14 +163,14 @@ module Interpol
         end
 
         get '/users/12.23/projects/ruby'
-        last_response.status.should eq(406)
-        version.should eq('2.0')
-        available_versions.should eq(['1.0'])
+        expect(last_response.status).to eq(406)
+        expect(version).to eq('2.0')
+        expect(available_versions).to eq(['1.0'])
       end
 
       it 'allows unmatched routes to 404 as normal' do
         get '/some/invalid/route'
-        last_response.status.should eq(404)
+        expect(last_response.status).to eq(404)
       end
 
       it 'provides a means to disable param parsing at an app level' do
@@ -179,8 +179,8 @@ module Interpol
         app.disable :parse_params
 
         get '/users/foo/projects/ruby'
-        last_response.status.should eq(200)
-        last_response.body.should eq("OK")
+        expect(last_response.status).to eq(200)
+        expect(last_response.body).to eq("OK")
       end
 
       it 'provides a means to disable param in a before hook' do
@@ -189,8 +189,8 @@ module Interpol
         sinatra_before { skip_param_parsing! }
 
         get '/users/foo/projects/ruby'
-        last_response.status.should eq(200)
-        last_response.body.should eq("OK")
+        expect(last_response.status).to eq(200)
+        expect(last_response.body).to eq("OK")
       end
 
       context 'when the app class is instantiated multiple times' do
@@ -203,7 +203,7 @@ module Interpol
           2.times do
             self.app = app_class.new
             get '/users/23.12/projects/ruby?integer=3'
-            last_response.body.should eq('3')
+            expect(last_response.body).to eq('3')
           end
         end
       end
@@ -223,10 +223,10 @@ module Interpol
           endpoint_definition_yml.gsub!('route: /', 'route: /mounted_path/')
 
           get '/mounted_path/users/foo/projects/ruby'
-          last_response.status.should eq(400)
+          expect(last_response.status).to eq(400)
 
           get '/mounted_path/users/12.23/projects/ruby'
-          last_response.status.should eq(200)
+          expect(last_response.status).to eq(200)
         end
       end
 
@@ -238,7 +238,7 @@ module Interpol
 
         it 'does not fail due to double parsing the params (as originally occurred)' do
           get '/users/12.23/projects/ruby'
-          last_response.status.should eq(500)
+          expect(last_response.status).to eq(500)
         end
       end
 
@@ -264,8 +264,8 @@ module Interpol
           self.before_parser_middleware = IdentityMiddleware
 
           get '/users/foo/projects/ruby'
-          last_response.status.should eq(400)
-          last_response.body.should include('user_id')
+          expect(last_response.status).to eq(400)
+          expect(last_response.body).to include('user_id')
         end
 
         it 'raises a helpful error when adding middlewares after the parser' do
@@ -297,12 +297,12 @@ module Interpol
           on_get { 'OK' } # don't use the params
 
           get '/users/foo/projects/ruby'
-          last_response.status.should eq(400)
-          last_response.body.should include('user_id')
+          expect(last_response.status).to eq(400)
+          expect(last_response.body).to include('user_id')
 
           get '/users/12.23/projects/ruby'
-          last_response.status.should eq(200)
-          last_response.body.should eq("OK")
+          expect(last_response.status).to eq(200)
+          expect(last_response.body).to eq("OK")
         end
       end
     end
