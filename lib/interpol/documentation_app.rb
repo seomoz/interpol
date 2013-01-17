@@ -16,7 +16,7 @@ module Interpol
       require 'rack/mock'
       app = build(&block)
       status, headers, body = app.call(Rack::MockRequest.env_for "/", :method => "GET")
-      AssetInliner.new(body.join, app.public_folder).standalone_page
+      AssetInliner.new(body.enum_for(:each).to_a.join, app.public_folder).standalone_page
     end
 
     # Inlines the assets so the page can be viewed as a standalone web page.
