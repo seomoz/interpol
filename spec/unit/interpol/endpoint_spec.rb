@@ -2,6 +2,19 @@ require 'fast_spec_helper'
 require 'interpol/endpoint'
 
 module Interpol
+  shared_examples_for "custom_metadata" do
+    it "initializes custom_metadata from the meta field" do
+      instance = new_with('meta' => {'key' => 'value'})
+      expect(instance.custom_metadata).to eq('key' => 'value')
+    end
+
+    context "when no meta key is provided" do
+      it "initializes custom_metadata to an empty hash" do
+        expect(new_with({}).custom_metadata).to eq({})
+      end
+    end
+  end
+
   describe Endpoint do
     def build_hash(hash = {})
       {
@@ -18,14 +31,9 @@ module Interpol
       end
     end
 
-    it "initializes custom_metadata from the meta field" do
-      endpoint = Endpoint.new(build_hash 'meta' => {'key' => 'value'})
-      expect(endpoint.custom_metadata).to eq('key' => 'value')
-    end
-
-    context "when no meta key is provided" do
-      it "initializes custom_metadata to an empty hash" do
-        expect(Endpoint.new(build_hash).custom_metadata).to eq({})
+    it_behaves_like "custom_metadata" do
+      def new_with(hash)
+        Endpoint.new(build_hash hash)
       end
     end
 
@@ -255,6 +263,12 @@ module Interpol
         hash = build_hash(attr => params)
         v = EndpointDefinition.new(endpoint, version, 'response', hash)
         expect(v.send(attr)).to eq(params)
+      end
+    end
+
+    it_behaves_like "custom_metadata" do
+      def new_with(hash)
+        EndpointDefinition.new(endpoint, version, 'response', build_hash(hash))
       end
     end
 

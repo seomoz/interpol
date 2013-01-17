@@ -153,21 +153,22 @@ module Interpol
   class EndpointDefinition
     include HashFetcher
     attr_reader :endpoint, :message_type, :version, :schema,
-                :path_params, :query_params, :examples
+                :path_params, :query_params, :examples, :custom_metadata
     extend Forwardable
     def_delegators :endpoint, :route
 
     DEFAULT_PARAM_HASH = { 'type' => 'object', 'properties' => {} }
 
     def initialize(endpoint, version, message_type, definition)
-      @endpoint       = endpoint
-      @message_type   = message_type
-      @status_codes   = StatusCodeMatcher.new(definition['status_codes'])
-      @version        = version
-      @schema         = fetch_from(definition, 'schema')
-      @path_params    = definition.fetch('path_params', DEFAULT_PARAM_HASH.dup)
-      @query_params   = definition.fetch('query_params', DEFAULT_PARAM_HASH.dup)
-      @examples       = extract_examples_from(definition)
+      @endpoint        = endpoint
+      @message_type    = message_type
+      @status_codes    = StatusCodeMatcher.new(definition['status_codes'])
+      @version         = version
+      @schema          = fetch_from(definition, 'schema')
+      @path_params     = definition.fetch('path_params', DEFAULT_PARAM_HASH.dup)
+      @query_params    = definition.fetch('query_params', DEFAULT_PARAM_HASH.dup)
+      @examples        = extract_examples_from(definition)
+      @custom_metadata = definition.fetch('meta') { {} }
       make_schema_strict!(@schema)
     end
 
