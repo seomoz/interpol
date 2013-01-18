@@ -40,6 +40,7 @@ module Interpol
       _override_config = @override_config || Proc.new { }
 
       Rack::Builder.new do
+        use Rack::Lint
         use(Interpol::RequestBodyValidator, &_override_config)
         use Rack::ContentLength
 

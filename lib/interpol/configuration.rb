@@ -216,7 +216,7 @@ module Interpol
       json = JSON.dump(hash)
 
       [status, { 'Content-Type'   => 'application/json',
-                 'Content-Length' => json.bytesize }, [json]]
+                 'Content-Length' => json.bytesize.to_s }, [json]]
     end
 
     def named_example_selectors

@@ -33,6 +33,7 @@ module Interpol
         config.endpoints = [endpoint]
         config.documentation_title = "My Cool API" unless skip_doc_title_config
       end.tap do |a|
+        a.use Rack::Lint
         a.set :raise_errors, true
         a.set :show_exceptions, false
       end

@@ -37,15 +37,20 @@ module Interpol
       config = configuration
       _closable_body = closable_body
       Rack::Builder.new do
+        use Rack::Lint
         use Interpol::ResponseSchemaValidator, &config
         use Rack::ContentLength
 
-        [200, 204].each do |status|
-          map("/search/#{status}/overview") do
-            run lambda { |env|
-              [ status, {'Content-Type' => 'application/json'}, [%|{"a":"b"}|] ]
-            }
-          end
+        map("/search/200/overview") do
+          run lambda { |env|
+            [ 200, {'Content-Type' => 'application/json'}, [%|{"a":"b"}|] ]
+          }
+        end
+
+        map("/search/204/overview") do
+          run lambda { |env|
+            [ 204, {}, [] ]
+          }
         end
 
         map('/closable/body') do

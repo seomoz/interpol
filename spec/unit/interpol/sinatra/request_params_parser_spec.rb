@@ -44,6 +44,7 @@ module Interpol
         ::Sinatra.new do
           include Module.new(&sinatra_overrides)
 
+          use Rack::Lint
           use _before_parser_middleware if _before_parser_middleware
 
           use RequestParamsParser do |config|

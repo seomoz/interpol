@@ -77,6 +77,7 @@ module Interpol
 
     let(:app) do
       StubApp.build(&default_config).tap do |a|
+        a.use Rack::Lint
         a.set :raise_errors, true
         a.set :show_exceptions, false
       end
