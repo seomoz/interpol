@@ -21,6 +21,32 @@ module JSON
       end
     end
   end
+
+  # Monkey patch json-schema to only allow the defined formats.
+  # We've been accidentally using invalid formats like "timestamp",
+  # so this will help ensure we only use valid ones.
+  class Validator
+    VALID_FORMATS = %w[
+      date-time date time utc-millisec regex color style
+      phone uri email ip-address ipv6 host-name
+    ]
+
+    def open(uri)
+      return super unless uri.start_with?('file://') && uri.end_with?('draft-03.json')
+      return StringIO.new(Validator.overriden_draft_03) if Validator.overriden_draft_03
+
+      schema = JSON.parse(super.read)
+      schema.fetch("properties").fetch("format")["enum"] = VALID_FORMATS
+
+      override = JSON.dump(schema)
+      Validator.overriden_draft_03 = override
+      StringIO.new(override)
+    end
+
+    class << self
+      attr_accessor :overriden_draft_03
+    end
+  end
 end
 
 module Interpol

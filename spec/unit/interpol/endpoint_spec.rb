@@ -323,6 +323,26 @@ module Interpol
         }.to raise_error(ValidationError)
       end
 
+      let(:date_time_string) { "2012-12-12T08:23:12Z" }
+
+      it 'rejects unrecognized format options' do
+        schema['properties']['foo']['type'] = 'string'
+        schema['properties']['foo']['format'] = 'timestamp' # the valid format is date-time
+
+        expect {
+          subject.validate_data!('foo' => date_time_string)
+        }.to raise_error(ValidationError, %r|'#/properties/foo/format' value "timestamp"|)
+      end
+
+      it 'allows recognized format options' do
+        schema['properties']['foo']['type'] = 'string'
+        schema['properties']['foo']['format'] = 'date-time'
+
+        expect {
+          subject.validate_data!('foo' => date_time_string)
+        }.not_to raise_error
+      end
+
       it 'requires all properties' do
         expect {
           subject.validate_data!({})
