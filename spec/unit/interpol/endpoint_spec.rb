@@ -406,6 +406,100 @@ module Interpol
           }.to raise_error(ValidationError)
         end
       end
+
+      context 'a schema with an array of union types' do
+        before do
+          schema['properties']['foo'] = {
+            'type' => 'array',
+            'items' => {
+              'type' => [
+                { 'type' => 'object', 'properties' => {
+                  'class' => { 'type' => 'string', 'enum' => ['integer'] },
+                  'num' => { 'type' => 'integer' } }
+                },
+                { 'type' => 'object', 'properties' => {
+                  'class' => { 'type' => 'string', 'enum' => ['text'] },
+                  'text' => { 'type' => 'string' } }
+                }
+              ]
+            }
+          }
+        end
+
+        it 'does not raise an error when the data is valid' do
+          subject.validate_data!('foo' => [
+                                 { 'class' => 'integer', 'num' => 3 },
+                                 { 'class' => 'text', 'text' => 'blah' } ])
+        end
+
+        it 'raises an error when a subtype has an invalid property value' do
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 'string' },
+                                   { 'class' => 'text', 'text' => 'blah' } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/0/num' of type String did not match the following type: integer|)
+
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 3 },
+                                   { 'class' => 'text', 'text' => 4 } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/1/text' of type Fixnum did not match the following type: string|)
+        end
+
+        it 'raises an error if a subtype is missing a property' do
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer' },
+                                   { 'class' => 'text', 'text' => 'blah' } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/0' did not contain a required property of 'num'|)
+
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 3 },
+                                   { 'class' => 'text' } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/1' did not contain a required property of 'text'|)
+        end
+
+        it 'raises an error if a subtype has additional properties' do
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 3, 'extra' => 4 },
+                                   { 'class' => 'text', 'text' => 'blah' } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/0' contains additional properties \["extra"\] outside of the schema|)
+
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 3 },
+                                   { 'class' => 'text', 'text' => 'blah', 'other' => 'a' } ])
+          }.to raise_error(ValidationError,
+               %r|'#/foo/1' contains additional properties \["other"\] outside of the schema|)
+        end
+
+        it 'allows additional properties if the additionalProperties property is set to true' do
+          schema['properties']['foo']['items']['type'].first['additionalProperties'] = true
+
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer', 'num' => 3, 'extra' => 4 },
+                                   { 'class' => 'text', 'text' => 'blah' } ])
+          }.not_to raise_error
+        end
+
+        it 'does not require nested properties marked as optional' do
+          schema['properties']['foo']['items']['type'].first['properties']['num']['optional'] = true
+
+          expect {
+            subject.validate_data!('foo' => [
+                                   { 'class' => 'integer' },
+                                   { 'class' => 'text', 'text' => 'blah' } ])
+          }.not_to raise_error
+        end
+      end
     end
   end
 

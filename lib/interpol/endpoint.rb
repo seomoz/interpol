@@ -212,16 +212,30 @@ module Interpol
   private
 
     def make_schema_strict!(raw_schema, modify_object=true)
-      return unless Hash === raw_schema
+      case raw_schema
+        when Hash then make_schema_hash_strict!(raw_schema, modify_object)
+        when Array then make_schema_array_strict!(raw_schema, modify_object)
+      end
+    end
 
+    def make_schema_hash_strict!(raw_schema, modify_object=true)
       raw_schema.each do |key, value|
         make_schema_strict!(value, key != 'properties')
       end
 
       return unless modify_object
 
-      raw_schema['additionalProperties'] ||= false
+      if raw_schema.has_key?('properties')
+        raw_schema['additionalProperties'] ||= false
+      end
+
       raw_schema['required'] = !raw_schema.delete('optional')
+    end
+
+    def make_schema_array_strict!(raw_schema, modify_object=true)
+      raw_schema.each do |entry|
+        make_schema_strict!(entry, modify_object)
+      end
     end
 
     def extract_examples_from(definition)
