@@ -1,7 +1,6 @@
 require 'fast_spec_helper'
 require 'interpol/configuration'
 require 'yaml'
-require 'psych'
 
 module Interpol
   describe DefinitionFinder do
@@ -97,6 +96,7 @@ module Interpol
     let(:config) { Configuration.new }
 
     if defined?(::YAML::ENGINE.yamler)
+      require 'psych'
       old_yamler = nil
 
       before(:all) do
