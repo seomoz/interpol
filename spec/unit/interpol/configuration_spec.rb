@@ -1,5 +1,7 @@
 require 'fast_spec_helper'
 require 'interpol/configuration'
+require 'yaml'
+require 'psych'
 
 module Interpol
   describe DefinitionFinder do
@@ -93,6 +95,19 @@ module Interpol
 
   describe Configuration do
     let(:config) { Configuration.new }
+
+    if defined?(::YAML::ENGINE.yamler)
+      old_yamler = nil
+
+      before(:all) do
+        old_yamler = ::YAML::ENGINE.yamler
+        ::YAML::ENGINE.yamler = 'psych'
+      end
+
+      after(:all) do
+        ::YAML::ENGINE.yamler = old_yamler
+      end
+    end
 
     it 'yields itself on initialization if a block is provided' do
       yielded_object = nil
