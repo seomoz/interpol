@@ -21,7 +21,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'json-schema', '~> 1.1.1'
   gem.add_dependency 'nokogiri', '~> 1.5'
 
-  gem.add_development_dependency 'rspec', '~> 2.11'
+  gem.add_development_dependency 'rspec', '~> 2.13'
   gem.add_development_dependency 'rspec-fire', '~> 0.4'
   gem.add_development_dependency 'simplecov', '~> 0.6'
   gem.add_development_dependency 'tailor', '~> 0'

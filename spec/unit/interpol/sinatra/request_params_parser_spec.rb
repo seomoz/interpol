@@ -212,13 +212,11 @@ module Interpol
       end
 
       context 'when the sinatra app is mounted using Rack::Builder' do
-        alias sinatra_app app
-
         let(:app) do
-          _sinatra_app = sinatra_app
+          sinatra_app = super()
 
           Rack::Builder.new do
-            map('/mounted_path') { run _sinatra_app.new }
+            map('/mounted_path') { run sinatra_app.new }
           end
         end
 
