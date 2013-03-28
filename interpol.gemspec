@@ -28,5 +28,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
   gem.add_development_dependency 'rack-test', '0.6.1'
   gem.add_development_dependency 'hashie', '~> 1.2'
+  gem.add_development_dependency 'sinatra', '~> 1.4'
 end
 

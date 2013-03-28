@@ -214,9 +214,7 @@ module Interpol
       expect(last_response.status).to eq(404)
       expect(parsed_body).to eq("error" => "The requested resource could not be found")
 
-      pending "sinatra bug: https://github.com/sinatra/sinatra/issues/500" do
-        expect(last_response.headers['Content-Type']).to eq('application/json;charset=utf-8')
-      end
+      expect(last_response.headers['Content-Type']).to eq('application/json;charset=utf-8')
     end
 
     let(:endpoint_example) do

@@ -68,7 +68,9 @@ module Interpol
       def find_sinatra_base_subclass_wrapped_in(app)
         return app if app.class.ancestors.include?(::Sinatra::Base)
 
-        wrapped_app = if app.respond_to?(:app)
+        wrapped_app = if app.class.name == "Sinatra::Wrapper"
+          app.instance_variable_get(:@instance)
+        elsif app.respond_to?(:app)
           app.app
         elsif app.instance_variables.include?(:@app)
           app.instance_variable_get(:@app)
