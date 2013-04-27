@@ -150,6 +150,13 @@ module Interpol
         expect(config.endpoints.map(&:name)).to match_array %w[ project_list task_list ]
       end
 
+      it 'passes itself to the endpoints as the configuration' do
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+        config.endpoint_definition_files = Dir["#{dir}/*.yml"]
+        endpoint_config = config.endpoints.first.configuration
+        expect(endpoint_config).to be(config)
+      end
+
       context "when YAML merge keys are used" do
         let_without_indentation(:types) do <<-EOF
           ---

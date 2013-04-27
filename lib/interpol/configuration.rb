@@ -50,7 +50,7 @@ module Interpol
 
     def endpoint_definition_files=(files)
       self.endpoints = files.map do |file|
-        Endpoint.new(deserialized_hash_from file)
+        Endpoint.new(deserialized_hash_from(file), self)
       end
       @endpoint_definition_files = files
     end
