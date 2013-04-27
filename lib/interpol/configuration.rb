@@ -1,3 +1,4 @@
+require 'interpol'
 require 'interpol/endpoint'
 require 'interpol/errors'
 require 'yaml'
@@ -154,6 +155,14 @@ module Interpol
     def example_response_for(endpoint_def, env)
       selector = named_example_selectors[endpoint_def.endpoint_name]
       selector.call(endpoint_def, env)
+    end
+
+    def scalars_nullable_by_default=(value)
+      @scalars_nullable_by_default = value
+    end
+
+    def scalars_nullable_by_default?
+      @scalars_nullable_by_default
     end
 
     def self.default

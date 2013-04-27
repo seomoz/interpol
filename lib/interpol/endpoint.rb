@@ -1,6 +1,7 @@
 require 'json-schema'
 require 'interpol/errors'
 require 'forwardable'
+require 'set'
 
 module JSON
   # The JSON-schema namespace
@@ -65,13 +66,14 @@ module Interpol
   # based on the endpoint definitions in the YAML files.
   class Endpoint
     include HashFetcher
-    attr_reader :name, :route, :method, :custom_metadata
+    attr_reader :name, :route, :method, :custom_metadata, :configuration
 
-    def initialize(endpoint_hash)
+    def initialize(endpoint_hash, configuration = Interpol.default_configuration)
       @name        = fetch_from(endpoint_hash, 'name')
       @route       = fetch_from(endpoint_hash, 'route')
       @method      = fetch_from(endpoint_hash, 'method').downcase.to_sym
 
+      @configuration   = configuration
       @custom_metadata = endpoint_hash.fetch('meta') { {} }
 
       @definitions_hash, @all_definitions = extract_definitions_from(endpoint_hash)
@@ -181,7 +183,7 @@ module Interpol
     attr_reader :endpoint, :message_type, :version, :schema,
                 :path_params, :query_params, :examples, :custom_metadata
     extend Forwardable
-    def_delegators :endpoint, :route
+    def_delegators :endpoint, :route, :configuration
 
     DEFAULT_PARAM_HASH = { 'type' => 'object', 'properties' => {} }
 
@@ -244,12 +246,14 @@ module Interpol
       end
     end
 
-    def make_schema_hash_strict!(raw_schema, modify_object=true)
+    def make_schema_hash_strict!(raw_schema, make_this_schema_strict=true)
+      conditionally_make_nullable(raw_schema)
+
       raw_schema.each do |key, value|
         make_schema_strict!(value, key != 'properties')
       end
 
-      return unless modify_object
+      return unless make_this_schema_strict
 
       if raw_schema.has_key?('properties')
         raw_schema['additionalProperties'] ||= false
@@ -258,9 +262,35 @@ module Interpol
       raw_schema['required'] = !raw_schema.delete('optional')
     end
 
-    def make_schema_array_strict!(raw_schema, modify_object=true)
+    def make_schema_array_strict!(raw_schema, make_nested_schemas_strict=true)
       raw_schema.each do |entry|
-        make_schema_strict!(entry, modify_object)
+        make_schema_strict!(entry, make_nested_schemas_strict)
+      end
+    end
+
+    def conditionally_make_nullable(raw_schema)
+      return unless should_be_nullable?(raw_schema)
+
+      types = Array(raw_schema['type'])
+      return unless types.any?
+
+      types << "null" unless types.include?('null')
+
+      raw_schema['type'] = types
+    end
+
+    def should_be_nullable?(raw_schema)
+      raw_schema.fetch('nullable') do
+        configuration.scalars_nullable_by_default? && scalar?(raw_schema)
+      end
+    end
+
+    NON_SCALAR_TYPES = %w[ object array ]
+    def scalar?(raw_schema)
+      types = Array(raw_schema['type']).to_set
+
+      NON_SCALAR_TYPES.none? do |non_scalar|
+        types.include?(non_scalar)
       end
     end
 

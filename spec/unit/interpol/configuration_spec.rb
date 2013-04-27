@@ -291,6 +291,17 @@ module Interpol
       end
     end
 
+    describe "#scalars_nullable_by_default?" do
+      it 'defaults to false' do
+        expect(config.scalars_nullable_by_default?).to be_false
+      end
+
+      it 'can be set to true' do
+        config.scalars_nullable_by_default = true
+        expect(config.scalars_nullable_by_default?).to be_true
+      end
+    end
+
     describe "#api_version" do
       before { config.stub(:warn) }
 
