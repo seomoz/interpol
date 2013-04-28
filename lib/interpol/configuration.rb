@@ -1,7 +1,7 @@
+require 'interpol'
 require 'interpol/endpoint'
 require 'interpol/errors'
 require 'yaml'
-require 'interpol/configuration_ruby_18_extensions'  if RUBY_VERSION.to_f < 1.9
 require 'uri'
 
 module Interpol
@@ -33,8 +33,9 @@ module Interpol
 
   # Public: Defines interpol configuration.
   class Configuration
-    attr_reader :endpoint_definition_files, :endpoints, :filter_example_data_blocks
-    attr_accessor :validation_mode, :documentation_title, :endpoint_definition_merge_key_files
+    attr_reader :endpoint_definition_files, :endpoints, :filter_example_data_blocks,
+                :endpoint_definition_merge_key_files
+    attr_accessor :validation_mode, :documentation_title
 
     def initialize
       self.endpoint_definition_files = []
@@ -48,14 +49,23 @@ module Interpol
     end
 
     def endpoint_definition_files=(files)
-      self.endpoints = files.map do |file|
-        Endpoint.new(deserialized_hash_from file)
-      end
+      @endpoints = nil
       @endpoint_definition_files = files
+    end
+
+    def endpoint_definition_merge_key_files=(files)
+      @endpoints = nil
+      @endpoint_definition_merge_key_files = files
     end
 
     def endpoints=(endpoints)
       @endpoints = endpoints.extend(DefinitionFinder)
+    end
+
+    def endpoints
+      @endpoints ||= @endpoint_definition_files.map do |file|
+        Endpoint.new(deserialized_hash_from(file), self)
+      end.extend(DefinitionFinder)
     end
 
     [:request, :response].each do |type|
@@ -156,6 +166,15 @@ module Interpol
       selector.call(endpoint_def, env)
     end
 
+    def scalars_nullable_by_default=(value)
+      @endpoints = nil
+      @scalars_nullable_by_default = value
+    end
+
+    def scalars_nullable_by_default?
+      @scalars_nullable_by_default
+    end
+
     def self.default
       @default ||= Configuration.new
     end
@@ -183,24 +202,9 @@ module Interpol
     end
 
   private
-
-    # 1.9 version
-    include Module.new {
-      BAD_ALIAS_ERROR = defined?(::Psych::BadAlias) ?
-                          ::Psych::BadAlias : TypeError
-      def deserialized_hash_from(file)
-        YAML.load(yaml_content_for file)
-      rescue BAD_ALIAS_ERROR => e
-        raise ConfigurationError.new \
-          "Received an error while loading YAML from #{file}: \"" +
-          "#{e.class}: #{e.message}\" If you are using YAML merge keys " +
-          "to declare shared types, you must configure endpoint_definition_merge_key_files " +
-          "before endpoint_definition_files.", e
-      end
-    }
-
-    # Needed to override deserialized_hash_from for Ruby 1.8
-    include Interpol::ConfigurationRuby18Extensions  if RUBY_VERSION.to_f < 1.9
+    def deserialized_hash_from(file)
+      YAML.load(yaml_content_for file)
+    end
 
     def yaml_content_for(file)
       File.read(file).gsub(/\A---\n/, "---\n" + endpoint_merge_keys + "\n\n")

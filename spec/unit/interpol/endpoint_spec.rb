@@ -1,4 +1,5 @@
 require 'fast_spec_helper'
+require 'interpol'
 require 'interpol/endpoint'
 
 module Interpol
@@ -178,6 +179,19 @@ module Interpol
         expect(endpoint('/foo/bar').route_matches?('/foo/bar/bazz')).to be_false
       end
     end
+
+    describe "#configuration" do
+      it 'defaults to the Interpol default config' do
+        endpoint = Endpoint.new(build_hash)
+        expect(endpoint.configuration).to be(Interpol.default_configuration)
+      end
+
+      it 'allows a config instance to be passed' do
+        config = Configuration.new
+        endpoint = Endpoint.new(build_hash, config)
+        expect(endpoint.configuration).to be(config)
+      end
+    end
   end
 
   describe EndpointDefinition do
@@ -189,7 +203,11 @@ module Interpol
     end
 
     let(:version)  { '1.0' }
-    let(:endpoint) { fire_double("Interpol::Endpoint", :name => 'my-endpoint').as_null_object }
+    let(:config)   { Configuration.new }
+    let(:endpoint) do
+      fire_double("Interpol::Endpoint", :name => 'my-endpoint',
+                  :configuration => config).as_null_object
+    end
 
     it 'initializes the endpoint' do
       endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)
@@ -360,12 +378,136 @@ module Interpol
         }.to raise_error(ValidationError)
       end
 
+      context 'when scalars_nullable_by_default is set to true' do
+        before { config.scalars_nullable_by_default = true }
+
+        it 'allows nulls even when the property does not explicitly allow it' do
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.not_to raise_error
+        end
+
+        it 'works with existing union types' do
+          schema['properties']['foo']['type'] = %w[ integer string ]
+
+          expect { subject.validate_data!('foo' => 123) }.not_to raise_error
+          expect { subject.validate_data!('foo' => 'a') }.not_to raise_error
+          expect { subject.validate_data!('foo' => nil) }.not_to raise_error
+        end
+
+        it 'does not add an extra `null` entry to an existing nullable union type' do
+          schema['properties']['foo']['type'] = %w[ integer null ]
+
+          ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
+            expect(schema['properties']['foo']['type']).to match_array(%w[ integer null ])
+            [] # no errors
+          end
+
+          subject.validate_data!('foo' => nil)
+        end
+
+        it 'does not add an extra `null` entry to an existing nullable scalar type' do
+          schema['properties']['foo']['type'] = 'null'
+
+          ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
+            expect(schema['properties']['foo']['type']).to eq('null')
+            [] # no errors
+          end
+
+          subject.validate_data!('foo' => nil)
+        end
+
+        it 'does not allow nulls when the property has `nullable: false`' do
+          schema['properties']['foo']['nullable'] = false
+
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.to raise_error(ValidationError)
+        end
+
+        it 'does not automatically make arrays nullable' do
+          schema['properties']['foo']['type'] = 'array'
+
+          expect {
+            subject.validate_data!('foo' => [1])
+          }.not_to raise_error
+
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.to raise_error(ValidationError)
+        end
+
+        it 'does not automatically make objects nullable' do
+          schema['properties']['foo']['type'] = 'object'
+
+          expect {
+            subject.validate_data!('foo' => { 'a' => 3 })
+          }.not_to raise_error
+
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.to raise_error(ValidationError)
+        end
+
+        it 'does not make unioned types that include non-scalars nullable' do
+          schema['properties']['foo']['type'] = %w[ object array integer ]
+
+          expect {
+            subject.validate_data!('foo' => { 'a' => 3 })
+          }.not_to raise_error
+
+          expect {
+            subject.validate_data!('foo' => 3)
+          }.not_to raise_error
+
+          expect {
+            subject.validate_data!('foo' => [])
+          }.not_to raise_error
+
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.to raise_error(ValidationError)
+        end
+      end
+
+      context 'when scalars_nullable_by_default is set to false' do
+        before { config.scalars_nullable_by_default = false }
+
+        it 'does not allow nulls by default' do
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.to raise_error(ValidationError)
+        end
+
+        it 'allow nulls when the property has `nullable: true`' do
+          schema['properties']['foo']['nullable'] = true
+
+          expect {
+            subject.validate_data!('foo' => nil)
+          }.not_to raise_error
+        end
+      end
+
       context 'a schema with nested objects' do
         before do
           schema['properties']['foo'] = {
             'type' => 'object',
             'properties' => { 'name' => { 'type' => 'integer' } }
           }
+        end
+
+        it 'allows sub-properties to be nullable' do
+          schema['properties']['foo']['properties']['name']['nullable'] = true
+
+          expect {
+            subject.validate_data!('foo' => { 'name' => nil })
+          }.not_to raise_error
+        end
+
+        it 'does not make sub-properties nullable by default' do
+          expect {
+            subject.validate_data!('foo' => { 'name' => nil })
+          }.to raise_error(ValidationError)
         end
 
         it 'requires all properties on nested objects' do
@@ -424,6 +566,30 @@ module Interpol
           expect {
             subject.validate_data!('foo' => [{'name' => 3, 'bar' => 7}])
           }.to raise_error(ValidationError)
+        end
+
+        context 'when scalars_nullable_by_default is set to true' do
+          before { config.scalars_nullable_by_default = true }
+
+          it 'allows nulls for nested sub properties' do
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => nil }])
+            }.not_to raise_error
+          end
+
+          it 'works when there is actually a type property' do
+            schema['properties']['foo']['items']['properties']['type'] = {
+              'type' => 'string'
+            }
+
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => 3, 'type' => 'integer' }])
+            }.not_to raise_error
+
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => 3, 'type' => nil }])
+            }.not_to raise_error
+          end
         end
       end
 

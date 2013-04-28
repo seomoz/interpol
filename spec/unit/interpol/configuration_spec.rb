@@ -150,6 +150,28 @@ module Interpol
         expect(config.endpoints.map(&:name)).to match_array %w[ project_list task_list ]
       end
 
+      it 'passes itself to the endpoints as the configuration' do
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+        config.endpoint_definition_files = Dir["#{dir}/*.yml"]
+        endpoint_config = config.endpoints.first.configuration
+        expect(endpoint_config).to be(config)
+      end
+
+      it 'allows `scalars_nullable_by_default` to be configured after ' +
+         '`endpoint_definition_files`' do
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+
+        config.endpoint_definition_files = Dir["#{dir}/*.yml"]
+        config.endpoints # to force it to load
+        config.scalars_nullable_by_default = true
+
+        endpoint_def = config.endpoints.first.definitions.first
+
+        expect {
+          endpoint_def.validate_data!('name' => nil)
+        }.not_to raise_error
+      end
+
       context "when YAML merge keys are used" do
         let_without_indentation(:types) do <<-EOF
           ---
@@ -196,17 +218,17 @@ module Interpol
           assert_expected_endpoint
         end
 
+        it 'supports the merge keys when configured after the endpoint definition files' do
+          config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
+          config.endpoint_definition_merge_key_files = Dir["#{dir}/merge_keys.yml"]
+          assert_expected_endpoint
+        end
+
         it 'works when the merge key YAML file lacks the leading `---`' do
           write_file "#{dir}/merge_keys.yml", types.gsub(/\A---\n/, '')
           config.endpoint_definition_merge_key_files = Dir["#{dir}/merge_keys.yml"]
           config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
           assert_expected_endpoint
-        end
-
-        it 'raises a helpful error when endpoint_definition_files is configured first' do
-          expect {
-            config.endpoint_definition_files = Dir["#{dir}/e1.yml"]
-          }.to raise_error(/endpoint_definition_merge_key_files/)
         end
       end
 
@@ -288,6 +310,17 @@ module Interpol
             config.send(get_method, {}, stub.as_null_object)
           }.to raise_error(ConfigurationError)
         end
+      end
+    end
+
+    describe "#scalars_nullable_by_default?" do
+      it 'defaults to false' do
+        expect(config.scalars_nullable_by_default?).to be_false
+      end
+
+      it 'can be set to true' do
+        config.scalars_nullable_by_default = true
+        expect(config.scalars_nullable_by_default?).to be_true
       end
     end
 
