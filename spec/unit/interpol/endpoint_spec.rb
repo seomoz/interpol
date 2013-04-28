@@ -395,11 +395,22 @@ module Interpol
           expect { subject.validate_data!('foo' => nil) }.not_to raise_error
         end
 
-        it 'does not add an extra `null` entry to an existing nullable type' do
+        it 'does not add an extra `null` entry to an existing nullable union type' do
           schema['properties']['foo']['type'] = %w[ integer null ]
 
           ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
             expect(schema['properties']['foo']['type']).to match_array(%w[ integer null ])
+            [] # no errors
+          end
+
+          subject.validate_data!('foo' => nil)
+        end
+
+        it 'does not add an extra `null` entry to an existing nullable scalar type' do
+          schema['properties']['foo']['type'] = 'null'
+
+          ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
+            expect(schema['properties']['foo']['type']).to eq('null')
             [] # no errors
           end
 
@@ -555,6 +566,30 @@ module Interpol
           expect {
             subject.validate_data!('foo' => [{'name' => 3, 'bar' => 7}])
           }.to raise_error(ValidationError)
+        end
+
+        context 'when scalars_nullable_by_default is set to true' do
+          before { config.scalars_nullable_by_default = true }
+
+          it 'allows nulls for nested sub properties' do
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => nil }])
+            }.not_to raise_error
+          end
+
+          it 'works when there is actually a type property' do
+            schema['properties']['foo']['items']['properties']['type'] = {
+              'type' => 'string'
+            }
+
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => 3, 'type' => 'integer' }])
+            }.not_to raise_error
+
+            expect {
+              subject.validate_data!('foo' => [{ 'name' => 3, 'type' => nil }])
+            }.not_to raise_error
+          end
         end
       end
 

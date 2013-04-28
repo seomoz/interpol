@@ -247,7 +247,7 @@ module Interpol
     end
 
     def make_schema_hash_strict!(raw_schema, make_this_schema_strict=true)
-      conditionally_make_nullable(raw_schema)
+      conditionally_make_nullable(raw_schema) if make_this_schema_strict
 
       raw_schema.each do |key, value|
         make_schema_strict!(value, key != 'properties')
@@ -272,11 +272,9 @@ module Interpol
       return unless should_be_nullable?(raw_schema)
 
       types = Array(raw_schema['type'])
-      return unless types.any?
+      return if types.none? || types.include?('null')
 
-      types << "null" unless types.include?('null')
-
-      raw_schema['type'] = types
+      raw_schema['type'] = (types << "null")
     end
 
     def should_be_nullable?(raw_schema)
