@@ -180,6 +180,11 @@ module Interpol
     end
 
     def customized_duplicate(&block)
+      # ensure our endpoints our loaded; if they are not, they could be loaded
+      # a separate time by each interpol tool (when it uses this method) and
+      # that would be slow.
+      endpoints
+
       block ||= lambda { |c| }
       dup.tap(&block)
     end

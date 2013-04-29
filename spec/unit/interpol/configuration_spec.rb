@@ -172,6 +172,16 @@ module Interpol
         }.not_to raise_error
       end
 
+      it 'is not prone to being reloaded when the configuration is customized' do
+        Endpoint.should_receive(:new).once.and_call_original
+
+        write_file "#{dir}/e1.yml", endpoint_definition_yml
+        config.endpoint_definition_files = Dir["#{dir}/*.yml"]
+
+        config.customized_duplicate { |c| c.endpoints }
+        config.customized_duplicate { |c| c.endpoints }
+      end
+
       context "when YAML merge keys are used" do
         let_without_indentation(:types) do <<-EOF
           ---
