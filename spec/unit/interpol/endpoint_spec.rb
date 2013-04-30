@@ -331,7 +331,7 @@ module Interpol
         schema['properties']['foo']['minItems'] = 'foo'
         expect {
           subject.validate_data!('foo' => 17)
-        }.to raise_error(ValidationError, /Data:\s+{"type"=>"object"/m)
+        }.to raise_error(ValidationError, /Data:\s+{"/m)
       end
 
       it 'rejects unrecognized data types' do
