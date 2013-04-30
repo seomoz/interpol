@@ -214,7 +214,7 @@ module Interpol
 
     def validate_data!(data)
       errors = ::JSON::Validator.fully_validate_schema(schema)
-      raise ValidationError.new(errors, nil, description) if errors.any?
+      raise ValidationError.new(errors, schema, description) if errors.any?
       errors = ::JSON::Validator.fully_validate(schema, data)
       raise ValidationError.new(errors, data, description) if errors.any?
     end
