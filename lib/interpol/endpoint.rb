@@ -1,6 +1,7 @@
-require 'json-schema'
-require 'interpol/errors'
 require 'forwardable'
+require 'interpol/errors'
+require 'json'
+require 'json-schema'
 require 'set'
 
 module JSON
