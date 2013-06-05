@@ -2,6 +2,7 @@
 ![Interpol Logo](https://github.com/seomoz/interpol/blob/assets/interpol-logo.png?raw=true)
 
 [![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol)
+[![Code Climate](https://codeclimate.com/github/seomoz/interpol.png)](https://codeclimate.com/github/seomoz/interpol)
 
 Interpol is a toolkit for policing your HTTP JSON interface. To use it,
 define the endpoints of your HTTP API in simple YAML files.
@@ -156,7 +157,7 @@ Interpol.default_configuration do |config|
   # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
   config.response_version '1.0'
 
-  # Determines which versioned response endpoint definition Interpol uses
+  # Determines which versioned request endpoint definition Interpol uses
   # for a request. You can also use a block form, which yields
   # the rack env hash and the endpoint object as arguments.
   # This is useful when you need to extract the version from a
