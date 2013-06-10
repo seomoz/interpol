@@ -158,6 +158,10 @@ module Interpol
         expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be_true
       end
 
+      it 'can match when there is a trailing slash' do
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be_true
+      end
+
       it 'correctly identifies a non match' do
         expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be_false
       end

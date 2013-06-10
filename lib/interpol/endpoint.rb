@@ -146,7 +146,7 @@ module Interpol
           end
         end.join('\/')
 
-        /\A#{regex_string}\z/
+        /\A#{regex_string}\/?\z/
       end
     end
 
