@@ -15,4 +15,3 @@ gem 'json', :platform => 'ruby_18'
 
 gem 'cane', '~> 2.0', :platform => 'ruby_19'
 
-gem 'rspec-fire', :git => 'git://github.com/xaviershay/rspec-fire.git'
