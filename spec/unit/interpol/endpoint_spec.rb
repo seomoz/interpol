@@ -158,6 +158,10 @@ module Interpol
         expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be_true
       end
 
+      it 'can match when there is a trailing slash' do
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be_true
+      end
+
       it 'correctly identifies a non match' do
         expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be_false
       end
@@ -205,7 +209,7 @@ module Interpol
     let(:version)  { '1.0' }
     let(:config)   { Configuration.new }
     let(:endpoint) do
-      fire_double("Interpol::Endpoint", :name => 'my-endpoint',
+      instance_double("Interpol::Endpoint", :name => 'my-endpoint',
                   :configuration => config).as_null_object
     end
 
@@ -753,7 +757,7 @@ module Interpol
 
   describe EndpointExample do
 
-    let(:definition) { fire_double("Interpol::EndpointDefinition") }
+    let(:definition) { instance_double("Interpol::EndpointDefinition") }
     let(:data)       { { "the" => "data" } }
     let(:example)    { EndpointExample.new(data, definition) }
 

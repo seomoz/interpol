@@ -13,6 +13,8 @@ gem 'compass_twitter_bootstrap', :git => 'git://github.com/vwall/compass-twitter
 
 gem 'json', :platform => 'ruby_18'
 
-gem 'cane', '~> 2.0', :platform => 'ruby_19'
+gem 'cane', '~> 2.6', :platform => 'ruby_19'
 
-gem 'rspec-fire', :git => 'git://github.com/xaviershay/rspec-fire.git'
+# 1.6 won't install on JRuby or 1.8.7 :(.
+gem 'nokogiri', '~> 1.5.10'
+

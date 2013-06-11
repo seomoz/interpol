@@ -4,6 +4,7 @@ require 'sinatra/base'
 require 'nokogiri'
 
 module Interpol
+  # Provides the interpol documentation app.
   module DocumentationApp
     extend self
 
@@ -61,6 +62,7 @@ module Interpol
 
   private
 
+    # Helper methods for the documentation app.
     module Helpers
       def interpol_config
         self.class.interpol_config

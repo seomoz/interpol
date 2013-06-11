@@ -4,6 +4,7 @@ require 'interpol/request_params_parser'
 
 module Interpol
   module TestHelper
+    # Defines methods that are used by both the RSpec and Test::Unit mixins.
     module Common
       def define_interpol_example_tests(&block)
         config = Configuration.default.customized_duplicate(&block)
@@ -57,6 +58,7 @@ module Interpol
       end
     end
 
+    # An RSpec mixin for defining interpol example tests.
     module RSpec
       include Common
 
@@ -65,6 +67,7 @@ module Interpol
       end
     end
 
+    # A Test::Unit mixin for defining interpol example tests.
     module TestUnit
       include Common
 

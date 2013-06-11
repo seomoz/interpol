@@ -73,9 +73,9 @@ module Interpol
       end
     end
 
-    let(:validator) { fire_double("Interpol::EndpointDefinition", :validate_data! => nil) }
+    let(:validator) { instance_double("Interpol::EndpointDefinition", :validate_data! => nil) }
     let(:endpoint)  { new_endpoint }
-    let(:default_definition_finder) { fire_double("Interpol::DefinitionFinder") }
+    let(:default_definition_finder) { instance_double("Interpol::DefinitionFinder") }
 
     def stub_lookup(v = validator)
       default_definition_finder.stub(:find_definition => v)

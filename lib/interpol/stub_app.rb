@@ -3,6 +3,7 @@ require 'sinatra/base'
 require 'json'
 
 module Interpol
+  # Public: Builds an interpol stub app.
   module StubApp
     extend self
 
