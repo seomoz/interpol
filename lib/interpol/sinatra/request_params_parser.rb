@@ -122,6 +122,7 @@ module Interpol
         end
       end
 
+      # Contains methods that override sinatra methods.
       module SinatraOverriddes
         extend Forwardable
         def_delegators :settings, :request_params_parser

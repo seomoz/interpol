@@ -52,6 +52,8 @@ module JSON
 end
 
 module Interpol
+  # Provides a helper method for fetching an item from a hash.
+  # Deals with differences on different ruby interpretters.
   module HashFetcher
     # Unfortunately, on JRuby 1.9, the error raised from Hash#fetch when
     # the key is not found does not include the key itself :(. So we work

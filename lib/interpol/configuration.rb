@@ -5,6 +5,8 @@ require 'yaml'
 require 'uri'
 
 module Interpol
+  # Meant to be extended onto an array, to provide custom
+  # finder methods for interpol endpoint definitions.
   module DefinitionFinder
     include HashFetcher
     NoDefinitionFound = Class.new

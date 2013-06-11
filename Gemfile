@@ -13,5 +13,5 @@ gem 'compass_twitter_bootstrap', :git => 'git://github.com/vwall/compass-twitter
 
 gem 'json', :platform => 'ruby_18'
 
-gem 'cane', '~> 2.0', :platform => 'ruby_19'
+gem 'cane', '~> 2.6', :platform => 'ruby_19'
 

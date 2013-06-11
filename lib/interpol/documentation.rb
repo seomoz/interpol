@@ -1,6 +1,7 @@
 require 'nokogiri'
 
 module Interpol
+  # Renders HTML documentation for an interpol endpoint.
   module Documentation
     extend self
 
