@@ -215,9 +215,11 @@ module Interpol
       @endpoint.name
     end
 
-    def validate_data!(data)
-      errors = ::JSON::Validator.fully_validate_schema(schema)
-      raise ValidationError.new(errors, schema, description) if errors.any?
+    def validate_data!(data, validate_schema = true)
+      if validate_schema
+        errors = ::JSON::Validator.fully_validate_schema(schema)
+        raise ValidationError.new(errors, schema, description) if errors.any?
+      end
       errors = ::JSON::Validator.fully_validate(schema, data)
       raise ValidationError.new(errors, data, description) if errors.any?
     end
