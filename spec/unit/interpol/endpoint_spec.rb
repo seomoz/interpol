@@ -331,11 +331,21 @@ module Interpol
         subject.validate_data!('foo' => 17)
       end
 
-      it 'raises an error when the schema itself is invalid' do
-        schema['properties']['foo']['minItems'] = 'foo'
-        expect {
-          subject.validate_data!('foo' => 17)
-        }.to raise_error(ValidationError, /Data:\s+{"/m)
+      context 'invalid schema' do
+        before { schema['properties']['foo']['minItems'] = 'foo' }
+
+        it 'raises an error when the schema itself is invalid' do
+          expect {
+            subject.validate_data!('foo' => 17)
+          }.to raise_error(ValidationError, /Data:\s+{"/m)
+        end
+
+        it 'does not raise an invalid schema error if schema validation is disabled' do
+          schema['properties']['foo']['minItems'] = 'foo'
+          expect {
+            subject.validate_data!({ 'foo' => 17 }, false)
+          }.to_not raise_error
+        end
       end
 
       it 'rejects unrecognized data types' do
