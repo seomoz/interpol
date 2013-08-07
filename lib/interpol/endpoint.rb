@@ -195,7 +195,7 @@ module Interpol
       @message_type    = message_type
       @status_codes    = StatusCodeMatcher.new(definition['status_codes'])
       @version         = version
-      @schema          = fetch_from(definition, 'schema')
+      @schema          = Marshal.load(Marshal.dump fetch_from(definition, 'schema'))
       @path_params     = definition.fetch('path_params', DEFAULT_PARAM_HASH.dup)
       @query_params    = definition.fetch('query_params', DEFAULT_PARAM_HASH.dup)
       @examples        = extract_examples_from(definition)

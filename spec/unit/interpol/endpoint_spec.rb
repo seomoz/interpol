@@ -311,6 +311,17 @@ module Interpol
       end
     end
 
+    it 'does not mutate the given schema when making it strict' do
+      new_basic_schema = lambda { {
+        'type'       => 'object',
+        'properties' => {'foo' => { 'type' => 'integer' } }
+      } }
+
+      schema = new_basic_schema.call
+      EndpointDefinition.new(endpoint, version, 'response', build_hash('schema' => schema))
+      expect(schema).to eq(new_basic_schema.call)
+    end
+
     describe "#validate_data" do
       let(:schema) do {
         'type'       => 'object',
