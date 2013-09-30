@@ -53,7 +53,7 @@ module Interpol
           alias unparsed_params params
           set :request_params_parser, parser
           enable :parse_params unless settings.respond_to?(:parse_params)
-          include SinatraOverriddes
+          include SinatraOverrides
         end
       end
 
@@ -123,7 +123,7 @@ module Interpol
       end
 
       # Contains methods that override sinatra methods.
-      module SinatraOverriddes
+      module SinatraOverrides
         extend Forwardable
         def_delegators :settings, :request_params_parser
 
@@ -131,7 +131,7 @@ module Interpol
         # due to the order that sinatra runs the hooks in relation to route
         # matching.
         def process_route(*method_args, &block)
-          return super unless SinatraOverriddes.being_processed_by_sinatra?(block)
+          return super unless SinatraOverrides.being_processed_by_sinatra?(block)
 
           super do |*block_args|
             with_parsed_params do
