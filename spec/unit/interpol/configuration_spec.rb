@@ -146,7 +146,7 @@ module Interpol
         write_file "#{dir}/e2.yml", endpoint_definition_yml.gsub("project", "task")
 
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
-        expect(config).to have(2).endpoints
+        expect(config.endpoints.size).to eq(2)
         expect(config.endpoints.map(&:name)).to match_array %w[ project_list task_list ]
       end
 
@@ -173,7 +173,7 @@ module Interpol
       end
 
       it 'is not prone to being reloaded when the configuration is customized' do
-        Endpoint.should_receive(:new).once.and_call_original
+        expect(Endpoint).to receive(:new).once.and_call_original
 
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         config.endpoint_definition_files = Dir["#{dir}/*.yml"]
@@ -216,7 +216,7 @@ module Interpol
           expect(config.endpoints.size).to eq(1)
           endpoint = config.endpoints.first
           defs = endpoint.definitions
-          expect(defs).to have_at_least(1).entry
+          expect(defs.size).to be >= 1
           defs.each do |definitions|
             expect(definitions.schema.fetch("properties")).to have_key("name")
           end
@@ -263,7 +263,7 @@ module Interpol
       end
 
       it 'can be assigned directly' do
-        endpoints_array = [stub.as_null_object]
+        endpoints_array = [double.as_null_object]
         config.endpoints = endpoints_array
         expect(config.endpoints).to respond_to(:find_definition)
       end
@@ -292,12 +292,12 @@ module Interpol
         context 'when configured with a static version' do
           it 'returns the configured static api version number' do
             config.send(set_method, '1.2')
-            expect(config.send(get_method, {}, stub.as_null_object)).to eq('1.2')
+            expect(config.send(get_method, {}, double.as_null_object)).to eq('1.2')
           end
 
           it 'always returns a string, even when configured as an integer' do
             config.send(set_method, 3)
-            expect(config.send(get_method, {}, stub.as_null_object)).to eq('3')
+            expect(config.send(get_method, {}, double.as_null_object)).to eq('3')
           end
         end
 
@@ -305,19 +305,19 @@ module Interpol
           it "returns the blocks's return value" do
             config.send(set_method) { |e, _| e[:path][%r|/api/v(\d+)/|, 1] }
             expect(
-              config.send(get_method, { :path => "/api/v2/foo" }, stub.as_null_object)
+              config.send(get_method, { :path => "/api/v2/foo" }, double.as_null_object)
             ).to eq('2')
           end
 
           it 'always returns a string, even when configured as an integer' do
             config.send(set_method) { |*a| 3 }
-            expect(config.send(get_method, {}, stub.as_null_object)).to eq('3')
+            expect(config.send(get_method, {}, double.as_null_object)).to eq('3')
           end
         end
 
         it "raises a helpful error when ##{set_method} has not been configured" do
           expect {
-            config.send(get_method, {}, stub.as_null_object)
+            config.send(get_method, {}, double.as_null_object)
           }.to raise_error(ConfigurationError)
         end
       end
@@ -335,22 +335,22 @@ module Interpol
     end
 
     describe "#api_version" do
-      before { config.stub(:warn) }
+      before { allow(config).to receive(:warn) }
 
       it 'configures both request_version and response_version' do
         config.api_version '23.14'
-        expect(config.request_version_for({}, stub.as_null_object)).to eq('23.14')
-        expect(config.response_version_for({}, stub.as_null_object)).to eq('23.14')
+        expect(config.request_version_for({}, double.as_null_object)).to eq('23.14')
+        expect(config.response_version_for({}, double.as_null_object)).to eq('23.14')
       end
 
       it 'prints a warning' do
-        config.should_receive(:warn).with(/api_version.*request_version.*response_version/)
+        expect(config).to receive(:warn).with(/api_version.*request_version.*response_version/)
         config.api_version '1.0'
       end
     end
 
     describe "#validate_if" do
-      before { config.stub(:warn) }
+      before { allow(config).to receive(:warn) }
 
       it 'configures validate_response_if' do
         config.validate_if { |a| a }
@@ -359,7 +359,7 @@ module Interpol
       end
 
       it 'prints a warning' do
-        config.should_receive(:warn).with(/validate_if.*validate_response_if/)
+        expect(config).to receive(:warn).with(/validate_if.*validate_response_if/)
         config.validate_if { true }
       end
     end

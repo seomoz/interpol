@@ -115,7 +115,7 @@ module Interpol
         end
 
         def run(group)
-          group.run(stub.as_null_object)
+          group.run(double.as_null_object)
         end
 
         def num_tests_from(group)

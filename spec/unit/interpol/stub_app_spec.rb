@@ -222,9 +222,9 @@ module Interpol
     end
 
     it 'performs validations by default' do
-      endpoint_example.stub(:apply_filters) { endpoint_example }
+      allow(endpoint_example).to receive(:apply_filters) { endpoint_example }
       expect(endpoint_example).to respond_to(:validate!).with(0).arguments
-      endpoint_example.should_receive(:validate!).with(no_args)
+      expect(endpoint_example).to receive(:validate!).with(no_args)
       header 'Response-Version', '1.0'
       get '/users/3/projects'
       expect(last_response).to be_ok
@@ -233,9 +233,9 @@ module Interpol
     it 'does not perform validates if validations are disabled' do
       app.disable :perform_validations
 
-      endpoint_example.stub(:apply_filters) { endpoint_example }
+      allow(endpoint_example).to receive(:apply_filters) { endpoint_example }
       expect(endpoint_example).to respond_to(:validate!).with(0).arguments
-      endpoint_example.should_not_receive(:validate!)
+      expect(endpoint_example).not_to receive(:validate!)
 
       header 'Response-Version', '1.0'
       get '/users/3/projects'
