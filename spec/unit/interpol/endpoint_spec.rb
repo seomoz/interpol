@@ -219,7 +219,7 @@ module Interpol
     end
 
     it 'exposes the endpoint name' do
-      endpoint.stub(:name => 'e-name')
+      allow(endpoint).to receive(:name).and_return('e-name')
       endpoint_def = EndpointDefinition.new(endpoint, version, 'response', build_hash)
       expect(endpoint_def.endpoint_name).to eq('e-name')
     end
@@ -423,7 +423,7 @@ module Interpol
         it 'does not add an extra `null` entry to an existing nullable union type' do
           schema['properties']['foo']['type'] = %w[ integer null ]
 
-          ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
+          expect(::JSON::Validator).to receive(:fully_validate_schema) do |schema|
             expect(schema['properties']['foo']['type']).to match_array(%w[ integer null ])
             [] # no errors
           end
@@ -434,7 +434,7 @@ module Interpol
         it 'does not add an extra `null` entry to an existing nullable scalar type' do
           schema['properties']['foo']['type'] = 'null'
 
-          ::JSON::Validator.should_receive(:fully_validate_schema) do |schema|
+          expect(::JSON::Validator).to receive(:fully_validate_schema) do |schema|
             expect(schema['properties']['foo']['type']).to eq('null')
             [] # no errors
           end
@@ -784,7 +784,7 @@ module Interpol
 
     describe "#validate!" do
       it 'validates against the schema' do
-        definition.should_receive(:validate_data!).with(data)
+        expect(definition).to receive(:validate_data!).with(data)
         example.validate!
       end
     end

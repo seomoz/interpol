@@ -9,7 +9,7 @@ module Interpol
 
     def configuration
       lambda do |config|
-        config.stub(:endpoints => definition_finder)
+        allow(config).to receive(:endpoints).and_return(definition_finder)
         config.response_version '1.0' unless response_version_configured?(config)
         config.validate_response_if(&validate_response_if_block) if validate_response_if_block
         config.validation_mode = validation_mode
@@ -27,8 +27,8 @@ module Interpol
     end
 
     let(:closable_body) do
-      stub(:close => nil).tap do |s|
-        s.stub(:each).and_yield('{"a":"b"}')
+      double(:close => nil).tap do |s|
+        allow(s).to receive(:each).and_yield('{"a":"b"}')
       end
     end
 
@@ -78,13 +78,13 @@ module Interpol
     let(:default_definition_finder) { instance_double("Interpol::DefinitionFinder") }
 
     def stub_lookup(v = validator)
-      default_definition_finder.stub(:find_definition => v)
+      allow(default_definition_finder).to receive(:find_definition).and_return(v)
     end
 
     it 'validates the data against the correct versioned endpoint definition' do
-      validator.should_receive(:validate_data!).with("a" => "b")
+      expect(validator).to receive(:validate_data!).with("a" => "b")
 
-      default_definition_finder.should_receive(:find_definition).
+      expect(default_definition_finder).to receive(:find_definition).
         with("GET", "/search/200/overview", "response", 200).
         and_return(validator)
 
@@ -105,7 +105,8 @@ module Interpol
     end
 
     it 'calls the response_version hook with the rack env, the endpoint and the response triplet' do
-      endpoint.stub(:method => :get, :route_matches? => true)
+      allow(endpoint).to receive(:method).and_return(:get)
+      allow(endpoint).to receive(:route_matches?).and_return(true)
       self.definition_finder = [endpoint].extend(Interpol::DefinitionFinder)
 
       yielded_args = nil
@@ -142,27 +143,27 @@ module Interpol
 
     it 'does not validate if the validate_response_if config returns false' do
       validate_response_if { |*args| false }
-      validator.should_not_receive(:validate_data!)
-      default_definition_finder.should_not_receive(:find_definition)
+      expect(validator).not_to receive(:validate_data!)
+      expect(default_definition_finder).not_to receive(:find_definition)
       get '/search/200/overview'
     end
 
     context 'when no validate_response_if callback has been set' do
       it 'does not validate if the response is not 2xx' do
-        validator.should_not_receive(:validate_data!)
-        default_definition_finder.should_not_receive(:find_definition)
+        expect(validator).not_to receive(:validate_data!)
+        expect(default_definition_finder).not_to receive(:find_definition)
         get '/not_found'
       end
 
       it 'does not validate a 204 no content response' do
-        validator.should_not_receive(:validate_data!)
-        default_definition_finder.should_not_receive(:find_definition)
+        expect(validator).not_to receive(:validate_data!)
+        expect(default_definition_finder).not_to receive(:find_definition)
         get '/search/204/overview'
       end
 
       it 'does not validate a non json response' do
-        validator.should_not_receive(:validate_data!)
-        default_definition_finder.should_not_receive(:find_definition)
+        expect(validator).not_to receive(:validate_data!)
+        expect(default_definition_finder).not_to receive(:find_definition)
         get '/not_json'
         expect(last_response.status).to eq(200)
       end
@@ -170,7 +171,7 @@ module Interpol
 
     it 'closes the body when done iterating it as per the rack spec' do
       stub_lookup
-      closable_body.should_receive(:close).once
+      expect(closable_body).to receive(:close).once
       get '/closable/body'
     end
 
@@ -178,21 +179,21 @@ module Interpol
       before { set_validation_mode :error }
 
       it 'raises an error when the data fails validation' do
-        validator.should_receive(:validate_data!).and_raise(ValidationError)
+        expect(validator).to receive(:validate_data!).and_raise(ValidationError)
         stub_lookup
 
         expect { get '/search/200/overview' }.to raise_error(ValidationError)
       end
 
       it 'raises an error when no endpoint definition can be found' do
-        validator.stub(:validate_data!)
+        allow(validator).to receive(:validate_data!)
         stub_lookup(DefinitionFinder::NoDefinitionFound)
 
         expect { get '/search/200/overview' }.to raise_error(NoEndpointDefinitionFoundError)
       end
 
       it 'does not raise an error when the data passes validation' do
-        validator.stub(:validate_data!)
+        allow(validator).to receive(:validate_data!)
         stub_lookup
 
         get '/search/200/overview'
@@ -204,26 +205,26 @@ module Interpol
       before { set_validation_mode :warn }
 
       it 'prints a warning when the data fails validation' do
-        validator.should_receive(:validate_data!).and_raise(ValidationError)
+        expect(validator).to receive(:validate_data!).and_raise(ValidationError)
         stub_lookup
 
-        warner.should_receive(:warn).with(/Found.*error.*when validating/)
+        expect(warner).to receive(:warn).with(/Found.*error.*when validating/)
         get '/search/200/overview'
       end
 
       it 'prints a warning when no endpoint definition can be found' do
-        validator.stub(:validate_data!)
+        allow(validator).to receive(:validate_data!)
         stub_lookup(DefinitionFinder::NoDefinitionFound)
 
-        warner.should_receive(:warn).with(/No endpoint definition could be found/)
+        expect(warner).to receive(:warn).with(/No endpoint definition could be found/)
         get '/search/200/overview'
       end
 
       it 'does not print a warning when the data passes validation' do
-        validator.stub(:validate_data!)
+        allow(validator).to receive(:validate_data!)
         stub_lookup
 
-        warner.should_not_receive(:warn)
+        expect(warner).not_to receive(:warn)
         get '/search/200/overview'
       end
     end

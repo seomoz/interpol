@@ -291,7 +291,7 @@ module Interpol
       def prevent_validation_failure
         # Ensure it gets past the validation so we can get to a case where
         # the parser cannot parse the value.
-        parser.instance_variable_get(:@validator).stub(:validate!)
+        allow(parser.instance_variable_get(:@validator)).to receive(:validate!)
       end
 
       it 'raises an error if none of the unioned types can parse the given value' do
@@ -299,7 +299,7 @@ module Interpol
         # the parser cannot parse the value.
         # Note that it gets pass the validation anyway, but only due to a code
         # in json-schema: it does not validate URI strings.
-        parser.instance_variable_get(:@validator).stub(:validate!)
+        allow(parser.instance_variable_get(:@validator)).to receive(:validate!)
 
         expect {
           parse_with('union' => 'some string')
@@ -309,8 +309,13 @@ module Interpol
       it 'raises an error when parsing an unrecognized type' do
         endpoint_definition_yml.gsub!('string', 'bling')
         RequestParamsParser::ParamValidator.any_instance.tap do |pv|
-          pv.stub(:build_params_schema)
-          pv.stub(:validate!)
+          allow_any_instance_of(
+            Interpol::RequestParamsParser::ParamValidator
+          ).to receive(:build_params_schema)
+
+          allow_any_instance_of(
+            Interpol::RequestParamsParser::ParamValidator
+          ).to receive(:validate!)
         end
 
         expect {
