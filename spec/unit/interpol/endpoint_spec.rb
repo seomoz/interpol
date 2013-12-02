@@ -820,7 +820,7 @@ module Interpol
           ex.data["array"] << 0
         end
 
-        modified_example = example.apply_filters([filter], request_env)
+        example.apply_filters([filter], request_env)
         expect(example.data).to eq(data_2)
       end
 
@@ -834,7 +834,7 @@ module Interpol
           ex.data << 0
         end
 
-        modified_example = example.apply_filters([filter], request_env)
+        example.apply_filters([filter], request_env)
         expect(example.data).to eq(data_2)
       end
 
