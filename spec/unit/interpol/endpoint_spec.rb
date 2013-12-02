@@ -420,6 +420,28 @@ module Interpol
           expect { subject.validate_data!('foo' => nil) }.not_to raise_error
         end
 
+        it 'works with enums' do
+          schema['properties']['foo'] = {
+            'type' => 'string',
+            'enum' => %w[ A B C D F ]
+          }
+
+          expect { subject.validate_data!('foo' => nil) }.not_to raise_error
+          expect { subject.validate_data!('foo' => 'A') }.not_to raise_error
+          expect { subject.validate_data!('foo' => 'F') }.not_to raise_error
+          expect { subject.validate_data!('foo' => 'E') }.to raise_error(ValidationError)
+        end
+
+        it 'allows enums to be non-nullable' do
+          schema['properties']['foo'] = {
+            'nullable' => false,
+            'type' => 'string',
+            'enum' => %w[ A B C D F ]
+          }
+
+          expect { subject.validate_data!('foo' => nil) }.to raise_error(ValidationError)
+        end
+
         it 'does not add an extra `null` entry to an existing nullable union type' do
           schema['properties']['foo']['type'] = %w[ integer null ]
 
@@ -820,7 +842,7 @@ module Interpol
           ex.data["array"] << 0
         end
 
-        modified_example = example.apply_filters([filter], request_env)
+        example.apply_filters([filter], request_env)
         expect(example.data).to eq(data_2)
       end
 
@@ -834,7 +856,7 @@ module Interpol
           ex.data << 0
         end
 
-        modified_example = example.apply_filters([filter], request_env)
+        example.apply_filters([filter], request_env)
         expect(example.data).to eq(data_2)
       end
 
