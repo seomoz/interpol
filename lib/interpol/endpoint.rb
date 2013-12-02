@@ -279,7 +279,10 @@ module Interpol
       types = Array(raw_schema['type'])
       return if types.none? || types.include?('null')
 
-      raw_schema['type'] = (types << "null")
+      # Mark as non-nullable so it doesn't try to recurse down into it
+      # and make it nullable at that level (since we are taking care of it at this level)
+      sub_schema = raw_schema.merge('nullable' => false)
+      raw_schema.replace('type' => ['null', sub_schema])
     end
 
     def should_be_nullable?(raw_schema)
