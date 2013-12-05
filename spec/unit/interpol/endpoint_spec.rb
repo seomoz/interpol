@@ -397,6 +397,11 @@ module Interpol
         subject.validate_data!({})
       end
 
+      it 'does not require optional nullable properties' do
+        schema['properties']['foo'].merge!('optional' => true, 'nullable' => true)
+        subject.validate_data!({})
+      end
+
       it 'does not allow additional properties' do
         expect {
           subject.validate_data!('bar' => 3)

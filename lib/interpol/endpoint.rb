@@ -282,7 +282,7 @@ module Interpol
       # Mark as non-nullable so it doesn't try to recurse down into it
       # and make it nullable at that level (since we are taking care of it at this level)
       sub_schema = raw_schema.merge('nullable' => false)
-      raw_schema.replace('type' => ['null', sub_schema])
+      raw_schema.replace('type' => ['null', sub_schema], 'optional' => sub_schema['optional'])
     end
 
     def should_be_nullable?(raw_schema)
