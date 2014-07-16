@@ -101,7 +101,7 @@ module Interpol
       end
 
       get '/search/200/overview'
-      expect(default_config_called).to be_true
+      expect(default_config_called).to be true
     end
 
     it 'calls the response_version hook with the rack env, the endpoint and the response triplet' do

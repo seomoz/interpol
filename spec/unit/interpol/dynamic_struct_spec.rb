@@ -11,8 +11,8 @@ module Interpol
 
     it 'provides predicates' do
       ds = DynamicStruct.new("a" => 3, "b" => false)
-      expect(ds.a?).to be_true
-      expect(ds.b?).to be_false
+      expect(ds.a?).to be true
+      expect(ds.b?).to be false
     end
 
     it 'raises a NoMethodError for messages that are not in the hash' do

@@ -155,32 +155,32 @@ module Interpol
       end
 
       it 'correctly identifies an exact match' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be_true
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be true
       end
 
       it 'can match when there is a trailing slash' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be_true
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be true
       end
 
       it 'correctly identifies a non match' do
-        expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be false
       end
 
       it 'handles route params' do
-        expect(endpoint('/foo/:var/bar').route_matches?('/foo/17/bar')).to be_true
+        expect(endpoint('/foo/:var/bar').route_matches?('/foo/17/bar')).to be true
       end
 
       it 'handles special regex chars in the route' do
-        expect(endpoint('/foo.bar').route_matches?('/foo.bar')).to be_true
-        expect(endpoint('/foo.bar').route_matches?('/foo-bar')).to be_false
+        expect(endpoint('/foo.bar').route_matches?('/foo.bar')).to be true
+        expect(endpoint('/foo.bar').route_matches?('/foo-bar')).to be false
       end
 
       it 'does not match a path with an extra prefix' do
-        expect(endpoint('/foo/bar').route_matches?('/bazz/foo/bar')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/bazz/foo/bar')).to be false
       end
 
       it 'does not match a path with an extra postfix' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar/bazz')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/bazz')).to be false
       end
     end
 
@@ -770,21 +770,21 @@ module Interpol
     describe "#matches?" do
       let(:nil_codes_subject) { StatusCodeMatcher.new(nil) }
       it 'returns true when codes is nil' do
-        expect(nil_codes_subject.matches?('200')).to be_true
+        expect(nil_codes_subject.matches?('200')).to be true
       end
 
       subject { StatusCodeMatcher.new(['200', '4xx', 'x5x']) }
       it 'returns true for an exact match' do
-        expect(subject.matches?('200')).to be_true
+        expect(subject.matches?('200')).to be true
       end
 
       it 'returns true for a partial matches' do
-        expect(subject.matches?('401')).to be_true
-        expect(subject.matches?('454')).to be_true
+        expect(subject.matches?('401')).to be true
+        expect(subject.matches?('454')).to be true
       end
 
       it 'returns false for no matches' do
-        expect(subject.matches?('202')).to be_false
+        expect(subject.matches?('202')).to be false
       end
     end
 

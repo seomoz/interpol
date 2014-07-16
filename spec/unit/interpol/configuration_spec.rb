@@ -325,12 +325,12 @@ module Interpol
 
     describe "#scalars_nullable_by_default?" do
       it 'defaults to false' do
-        expect(config.scalars_nullable_by_default?).to be_false
+        expect(config.scalars_nullable_by_default?).to be false
       end
 
       it 'can be set to true' do
         config.scalars_nullable_by_default = true
-        expect(config.scalars_nullable_by_default?).to be_true
+        expect(config.scalars_nullable_by_default?).to be true
       end
     end
 
@@ -354,8 +354,8 @@ module Interpol
 
       it 'configures validate_response_if' do
         config.validate_if { |a| a }
-        expect(config.validate_response?(true)).to be_true
-        expect(config.validate_response?(false)).to be_false
+        expect(config.validate_response?(true)).to be true
+        expect(config.validate_response?(false)).to be false
       end
 
       it 'prints a warning' do
@@ -741,9 +741,8 @@ module Interpol
       end
 
       it 'fails invalid URI strings' do
-        pending "json-schema doesn't validate URIs yet, unfortunately" do
-          expect(schema).to have_errors_for('not a URI')
-        end
+        pending "json-schema doesn't validate URIs yet, unfortunately"
+        expect(schema).to have_errors_for('not a URI')
       end
 
       it 'converts URI strings to a URI object' do

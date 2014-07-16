@@ -75,7 +75,7 @@ module Interpol
         elsif app.instance_variables.include?(:@app)
           app.instance_variable_get(:@app)
         elsif RUBY_VERSION.to_f < 1.9
-          pending "Not sure why we can't get this to work on 1.8.7"
+          skip "Not sure why we can't get this to work on 1.8.7"
         else
           raise "Unable to find a wrapped app within #{app}"
         end
