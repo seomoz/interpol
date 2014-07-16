@@ -308,15 +308,13 @@ module Interpol
 
       it 'raises an error when parsing an unrecognized type' do
         endpoint_definition_yml.gsub!('string', 'bling')
-        RequestParamsParser::ParamValidator.any_instance.tap do |pv|
-          allow_any_instance_of(
-            Interpol::RequestParamsParser::ParamValidator
-          ).to receive(:build_params_schema)
+        allow_any_instance_of(
+          Interpol::RequestParamsParser::ParamValidator
+        ).to receive(:build_params_schema)
 
-          allow_any_instance_of(
-            Interpol::RequestParamsParser::ParamValidator
-          ).to receive(:validate!)
-        end
+        allow_any_instance_of(
+          Interpol::RequestParamsParser::ParamValidator
+        ).to receive(:validate!)
 
         expect {
           parse

@@ -49,7 +49,6 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && 
 end
 
 RSpec.configure do |c|
-  c.treat_symbols_as_metadata_keys_with_true_values = true
   c.filter_run :f
   c.run_all_when_everything_filtered = true
   c.include TestHelpers

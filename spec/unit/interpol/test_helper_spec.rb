@@ -44,7 +44,7 @@ module Interpol
       it 'generates tests that fail if their example data is invalid' do
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
-        expect(results_from(test_group)).to match_array ['passed', 'failed', 'failed']
+        expect(results_from(test_group)).to match_array [:passed, :failed, :failed]
       end
 
       it 'falls back to default config settings' do
@@ -64,7 +64,7 @@ module Interpol
 
         write_file "#{dir}/e1.yml", endpoint_definition_yml
         run(test_group)
-        expect(results_from(test_group)).to match_array ['passed', 'passed', 'passed']
+        expect(results_from(test_group)).to match_array [:passed, :passed, :passed]
       end
 
       context 'request path schema validation' do
@@ -94,13 +94,13 @@ module Interpol
         it 'generates tests that pass if the params are declared correctly' do
           write_file "#{dir}/e1.yml", endpoint_definition_yml
           run(test_group)
-          expect(results_from(test_group)).to eq ['passed']
+          expect(results_from(test_group)).to eq [:passed]
         end
 
         it 'generates tests that fail if the params are declared incorrectly' do
           write_file "#{dir}/e1.yml", endpoint_definition_yml.gsub('object', 'oject')
           run(test_group)
-          expect(results_from(test_group)).to eq ['failed']
+          expect(results_from(test_group)).to eq [:failed]
         end
       end
     end
@@ -123,7 +123,7 @@ module Interpol
         end
 
         def results_from(group)
-          group.examples.map{ |e| e.execution_result[:status] }
+          group.examples.map { |e| e.execution_result.status }
         end
       end
     end
@@ -151,10 +151,10 @@ module Interpol
           instance.methods.grep(/^test_/).each do |test|
             begin
               instance.send(test)
-            rescue => e
-              group.results << "failed"
+            rescue
+              group.results << :failed
             else
-              group.results << "passed"
+              group.results << :passed
             end
           end
         end
