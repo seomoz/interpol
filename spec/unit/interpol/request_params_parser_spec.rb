@@ -3,7 +3,7 @@ require 'interpol/request_params_parser'
 require 'support/request_params_parser_definition'
 
 module Interpol
-  describe RequestParamsParser, :uses_request_params_parser_definition do
+  RSpec.describe RequestParamsParser, :uses_request_params_parser_definition do
     let(:raw_endpoint_definition) { YAML.load endpoint_definition_yml }
 
     def endpoint_definition

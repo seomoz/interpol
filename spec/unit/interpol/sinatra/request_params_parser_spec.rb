@@ -6,7 +6,7 @@ require 'rack/test'
 
 module Interpol
   module Sinatra
-    describe RequestParamsParser, :uses_request_params_parser_definition do
+    RSpec.describe RequestParamsParser, :uses_request_params_parser_definition do
       include Rack::Test::Methods
 
       def on_get(&block)

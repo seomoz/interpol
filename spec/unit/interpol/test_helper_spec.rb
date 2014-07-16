@@ -3,7 +3,7 @@ require 'interpol/test_helper'
 require 'rack/request'
 
 module Interpol
-  describe TestHelper, :clean_endpoint_dir do
+  RSpec.describe TestHelper, :clean_endpoint_dir do
     shared_examples_for "interpol example test definer" do
       let_without_indentation(:endpoint_definition_yml) do <<-EOF
         ---

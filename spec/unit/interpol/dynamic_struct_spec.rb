@@ -2,7 +2,7 @@ require 'fast_spec_helper'
 require 'interpol/dynamic_struct'
 
 module Interpol
-  describe DynamicStruct do
+  RSpec.describe DynamicStruct do
     it 'defines methods for each hash entry' do
       ds = DynamicStruct.new("a" => 5, "b" => 3)
       expect(ds.a).to eq(5)

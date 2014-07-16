@@ -3,7 +3,7 @@ require 'interpol'
 require 'interpol/endpoint'
 
 module Interpol
-  shared_examples_for "custom_metadata" do
+  RSpec.shared_examples_for "custom_metadata" do
     it "initializes custom_metadata from the meta field" do
       instance = new_with('meta' => {'key' => 'value'})
       expect(instance.custom_metadata).to eq('key' => 'value')
@@ -16,7 +16,7 @@ module Interpol
     end
   end
 
-  describe Endpoint do
+  RSpec.describe Endpoint do
     def build_hash(hash = {})
       {
         'name' => "the-name",
@@ -198,7 +198,7 @@ module Interpol
     end
   end
 
-  describe EndpointDefinition do
+  RSpec.describe EndpointDefinition do
     def build_hash(hash = {})
       {
         'schema'   => {'the' => 'schema'},
@@ -741,7 +741,7 @@ module Interpol
     end
   end
 
-  describe StatusCodeMatcher do
+  RSpec.describe StatusCodeMatcher do
     describe "#new" do
       it 'initializes the codes for nil' do
         expect(StatusCodeMatcher.new(nil).code_strings).to eq ['xxx']
@@ -803,7 +803,7 @@ module Interpol
     end
   end
 
-  describe EndpointExample do
+  RSpec.describe EndpointExample do
 
     let(:definition) { instance_double("Interpol::EndpointDefinition") }
     let(:data)       { { "the" => "data" } }

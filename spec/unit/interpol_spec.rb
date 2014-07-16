@@ -1,7 +1,7 @@
 require 'fast_spec_helper'
 require 'interpol'
 
-describe Interpol do
+RSpec.describe Interpol do
   describe ".default_configuration" do
     it 'returns Configuration.default' do
       expect(Interpol.default_configuration).to be(Interpol::Configuration.default)

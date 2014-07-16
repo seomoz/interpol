@@ -4,7 +4,7 @@ require 'interpol/sinatra/request_params_parser'
 require 'rack/test'
 
 module Interpol
-  describe StubApp do
+  RSpec.describe StubApp do
     include Rack::Test::Methods
 
     let_without_indentation(:endpoint_definition_yml) do <<-EOF

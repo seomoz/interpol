@@ -4,7 +4,7 @@ require 'rack/content_length'
 require 'interpol/response_schema_validator'
 
 module Interpol
-  describe ResponseSchemaValidator do
+  RSpec.describe ResponseSchemaValidator do
     include Rack::Test::Methods
 
     def configuration

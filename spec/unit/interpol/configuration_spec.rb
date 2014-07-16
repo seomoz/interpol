@@ -3,7 +3,7 @@ require 'interpol/configuration'
 require 'yaml'
 
 module Interpol
-  describe DefinitionFinder do
+  RSpec.describe DefinitionFinder do
     describe '#find_definition' do
       def endpoint_def(message_type, status_codes, *versions)
         {
@@ -92,19 +92,19 @@ module Interpol
     end
   end
 
-  describe Configuration do
+  RSpec.describe Configuration do
     let(:config) { Configuration.new }
 
     if defined?(::YAML::ENGINE.yamler)
       require 'psych'
       old_yamler = nil
 
-      before(:all) do
+      before(:context) do
         old_yamler = ::YAML::ENGINE.yamler
         ::YAML::ENGINE.yamler = 'psych'
       end
 
-      after(:all) do
+      after(:context) do
         ::YAML::ENGINE.yamler = old_yamler
       end
     end
@@ -448,7 +448,7 @@ module Interpol
     end
   end
 
-  describe ParamParser do
+  RSpec.describe ParamParser do
     let(:config) { Configuration.new }
 
     describe "#parse_value" do
@@ -476,7 +476,7 @@ module Interpol
         validate(schema)
       end
 
-      failure_message_for_should_not do |schema|
+      failure_message_when_negated do |schema|
         ValidationError.new(@errors, params).message
       end
 
@@ -495,14 +495,14 @@ module Interpol
         @new_value = new_value
       end
 
-      match_for_should do |converter|
+      match do |converter|
         raise "Must specify the expected value with .to" unless defined?(@new_value)
         @converter = converter
         @old_value = old_value
         converted_value == @new_value
       end
 
-      match_for_should_not do |converter|
+      match_when_negated do |converter|
         @converter = converter
         @old_value = old_value
         raised_argument_error = false
@@ -516,12 +516,12 @@ module Interpol
         raised_argument_error
       end
 
-      failure_message_for_should do |converter|
+      failure_message do |converter|
         "expected #{old_value.inspect} to convert to #{@new_value.inspect}, " +
         "but converted to #{converted_value.inspect}"
       end
 
-      failure_message_for_should_not do |converter|
+      failure_message_when_negated do |converter|
         "expected #{old_value.inspect} to trigger an ArgumentError when " +
         "conversion was attempted, but did not"
       end
