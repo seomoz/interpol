@@ -1,4 +1,3 @@
-require 'fast_spec_helper'
 require 'interpol/test_helper'
 require 'rack/request'
 

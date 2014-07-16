@@ -1,4 +1,3 @@
-require 'fast_spec_helper'
 require 'interpol'
 
 RSpec.describe Interpol do

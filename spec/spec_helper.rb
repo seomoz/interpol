@@ -44,35 +44,29 @@ module TestHelpers
   end
 end
 
-if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI']
-  require 'debugger'
-end
+RSpec.configure do |config|
+  config.disable_monkey_patching!
+  config.filter_run :focus
+  config.run_all_when_everything_filtered = true
 
-RSpec.configure do |c|
-  c.filter_run :f
-  c.run_all_when_everything_filtered = true
-  c.include TestHelpers
-  c.extend TestHelpers::ClassMethods
+  config.default_formatter = 'doc' if config.files_to_run.one?
+  config.profile_examples = 10
+  config.order = :random
+  Kernel.srand config.seed
 
-  c.expect_with :rspec do |expectations|
-    expectations.syntax = :expect
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
   end
 
-  c.before do
+  config.include TestHelpers
+  config.extend TestHelpers::ClassMethods
+
+  config.before do
     if defined?(Interpol::Configuration)
       # clear global state between examples
       Interpol::Configuration.instance_variable_set(:@default, nil)
     end
   end
-
-  # Setting this config option `false` removes rspec-core's monkey patching of the
-  # top level methods like `describe`, `shared_examples_for` and `shared_context`
-  # on `main` and `Module`. The methods are always available through the `RSpec`
-  # module like `RSpec.describe` regardless of this setting.
-  # For backwards compatibility this defaults to `true`.
-  #
-  # https://relishapp.com/rspec/rspec-core/v/3-0/docs/configuration/global-namespace-dsl
-  c.expose_dsl_globally = false
 end
 
 RSpec.shared_context "clean endpoint directory", :clean_endpoint_dir do

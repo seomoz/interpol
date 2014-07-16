@@ -1,4 +1,3 @@
-require 'fast_spec_helper'
 require 'interpol/stub_app'
 require 'interpol/sinatra/request_params_parser'
 require 'rack/test'

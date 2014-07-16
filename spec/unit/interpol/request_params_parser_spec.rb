@@ -1,4 +1,3 @@
-require 'fast_spec_helper'
 require 'interpol/request_params_parser'
 require 'support/request_params_parser_definition'
 
