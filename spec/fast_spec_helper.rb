@@ -1,8 +1,5 @@
 require File.expand_path('../../config/setup_load_paths', __FILE__)
 
-# Note: this file is purposefully minimal. Load as little as possible here.
-require 'rspec/fire'
-
 # Sinatra acts a bit different in the test vs dev environments
 # in a way that made one of our tests a false positive. We want
 # to force the environment to dev here so it's closer to how
@@ -52,7 +49,6 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && 
 end
 
 RSpec.configure do |c|
-  c.include RSpec::Fire
   c.treat_symbols_as_metadata_keys_with_true_values = true
   c.filter_run :f
   c.run_all_when_everything_filtered = true
