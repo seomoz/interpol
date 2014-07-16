@@ -174,7 +174,7 @@ module Interpol
     end
 
     def scalars_nullable_by_default?
-      @scalars_nullable_by_default
+      !!@scalars_nullable_by_default
     end
 
     def self.default
