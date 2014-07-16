@@ -1,4 +1,3 @@
-require 'fast_spec_helper'
 require 'sinatra/base'
 require 'interpol/sinatra/request_params_parser'
 require 'support/request_params_parser_definition'
@@ -6,7 +5,7 @@ require 'rack/test'
 
 module Interpol
   module Sinatra
-    describe RequestParamsParser, :uses_request_params_parser_definition do
+    RSpec.describe RequestParamsParser, :uses_request_params_parser_definition do
       include Rack::Test::Methods
 
       def on_get(&block)
@@ -75,7 +74,7 @@ module Interpol
         elsif app.instance_variables.include?(:@app)
           app.instance_variable_get(:@app)
         elsif RUBY_VERSION.to_f < 1.9
-          pending "Not sure why we can't get this to work on 1.8.7"
+          skip "Not sure why we can't get this to work on 1.8.7"
         else
           raise "Unable to find a wrapped app within #{app}"
         end

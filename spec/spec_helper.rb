@@ -1,8 +1,5 @@
 require File.expand_path('../../config/setup_load_paths', __FILE__)
 
-# Note: this file is purposefully minimal. Load as little as possible here.
-require 'rspec/fire'
-
 # Sinatra acts a bit different in the test vs dev environments
 # in a way that made one of our tests a false positive. We want
 # to force the environment to dev here so it's closer to how
@@ -47,23 +44,24 @@ module TestHelpers
   end
 end
 
-if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3' && !ENV['CI']
-  require 'debugger'
-end
+RSpec.configure do |config|
+  config.disable_monkey_patching!
+  config.filter_run :focus
+  config.run_all_when_everything_filtered = true
 
-RSpec.configure do |c|
-  c.include RSpec::Fire
-  c.treat_symbols_as_metadata_keys_with_true_values = true
-  c.filter_run :f
-  c.run_all_when_everything_filtered = true
-  c.include TestHelpers
-  c.extend TestHelpers::ClassMethods
+  config.default_formatter = 'doc' if config.files_to_run.one?
+  config.profile_examples = 10
+  config.order = :random
+  Kernel.srand config.seed
 
-  c.expect_with :rspec do |expectations|
-    expectations.syntax = :expect
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
   end
 
-  c.before do
+  config.include TestHelpers
+  config.extend TestHelpers::ClassMethods
+
+  config.before do
     if defined?(Interpol::Configuration)
       # clear global state between examples
       Interpol::Configuration.instance_variable_set(:@default, nil)
@@ -71,10 +69,10 @@ RSpec.configure do |c|
   end
 end
 
-shared_context "clean endpoint directory", :clean_endpoint_dir do
+RSpec.shared_context "clean endpoint directory", :clean_endpoint_dir do
   let(:dir) { './spec/fixtures/tmp' }
 
-  before(:each) do
+  before(:example) do
     # ensure the directory is empty
     FileUtils.rm_rf dir
     FileUtils.mkdir_p dir

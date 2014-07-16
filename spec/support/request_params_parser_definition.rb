@@ -1,4 +1,4 @@
-shared_context "an endpoint definition", :uses_request_params_parser_definition do
+RSpec.shared_context "an endpoint definition", :uses_request_params_parser_definition do
   let_without_indentation(:endpoint_definition_yml) do <<-EOF
     ---
     name: project_list

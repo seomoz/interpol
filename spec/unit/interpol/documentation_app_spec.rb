@@ -1,9 +1,8 @@
-require 'fast_spec_helper'
 require 'interpol/documentation_app'
 require 'rack/test'
 
 module Interpol
-  describe DocumentationApp do
+  RSpec.describe DocumentationApp do
     include Rack::Test::Methods
 
     let_without_indentation(:endpoint_definition_yml) do <<-EOF

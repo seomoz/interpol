@@ -1,9 +1,8 @@
-require 'fast_spec_helper'
 require 'interpol'
 require 'interpol/endpoint'
 
 module Interpol
-  shared_examples_for "custom_metadata" do
+  RSpec.shared_examples_for "custom_metadata" do
     it "initializes custom_metadata from the meta field" do
       instance = new_with('meta' => {'key' => 'value'})
       expect(instance.custom_metadata).to eq('key' => 'value')
@@ -16,7 +15,7 @@ module Interpol
     end
   end
 
-  describe Endpoint do
+  RSpec.describe Endpoint do
     def build_hash(hash = {})
       {
         'name' => "the-name",
@@ -155,32 +154,32 @@ module Interpol
       end
 
       it 'correctly identifies an exact match' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be_true
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar')).to be true
       end
 
       it 'can match when there is a trailing slash' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be_true
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/')).to be true
       end
 
       it 'correctly identifies a non match' do
-        expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/goo/bar')).to be false
       end
 
       it 'handles route params' do
-        expect(endpoint('/foo/:var/bar').route_matches?('/foo/17/bar')).to be_true
+        expect(endpoint('/foo/:var/bar').route_matches?('/foo/17/bar')).to be true
       end
 
       it 'handles special regex chars in the route' do
-        expect(endpoint('/foo.bar').route_matches?('/foo.bar')).to be_true
-        expect(endpoint('/foo.bar').route_matches?('/foo-bar')).to be_false
+        expect(endpoint('/foo.bar').route_matches?('/foo.bar')).to be true
+        expect(endpoint('/foo.bar').route_matches?('/foo-bar')).to be false
       end
 
       it 'does not match a path with an extra prefix' do
-        expect(endpoint('/foo/bar').route_matches?('/bazz/foo/bar')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/bazz/foo/bar')).to be false
       end
 
       it 'does not match a path with an extra postfix' do
-        expect(endpoint('/foo/bar').route_matches?('/foo/bar/bazz')).to be_false
+        expect(endpoint('/foo/bar').route_matches?('/foo/bar/bazz')).to be false
       end
     end
 
@@ -198,7 +197,7 @@ module Interpol
     end
   end
 
-  describe EndpointDefinition do
+  RSpec.describe EndpointDefinition do
     def build_hash(hash = {})
       {
         'schema'   => {'the' => 'schema'},
@@ -741,7 +740,7 @@ module Interpol
     end
   end
 
-  describe StatusCodeMatcher do
+  RSpec.describe StatusCodeMatcher do
     describe "#new" do
       it 'initializes the codes for nil' do
         expect(StatusCodeMatcher.new(nil).code_strings).to eq ['xxx']
@@ -770,21 +769,21 @@ module Interpol
     describe "#matches?" do
       let(:nil_codes_subject) { StatusCodeMatcher.new(nil) }
       it 'returns true when codes is nil' do
-        expect(nil_codes_subject.matches?('200')).to be_true
+        expect(nil_codes_subject.matches?('200')).to be true
       end
 
       subject { StatusCodeMatcher.new(['200', '4xx', 'x5x']) }
       it 'returns true for an exact match' do
-        expect(subject.matches?('200')).to be_true
+        expect(subject.matches?('200')).to be true
       end
 
       it 'returns true for a partial matches' do
-        expect(subject.matches?('401')).to be_true
-        expect(subject.matches?('454')).to be_true
+        expect(subject.matches?('401')).to be true
+        expect(subject.matches?('454')).to be true
       end
 
       it 'returns false for no matches' do
-        expect(subject.matches?('202')).to be_false
+        expect(subject.matches?('202')).to be false
       end
     end
 
@@ -803,7 +802,7 @@ module Interpol
     end
   end
 
-  describe EndpointExample do
+  RSpec.describe EndpointExample do
 
     let(:definition) { instance_double("Interpol::EndpointDefinition") }
     let(:data)       { { "the" => "data" } }

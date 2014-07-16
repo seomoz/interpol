@@ -1,8 +1,7 @@
-require 'fast_spec_helper'
 require 'interpol/dynamic_struct'
 
 module Interpol
-  describe DynamicStruct do
+  RSpec.describe DynamicStruct do
     it 'defines methods for each hash entry' do
       ds = DynamicStruct.new("a" => 5, "b" => 3)
       expect(ds.a).to eq(5)
@@ -11,8 +10,8 @@ module Interpol
 
     it 'provides predicates' do
       ds = DynamicStruct.new("a" => 3, "b" => false)
-      expect(ds.a?).to be_true
-      expect(ds.b?).to be_false
+      expect(ds.a?).to be true
+      expect(ds.b?).to be false
     end
 
     it 'raises a NoMethodError for messages that are not in the hash' do

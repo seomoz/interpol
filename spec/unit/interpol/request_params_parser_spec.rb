@@ -1,9 +1,8 @@
-require 'fast_spec_helper'
 require 'interpol/request_params_parser'
 require 'support/request_params_parser_definition'
 
 module Interpol
-  describe RequestParamsParser, :uses_request_params_parser_definition do
+  RSpec.describe RequestParamsParser, :uses_request_params_parser_definition do
     let(:raw_endpoint_definition) { YAML.load endpoint_definition_yml }
 
     def endpoint_definition
@@ -308,15 +307,13 @@ module Interpol
 
       it 'raises an error when parsing an unrecognized type' do
         endpoint_definition_yml.gsub!('string', 'bling')
-        RequestParamsParser::ParamValidator.any_instance.tap do |pv|
-          allow_any_instance_of(
-            Interpol::RequestParamsParser::ParamValidator
-          ).to receive(:build_params_schema)
+        allow_any_instance_of(
+          Interpol::RequestParamsParser::ParamValidator
+        ).to receive(:build_params_schema)
 
-          allow_any_instance_of(
-            Interpol::RequestParamsParser::ParamValidator
-          ).to receive(:validate!)
-        end
+        allow_any_instance_of(
+          Interpol::RequestParamsParser::ParamValidator
+        ).to receive(:validate!)
 
         expect {
           parse

@@ -1,9 +1,8 @@
-require 'fast_spec_helper'
 require 'interpol/configuration'
 require 'yaml'
 
 module Interpol
-  describe DefinitionFinder do
+  RSpec.describe DefinitionFinder do
     describe '#find_definition' do
       def endpoint_def(message_type, status_codes, *versions)
         {
@@ -92,19 +91,19 @@ module Interpol
     end
   end
 
-  describe Configuration do
+  RSpec.describe Configuration do
     let(:config) { Configuration.new }
 
     if defined?(::YAML::ENGINE.yamler)
       require 'psych'
       old_yamler = nil
 
-      before(:all) do
+      before(:context) do
         old_yamler = ::YAML::ENGINE.yamler
         ::YAML::ENGINE.yamler = 'psych'
       end
 
-      after(:all) do
+      after(:context) do
         ::YAML::ENGINE.yamler = old_yamler
       end
     end
@@ -325,12 +324,12 @@ module Interpol
 
     describe "#scalars_nullable_by_default?" do
       it 'defaults to false' do
-        expect(config.scalars_nullable_by_default?).to be_false
+        expect(config.scalars_nullable_by_default?).to be false
       end
 
       it 'can be set to true' do
         config.scalars_nullable_by_default = true
-        expect(config.scalars_nullable_by_default?).to be_true
+        expect(config.scalars_nullable_by_default?).to be true
       end
     end
 
@@ -354,8 +353,8 @@ module Interpol
 
       it 'configures validate_response_if' do
         config.validate_if { |a| a }
-        expect(config.validate_response?(true)).to be_true
-        expect(config.validate_response?(false)).to be_false
+        expect(config.validate_response?(true)).to be true
+        expect(config.validate_response?(false)).to be false
       end
 
       it 'prints a warning' do
@@ -448,7 +447,7 @@ module Interpol
     end
   end
 
-  describe ParamParser do
+  RSpec.describe ParamParser do
     let(:config) { Configuration.new }
 
     describe "#parse_value" do
@@ -476,7 +475,7 @@ module Interpol
         validate(schema)
       end
 
-      failure_message_for_should_not do |schema|
+      failure_message_when_negated do |schema|
         ValidationError.new(@errors, params).message
       end
 
@@ -495,14 +494,14 @@ module Interpol
         @new_value = new_value
       end
 
-      match_for_should do |converter|
+      match do |converter|
         raise "Must specify the expected value with .to" unless defined?(@new_value)
         @converter = converter
         @old_value = old_value
         converted_value == @new_value
       end
 
-      match_for_should_not do |converter|
+      match_when_negated do |converter|
         @converter = converter
         @old_value = old_value
         raised_argument_error = false
@@ -516,12 +515,12 @@ module Interpol
         raised_argument_error
       end
 
-      failure_message_for_should do |converter|
+      failure_message do |converter|
         "expected #{old_value.inspect} to convert to #{@new_value.inspect}, " +
         "but converted to #{converted_value.inspect}"
       end
 
-      failure_message_for_should_not do |converter|
+      failure_message_when_negated do |converter|
         "expected #{old_value.inspect} to trigger an ArgumentError when " +
         "conversion was attempted, but did not"
       end
@@ -741,9 +740,8 @@ module Interpol
       end
 
       it 'fails invalid URI strings' do
-        pending "json-schema doesn't validate URIs yet, unfortunately" do
-          expect(schema).to have_errors_for('not a URI')
-        end
+        pending "json-schema doesn't validate URIs yet, unfortunately"
+        expect(schema).to have_errors_for('not a URI')
       end
 
       it 'converts URI strings to a URI object' do

@@ -1,8 +1,7 @@
-require 'fast_spec_helper'
 require 'interpol/documentation'
 
 module Interpol
-  describe Documentation do
+  RSpec.describe Documentation do
     let(:address_schema) do
       {"first_name"=>
         {"description"=>"The person's first name.",

@@ -1,10 +1,9 @@
-require 'fast_spec_helper'
 require 'rack/test'
 require 'rack/content_length'
 require 'interpol/response_schema_validator'
 
 module Interpol
-  describe ResponseSchemaValidator do
+  RSpec.describe ResponseSchemaValidator do
     include Rack::Test::Methods
 
     def configuration
@@ -101,7 +100,7 @@ module Interpol
       end
 
       get '/search/200/overview'
-      expect(default_config_called).to be_true
+      expect(default_config_called).to be true
     end
 
     it 'calls the response_version hook with the rack env, the endpoint and the response triplet' do

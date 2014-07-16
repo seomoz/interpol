@@ -122,7 +122,7 @@ module Interpol
     end
 
     def route_matches?(path)
-      path =~ route_regex
+      !!(path =~ route_regex)
     end
 
     def inspect

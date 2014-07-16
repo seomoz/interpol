@@ -20,8 +20,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'rack'
   gem.add_dependency 'json-schema', '~> 1.1.1'
 
-  gem.add_development_dependency 'rspec', '~> 2.13'
-  gem.add_development_dependency 'rspec-fire', '~> 1.2'
+  gem.add_development_dependency 'rspec', '~> 3.0'
   gem.add_development_dependency 'simplecov', '~> 0.6'
   gem.add_development_dependency 'tailor', '~> 0'
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
