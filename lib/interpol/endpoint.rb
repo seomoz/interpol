@@ -251,11 +251,13 @@ module Interpol
       end
     end
 
+    PROPERTY_PARENTS = %w[ properties patternProperties ]
+
     def make_schema_hash_strict!(raw_schema, make_this_schema_strict=true)
       conditionally_make_nullable(raw_schema) if make_this_schema_strict
 
       raw_schema.each do |key, value|
-        make_schema_strict!(value, key != 'properties')
+        make_schema_strict!(value, !PROPERTY_PARENTS.include?(key))
       end
 
       return unless make_this_schema_strict

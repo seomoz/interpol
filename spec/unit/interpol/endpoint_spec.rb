@@ -391,6 +391,30 @@ module Interpol
         }.to raise_error(ValidationError)
       end
 
+      context "with patternProperties" do
+        before do
+          schema["properties"] = { "metadata" => {
+            "patternProperties" => {
+              ".+" => { "type" => "object", "properties" => {
+                "enabled" => { "type" => "boolean" }
+              } }
+             }
+          } }
+        end
+
+        it "allows multiple matching properties" do
+          expect {
+            subject.validate_data!("metadata" => { "stuff" => { "enabled" => true } })
+          }.not_to raise_error
+        end
+
+        it "fails validation when the data off a patterned property is invalid" do
+          expect {
+            subject.validate_data!("metadata" => { "stuff" => { "enabled" => 3 } })
+          }.to raise_error(ValidationError)
+        end
+      end
+
       it 'does not require properties marked as optional' do
         schema['properties']['foo']['optional'] = true
         subject.validate_data!({})
