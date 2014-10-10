@@ -5,6 +5,8 @@ gemspec
 
 group :extras do
   gem 'debugger' if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'ruby' && RUBY_VERSION == '1.9.3'
+  gem 'byebug' if RUBY_VERSION.start_with?('2.')
+
   gem 'ruby-debug', :platform => :mri_18
 end
 
