@@ -699,14 +699,14 @@ module Interpol
                                    { 'class' => 'integer', 'num' => 'string' },
                                    { 'class' => 'text', 'text' => 'blah' } ])
           }.to raise_error(ValidationError,
-               %r|'#/foo/0/num' of type String did not match the following type: integer|)
+               %r|'#/foo/0/num' of type string did not match the following type: integer|)
 
           expect {
             subject.validate_data!('foo' => [
                                    { 'class' => 'integer', 'num' => 3 },
                                    { 'class' => 'text', 'text' => 4 } ])
           }.to raise_error(ValidationError,
-               %r|'#/foo/1/text' of type Fixnum did not match the following type: string|)
+               %r|'#/foo/1/text' of type integer did not match the following type: string|)
         end
 
         it 'raises an error if a subtype is missing a property' do

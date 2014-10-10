@@ -480,7 +480,7 @@ module Interpol
       end
 
       def validate(schema)
-        @errors = ::JSON::Validator.fully_validate(schema, params)
+        @errors = ::JSON::Validator.fully_validate(schema, params, :version => :draft3)
         @errors.any?
       end
 

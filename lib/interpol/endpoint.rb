@@ -217,10 +217,10 @@ module Interpol
 
     def validate_data!(data, validate_schema = true)
       if validate_schema
-        errors = ::JSON::Validator.fully_validate_schema(schema)
+        errors = ::JSON::Validator.fully_validate_schema(schema, :version => :draft3)
         raise ValidationError.new(errors, schema, description) if errors.any?
       end
-      errors = ::JSON::Validator.fully_validate(schema, data)
+      errors = ::JSON::Validator.fully_validate(schema, data, :version => :draft3)
       raise ValidationError.new(errors, data, description) if errors.any?
     end
 

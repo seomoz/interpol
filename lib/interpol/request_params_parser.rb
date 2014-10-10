@@ -53,7 +53,7 @@ module Interpol
       end
 
       def validate!(params)
-        errors = ::JSON::Validator.fully_validate(@params_schema, params)
+        errors = ::JSON::Validator.fully_validate(@params_schema, params, :version => :draft3)
         raise ValidationError.new(errors, params, description) if errors.any?
       end
 
