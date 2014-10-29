@@ -19,13 +19,13 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency 'rack'
   gem.add_dependency 'json-schema', '~> 2.2.5'
+  gem.add_dependency 'hashie', '~> 1.2'
 
   gem.add_development_dependency 'rspec', '~> 3.0'
   gem.add_development_dependency 'simplecov', '~> 0.6'
   gem.add_development_dependency 'tailor', '~> 0'
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
   gem.add_development_dependency 'rack-test', '0.6.1'
-  gem.add_development_dependency 'hashie', '~> 1.2'
   gem.add_development_dependency 'sinatra', '~> 1.4'
 end
 
