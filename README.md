@@ -1,12 +1,22 @@
-# Interpol
+# Interpol [![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol) [![Code Climate](https://codeclimate.com/github/seomoz/interpol.png)](https://codeclimate.com/github/seomoz/interpol)
+
+![Status: Production](https://img.shields.io/badge/status-production-green.svg?style=flat)
+![Team: Moz Analytics](https://img.shields.io/badge/team-moz_analytics-green.svg?style=flat)
+![Scope: Internal](https://img.shields.io/badge/scope-internal-lightgrey.svg?style=flat)
+![Product: Moz Analytics](https://img.shields.io/badge/product-moz_analytics-blue.svg?style=flat)
+![Open Source: Yes](https://img.shields.io/badge/open_source-yes-green.svg?style=flat)
+![Critical: Yes](https://img.shields.io/badge/critical-yes-red.svg?style=flat)
+![Email](https://img.shields.io/badge/email-moz--platform--dev%40moz.com-green.svg?style=flat) ![Slack](https://img.shields.io/badge/slack-%23moz--analytics-ff69b4.svg?style=flat)
+
+## Overview 
+
+* *Main purpose:* JSON schema validation.
+* *Main Contact:* Moz Platform Dev team (moz-platform-dev@moz.com)
+* *Open Source Dependencies:* This is an open-source project developed by Myron Marston.
+
 ![Interpol Logo](https://github.com/seomoz/interpol/blob/assets/interpol-logo.png?raw=true)
 
-[![Build Status](https://secure.travis-ci.org/seomoz/interpol.png)](http://travis-ci.org/seomoz/interpol)
-[![Code Climate](https://codeclimate.com/github/seomoz/interpol.png)](https://codeclimate.com/github/seomoz/interpol)
-
-Interpol is a toolkit for policing your HTTP JSON interface. To use it,
-define the endpoints of your HTTP API in simple YAML files.
-Interpol provides multiple tools to work with these endpoint
+Interpol is a toolkit for policing your HTTP JSON interface. To use it, define the endpoints of your HTTP API in simple YAML files. Interpol provides multiple tools to work with these endpoint
 definitions:
 
 * `Interpol::TestHelper::RSpec` and `Interpol::TestHelper::TestUnit` are
