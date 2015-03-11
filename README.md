@@ -2,10 +2,6 @@
 
 ## Overview 
 
-* *Main purpose:* JSON schema validation.
-* *Main Contact:* Moz Platform Dev team (moz-platform-dev@moz.com)
-* *Open Source Dependencies:* This is an open-source project developed by Myron Marston.
-
 ![Interpol Logo](https://github.com/seomoz/interpol/blob/assets/interpol-logo.png?raw=true)
 
 Interpol is a toolkit for policing your HTTP JSON interface. To use it, define the endpoints of your HTTP API in simple YAML files. Interpol provides multiple tools to work with these endpoint
