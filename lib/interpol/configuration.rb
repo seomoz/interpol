@@ -36,18 +36,23 @@ module Interpol
   # Public: Defines interpol configuration.
   class Configuration
     attr_reader :endpoint_definition_files, :endpoints, :filter_example_data_blocks,
-                :endpoint_definition_merge_key_files
+                :endpoint_definition_merge_key_files, :base_path
     attr_accessor :validation_mode, :documentation_title
 
     def initialize
       self.endpoint_definition_files = []
       self.endpoint_definition_merge_key_files = []
+      self.base_path = ''
       self.documentation_title = "API Documentation Provided by Interpol"
       register_default_callbacks
       register_built_in_param_parsers
       @filter_example_data_blocks = []
 
       yield self if block_given?
+    end
+
+    def base_path=(path)
+      @base_path = path
     end
 
     def endpoint_definition_files=(files)
@@ -259,6 +264,7 @@ module Interpol
   # Holds the validation/parsing logic for a particular parameter
   # type (w/ additional options).
   class ParamParser
+    attr_reader :type, :options
     def initialize(type, options = {})
       @type = type
       @options = options
@@ -302,4 +308,3 @@ module Interpol
     end
   end
 end
-

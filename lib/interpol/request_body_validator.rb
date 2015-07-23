@@ -65,9 +65,10 @@ module Interpol
       end
 
       def endpoint_definition(&block)
-        config.endpoints.find_definition(request_method, path, 'request', nil) do |endpoint|
-          available = endpoint.available_request_versions
+        rel_path = path.gsub(config.base_path, '')
 
+        config.endpoints.find_definition(request_method, rel_path, 'request', nil) do |endpoint|
+          available = endpoint.available_request_versions
           @config.request_version_for(env, endpoint).tap do |requested|
             unless available.include?(requested)
               yield @config.request_version_unavailable(env, requested, available)
@@ -79,4 +80,3 @@ module Interpol
     end
   end
 end
-

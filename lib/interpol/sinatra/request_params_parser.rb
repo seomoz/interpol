@@ -92,8 +92,10 @@ module Interpol
         def endpoint_definition
           version = available_versions = nil
 
+          rel_path = request.path.gsub(config.base_path,'')
+
           definition = config.endpoints.find_definition \
-            request.env.fetch('REQUEST_METHOD'), request.path, 'request', nil do |endpoint|
+            request.env.fetch('REQUEST_METHOD'), rel_path, 'request', nil do |endpoint|
               available_versions ||= endpoint.available_request_versions
               config.request_version_for(request.env, endpoint).tap do |_version|
                 version ||= _version
@@ -170,4 +172,3 @@ module Interpol
     end
   end
 end
-

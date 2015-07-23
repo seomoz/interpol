@@ -65,7 +65,7 @@ module Interpol
       end
 
       def path
-        env.fetch('PATH_INFO')
+        env.fetch('PATH_INFO').gsub(config.base_path, '')
       end
 
       def validator
@@ -91,4 +91,3 @@ module Interpol
     end
   end
 end
-
