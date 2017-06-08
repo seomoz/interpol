@@ -78,6 +78,8 @@ module Interpol
         end
 
         def parse_params
+          return app.unparsed_params if endpoint_definition.includes_route_splat?
+
           @endpoint_parsers[endpoint_definition].parse(params_to_parse)
         rescue Interpol::ValidationError => error
           request_params_invalid(error)

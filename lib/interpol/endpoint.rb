@@ -143,6 +143,8 @@ module Interpol
         regex_string = route.split('/').map do |path_part|
           if path_part.start_with?(':')
             '[^\/]+' # it's a parameter; match anything
+          elsif path_part == '*'
+            '.+' # consider * to mean any char one or more times
           else
             Regexp.escape(path_part)
           end
@@ -213,6 +215,10 @@ module Interpol
 
     def endpoint_name
       @endpoint.name
+    end
+
+    def includes_route_splat?
+      endpoint.route.include?('*')
     end
 
     def validate_data!(data, validate_schema = true)
