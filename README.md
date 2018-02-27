@@ -2,9 +2,7 @@
 
 ## Overview 
 
-![Interpol Logo](https://github.com/seomoz/interpol/blob/assets/interpol-logo.png?raw=true)
-
-Interpol is a toolkit for policing your HTTP JSON interface. To use it, define the endpoints of your HTTP API in simple YAML files. Interpol provides multiple tools to work with these endpoint
+Moz-Interpol is a toolkit for policing your HTTP JSON interface. To use it, define the endpoints of your HTTP API in simple YAML files. Interpol provides multiple tools to work with these endpoint
 definitions:
 
 * `Interpol::TestHelper::RSpec` and `Interpol::TestHelper::TestUnit` are
@@ -96,7 +94,7 @@ definitions:
 
 Let's look at this YAML file, point-by-point:
 
-* `name` can be anything you want. Each endpoint should have a different name. Interpol uses
+* `name` can be anything you want. Each endpoint should have a different name. Moz-Interpol uses
   it in schema validation error messages. It is also used by the
   documentation app.
 * `route` defines the sinatra route for this endpoint. Note that while
@@ -131,7 +129,7 @@ Let's look at this YAML file, point-by-point:
 
 ## Configuration
 
-Interpol provides two levels of configuration: global default
+Moz-Interpol provides two levels of configuration: global default
 configuration, and one-off configuration, set on a particular
 instance of one of the provided tools. Each of the tools accepts
 a configuration block that provides an identical API to the
@@ -141,12 +139,12 @@ global configuration API shown below.
 require 'interpol'
 
 Interpol.default_configuration do |config|
-  # Tells Interpol where to find your endpoint definition files.
+  # Tells Moz-Interpol where to find your endpoint definition files.
   #
   # Needed by all tools.
   config.endpoint_definition_files = Dir["config/endpoints/*.yml"]
 
-  # Determines which versioned response endpoint definition Interpol uses
+  # Determines which versioned response endpoint definition Moz-Interpol uses
   # for a request. You can also use a block form, which yields
   # the rack env hash and the endpoint object as arguments.
   # This is useful when you need to extract the version from a
@@ -155,7 +153,7 @@ Interpol.default_configuration do |config|
   # Needed by Interpol::StubApp and Interpol::ResponseSchemaValidator.
   config.response_version '1.0'
 
-  # Determines which versioned request endpoint definition Interpol uses
+  # Determines which versioned request endpoint definition Moz-Interpol uses
   # for a request. You can also use a block form, which yields
   # the rack env hash and the endpoint object as arguments.
   # This is useful when you need to extract the version from a
